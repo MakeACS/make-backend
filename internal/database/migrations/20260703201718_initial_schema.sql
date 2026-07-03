@@ -106,7 +106,7 @@ CREATE TABLE equipment (
     reservation_only BOOLEAN NOT NULL DEFAULT FALSE,
     needs_welcome BOOLEAN NOT NULL DEFAULT TRUE,
     requires_in_person BOOLEAN NOT NULL DEFAULT TRUE,
-    requires_trainer BOOLEAN NOT NULL DEFAULT FALSE,
+    requires_trainer BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE trainers (
@@ -122,7 +122,15 @@ CREATE TABLE welcome_taps (
     makerspace_id INT REFERENCES makerspaces(id) ON DELETE SET NULL
 );
 
+CREATE TABLE trainings (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    questions JSONB NOT NULL,
+    makerspace_id INT REFERENCES makerspaces(id) ON DELETE CASCADE
+);
+
 -- +goose Down
+DROP TABLE trainings;
 DROP TABLE welcome_taps;
 DROP TABLE trainers;
 DROP TABLE equipment;
