@@ -134,7 +134,13 @@ CREATE TABLE equipment_trainings (
     training_id  INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE
 );
 
+CREATE TABLE zone_trainings (
+    zone_id INT NOT NULL REFERENCES zones(id) ON DELETE CASCADE,
+    training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE
+);
+
 -- +goose Down
+DROP TABLE zone_trainings;
 DROP TABLE equipment_trainings;
 DROP TABLE trainings;
 DROP TABLE welcome_taps;
