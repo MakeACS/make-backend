@@ -241,7 +241,13 @@ CREATE TABLE reservations (
     approved BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+CREATE TABLE custom_links (
+    short_url TEXT PRIMARY KEY,
+    long_url TEXT NOT NULL
+);
+
 -- +goose Down
+DROP TABLE custom_links;
 DROP TABLE reservations;
 DROP TABLE equipment_instances;
 DROP TABLE welcome_devices;
