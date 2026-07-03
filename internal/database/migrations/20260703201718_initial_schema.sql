@@ -174,7 +174,20 @@ CREATE TABLE organization_members (
     PRIMARY KEY (user_id, organization_id)
 );
 
+CREATE TABLE devices (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    sn TEXT NOT NULL,
+    paired TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    hardware TEXT,
+    firmware TEXT,
+    target_firmware TEXT,
+    key_cycle INT NOT NULL DEFAULT 0,
+    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE 
+);
+
 -- +goose Down
+DROP TABLE devices;
 DROP TABLE organization_members;
 DROP TABLE organizations;
 DROP TABLE passed_trainings;
