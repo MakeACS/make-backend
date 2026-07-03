@@ -222,7 +222,15 @@ CREATE TABLE welcome_devices (
     PRIMARY KEY (device_id, makerspace_id)
 );
 
+CREATE TABLE equipment_instances (
+    id SERIAL PRIMARY KEY,
+    equipment_id INT NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    name TEXT NOT NULL DEFAULT '',
+    access_channel_id INT REFERENCES access_channels(id) ON DELETE SET NULL
+);
+
 -- +goose Down
+DROP TABLE equipment_instances;
 DROP TABLE welcome_devices;
 DROP TABLE dispensers;
 DROP TYPE DISPENSER_ERROR;
