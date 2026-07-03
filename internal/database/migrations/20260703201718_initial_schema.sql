@@ -109,7 +109,14 @@ CREATE TABLE equipment (
     requires_trainer BOOLEAN NOT NULL DEFAULT FALSE,
 );
 
+CREATE TABLE trainers (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    equipment_id INT NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, equipment_id)
+);
+
 -- +goose Down
+DROP TABLE trainers;
 DROP TABLE equipment;
 DROP TABLE staff;
 DROP TABLE managers;
