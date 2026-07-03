@@ -168,7 +168,13 @@ CREATE TABLE organizations (
     notes TEXT NOT NULL DEFAULT ''
 );
 
+CREATE TABLE organization_members (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id INT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE
+);
+
 -- +goose Down
+DROP TABLE organization_members;
 DROP TABLE organizations;
 DROP TABLE passed_trainings;
 DROP TABLE training_holds;
