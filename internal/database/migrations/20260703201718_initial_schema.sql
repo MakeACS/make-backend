@@ -80,7 +80,21 @@ CREATE TABLE announcements (
     makerspace_id INT REFERENCES makerspaces(id) ON DELETE CASCADE
 );
 
+CREATE TABLE managers (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, makerspace_id)
+);
+
+CREATE TABLE staff (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, makerspace_id)
+);
+
 -- +goose Down
+DROP TABLE staff;
+DROP TABLE managers;
 DROP TABLE announcements;
 DROP TABLE special_hours;
 DROP TABLE default_hours;
