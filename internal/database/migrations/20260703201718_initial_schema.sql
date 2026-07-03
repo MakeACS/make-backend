@@ -246,7 +246,15 @@ CREATE TABLE custom_links (
     long_url TEXT NOT NULL
 );
 
+CREATE TABLE temp_cards (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    card_tag TEXT NOT NULL,
+    issued TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 -- +goose Down
+DROP TABLE temp_cards;
 DROP TABLE custom_links;
 DROP TABLE reservations;
 DROP TABLE equipment_instances;
