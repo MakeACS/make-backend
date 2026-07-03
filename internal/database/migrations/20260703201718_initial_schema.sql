@@ -130,18 +130,21 @@ CREATE TABLE trainings (
 );
 
 CREATE TABLE equipment_trainings (
-    equipment_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
-    training_id  INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE
+    equipment_id INT NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    training_id  INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+    PRIMARY KEY (equipment_id, training_id)
 );
 
 CREATE TABLE zone_trainings (
     zone_id INT NOT NULL REFERENCES zones(id) ON DELETE CASCADE,
-    training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE
+    training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+    PRIMARY KEY (zone_id, training_id)
 );
 
 CREATE TABLE makerspace_trainings (
     makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
-    training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE
+    training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+    PRIMARY KEY (makerspace_id, training_id)
 );
 
 CREATE TABLE training_holds (
@@ -154,7 +157,8 @@ CREATE TABLE training_holds (
 CREATE TABLE passed_trainings (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
-    passed_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    passed_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, training_id)
 );
 
 -- +goose Down
