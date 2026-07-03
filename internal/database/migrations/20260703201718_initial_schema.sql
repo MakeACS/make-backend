@@ -129,7 +129,13 @@ CREATE TABLE trainings (
     makerspace_id INT REFERENCES makerspaces(id) ON DELETE CASCADE
 );
 
+CREATE TABLE equipment_trainings (
+    equipment_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
+    training_id  INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE
+);
+
 -- +goose Down
+DROP TABLE equipment_trainings;
 DROP TABLE trainings;
 DROP TABLE welcome_taps;
 DROP TABLE trainers;
