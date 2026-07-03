@@ -144,7 +144,15 @@ CREATE TABLE makerspace_trainings (
     training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE
 );
 
+CREATE TABLE training_holds (
+    id SERIAL PRIMARY KEY,
+    training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
 -- +goose Down
+DROP TABLE training_holds;
 DROP TABLE makerspace_trainings;
 DROP TABLE zone_trainings;
 DROP TABLE equipment_trainings;
