@@ -63,7 +63,16 @@ CREATE TABLE default_hours (
     closed BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+CREATE TABLE special_hours (
+    makerspace_id INT REFERENCES makerspace_id(id) ON DELETE CASCADE,
+    special_date DATE NOT NULL,
+    open_time TIME WITH TIME ZONE,
+    close_time TIME WITH TIME ZONE,
+    closed BOOLEAN NOT NULL DEFAULT TRUE
+);
+
 -- +goose Down
+DROP TABLE special_hours;
 DROP TABLE default_hours;
 DROP TABLE zones;
 DROP TABLE restrictions;
