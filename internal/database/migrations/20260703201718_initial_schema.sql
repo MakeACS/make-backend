@@ -151,7 +151,14 @@ CREATE TABLE training_holds (
     expires TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
+CREATE TABLE passed_trainings (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    training_id INT NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+    passed_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 -- +goose Down
+DROP TABLE passed_trainings;
 DROP TABLE training_holds;
 DROP TABLE makerspace_trainings;
 DROP TABLE zone_trainings;
