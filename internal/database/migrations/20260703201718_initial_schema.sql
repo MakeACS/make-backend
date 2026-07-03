@@ -123,6 +123,7 @@ CREATE TABLE welcome_taps (
 );
 
 -- +goose Down
+DROP TABLE welcome_taps;
 DROP TABLE trainers;
 DROP TABLE equipment;
 DROP TABLE staff;
