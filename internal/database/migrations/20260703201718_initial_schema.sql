@@ -189,7 +189,7 @@ CREATE TABLE devices (
 CREATE TABLE access_devices (
     device_id INT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
     channels INT NOT NULL DEFAULT 0,
-    temp_duration INT NOT NULL DEFAULT 100,
+    temp_duration INTERVAL NOT NULL DEFAULT '100 MILLISECONDS',
     current_card_tag TEXT NOT NULL DEFAULT '',
     last_status TIMESTAMP WITH TIME ZONE,
     session_start TIMESTAMP WITH TIME ZONE,
@@ -198,7 +198,19 @@ CREATE TABLE access_devices (
     reported_deployment JSONB
 );
 
+CREATE TYPE ACCESS_CHANNEL_STATE AS ENUM ('IDLE', 'UNLOCKED', 'ALWAYS_ON', 'LOCKED_OUT');
+
+CREATE TABLE access_channels (
+    id SERIAL PRIMARY KEY,
+    device_id INT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    channel_id NOT NULL,
+    state ACCESS_CHANNEL_STATE,
+    temp_duration INTERVAL NOT NULL DEFAULT '100 MILLISECONDS'
+);
+
 -- +goose Down
+DROP TABLE access_channels;
+DROP TYPE ACCESS_CHANNEL_STATE;
 DROP TABLE access_devices;
 DROP TABLE devices;
 DROP TABLE organization_members;
