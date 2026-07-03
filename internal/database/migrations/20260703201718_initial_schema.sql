@@ -236,8 +236,8 @@ CREATE TABLE reservations (
     organization_id INT REFERENCES organizations(id) ON DELETE CASCADE,
     equipment_id INT NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
     description TEXT NOT NULL DEFAULT '',
-    start  TIMESTAMP WITH TIME ZONE NOT NULL,
-    end TIMESTAMP WITH TIME ZONE NOT NULL,
+    start_time  TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
     approved BOOLEAN NOT NULL DEFAULT FALSE
 );
 
