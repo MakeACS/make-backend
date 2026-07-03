@@ -104,6 +104,7 @@ CREATE TABLE equipment (
     description TEXT NOT NULL DEFAULT '',
     reservable BOOLEAN NOT NULL DEFAULT FALSE,
     reservation_only BOOLEAN NOT NULL DEFAULT FALSE,
+    reservation_instructions TEXT NOT NULL DEFAULT '',
     needs_welcome BOOLEAN NOT NULL DEFAULT TRUE,
     requires_in_person BOOLEAN NOT NULL DEFAULT TRUE,
     requires_trainer BOOLEAN NOT NULL DEFAULT FALSE
@@ -229,7 +230,19 @@ CREATE TABLE equipment_instances (
     access_channel_id INT REFERENCES access_channels(id) ON DELETE SET NULL
 );
 
+CREATE TABLE reservations (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    organization_id INT REFERENCES organizations(id) ON DELETE CASCADE,
+    equipment_id INT NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    description TEXT NOT NULL DEFAULT '',
+    start  TIMESTAMP WITH TIME ZONE NOT NULL,
+    end TIMESTAMP WITH TIME ZONE NOT NULL,
+    approved BOOLEAN NOT NULL DEFAULT FALSE
+);
+
 -- +goose Down
+DROP TABLE reservations;
 DROP TABLE equipment_instances;
 DROP TABLE welcome_devices;
 DROP TABLE dispensers;
