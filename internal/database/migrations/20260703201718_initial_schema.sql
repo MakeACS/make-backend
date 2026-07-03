@@ -161,7 +161,15 @@ CREATE TABLE passed_trainings (
     PRIMARY KEY (user_id, training_id)
 );
 
+CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT ''
+);
+
 -- +goose Down
+DROP TABLE organizations;
 DROP TABLE passed_trainings;
 DROP TABLE training_holds;
 DROP TABLE makerspace_trainings;
