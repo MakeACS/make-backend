@@ -186,7 +186,20 @@ CREATE TABLE devices (
     makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE 
 );
 
+CREATE TABLE access_devices (
+    device_id INT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
+    channels INT NOT NULL DEFAULT 0,
+    temp_duration INT NOT NULL DEFAULT 100,
+    current_card_tag TEXT NOT NULL DEFAULT '',
+    last_status TIMESTAMP WITH TIME ZONE,
+    session_start TIMESTAMP WITH TIME ZONE,
+    flags JSONB,
+    sealed_deployment JSONB,
+    reported_deployment JSONB
+);
+
 -- +goose Down
+DROP TABLE access_devices;
 DROP TABLE devices;
 DROP TABLE organization_members;
 DROP TABLE organizations;
