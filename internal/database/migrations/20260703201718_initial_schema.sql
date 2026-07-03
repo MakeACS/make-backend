@@ -92,7 +92,25 @@ CREATE TABLE staff (
     PRIMARY KEY (user_id, makerspace_id)
 );
 
+CREATE TABLE equipment (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    sub_name TEXT NOT NULL DEFAULT '',
+    zone_id INT NOT NULL REFERENCES zones(id) ON DELETE CASCADE,
+    hidden BOOLEAN NOT NULL DEFAULT FALSE,
+    image_id INT REFERENCES images(id) ON DELETE SET NULL,
+    sop_url TEXT NOT NULL DEFAULT '',
+    sign_off_url TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    reservable BOOLEAN NOT NULL DEFAULT FALSE,
+    reservation_only BOOLEAN NOT NULL DEFAULT FALSE,
+    needs_welcome BOOLEAN NOT NULL DEFAULT TRUE,
+    requires_in_person BOOLEAN NOT NULL DEFAULT TRUE,
+    requires_trainer BOOLEAN NOT NULL DEFAULT FALSE,
+);
+
 -- +goose Down
+DROP TABLE equipment;
 DROP TABLE staff;
 DROP TABLE managers;
 DROP TABLE announcements;
