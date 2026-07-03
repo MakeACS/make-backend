@@ -15,9 +15,9 @@ CREATE TABLE users (
 
 CREATE TABLE holds (
     id SERIAL PRIMARY KEY,
-    creator_id INT REFERENCES users(id),
-    remover_id INT REFERENCES users(id),
-    target_id INT REFERENCES users(id),
+    creator_id INT NOT NULL REFERENCES users(id),
+    remover_id INT NOT NULL REFERENCES users(id),
+    target_id INT NOT NULL REFERENCES users(id),
     reason TEXT NOT NULL DEFAULT '',
     create_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     remove_date TIMESTAMP WITH TIME ZONE
@@ -41,22 +41,22 @@ CREATE TABLE makerspaces (
 
 CREATE TABLE restrictions (
     id SERIAL PRIMARY KEY,
-    makerspace_id INT REFERENCES makerspaces(id) ON DELETE CASCADE,
-    creator_id INT REFERENCES users(id),
-    target_id INT REFERENCES users(id),
+    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
+    creator_id INT NOT NULL REFERENCES users(id),
+    target_id INT NOT NULL REFERENCES users(id),
     create_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     reason TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE zones (
     id SERIAL PRIMARY KEY,
-    makerspace_id INT REFERENCES makerspaces(id) ON DELETE CASCADE,
+    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
     name TEXT NOT NULL DEFAULT '',
     hidden BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE default_hours (
-    makerspace_id INT REFERENCES makerspace_id(id) ON DELETE CASCADE,
+    makerspace_id INT NOT NULL REFERENCES makerspace_id(id) ON DELETE CASCADE,
     day_of_week INT NOT NULL CHECK (day_of_week >= 0 AND day_of_week < 7),
     open_time TIME WITH TIME ZONE,
     close_time TIME WITH TIME ZONE,
@@ -64,14 +64,22 @@ CREATE TABLE default_hours (
 );
 
 CREATE TABLE special_hours (
-    makerspace_id INT REFERENCES makerspace_id(id) ON DELETE CASCADE,
+    makerspace_id INT NOT NULL REFERENCES makerspace_id(id) ON DELETE CASCADE,
     special_date DATE NOT NULL,
     open_time TIME WITH TIME ZONE,
     close_time TIME WITH TIME ZONE,
     closed BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+CREATE TABLE announcements (
+    id INT PRIMARY KEY,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL DEFAULT '',
+    makerspace_id INT REFERENCES makerspace_id(id) ON DELETE CASCADE
+);
+
 -- +goose Down
+DROP TABLE announcements;
 DROP TABLE special_hours;
 DROP TABLE default_hours;
 DROP TABLE zones;
