@@ -170,7 +170,8 @@ CREATE TABLE organizations (
 
 CREATE TABLE organization_members (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    organization_id INT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE
+    organization_id INT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, organization_id)
 );
 
 -- +goose Down
