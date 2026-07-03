@@ -115,6 +115,13 @@ CREATE TABLE trainers (
     PRIMARY KEY (user_id, equipment_id)
 );
 
+CREATE TABLE welcome_taps (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    tap_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    makerspace_id INT REFERENCES makerspaces(id) ON DELETE SET NULL
+);
+
 -- +goose Down
 DROP TABLE trainers;
 DROP TABLE equipment;
