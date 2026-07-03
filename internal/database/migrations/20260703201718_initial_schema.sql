@@ -216,7 +216,14 @@ CREATE TABLE dispensers (
     error DISPENSER_ERROR
 );
 
+CREATE TABLE welcome_devices (
+    device_id INT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
+    PRIMARY KEY (device_id, makerspace_id)
+);
+
 -- +goose Down
+DROP TABLE welcome_devices;
 DROP TABLE dispensers;
 DROP TYPE DISPENSER_ERROR;
 DROP TABLE access_channels;
