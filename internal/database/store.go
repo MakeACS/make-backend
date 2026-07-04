@@ -15,14 +15,20 @@ type MakerspaceRepository interface {
 	GetMakerspaceById(ctx context.Context, id int) (*models.Makerspace, error)
 }
 
+type ZoneRepository interface {
+	GetZoneById(ctx context.Context, id int) (*models.Zone, error)
+}
+
 type Store struct {
 	Users       UserRepository
 	Makerspaces MakerspaceRepository
+	Zones       ZoneRepository
 }
 
 func NewStore(db *sql.DB) *Store {
 	return &Store{
 		Users:       &repos.UserRepo{DB: db},
 		Makerspaces: &repos.MakerspaceRepo{DB: db},
+		Zones:       &repos.ZoneRepo{DB: db},
 	}
 }
