@@ -6,6 +6,10 @@ import (
 	"make-backend/internal/database/models"
 )
 
+type MakerspaceRepository interface {
+	GetMakerspaceById(ctx context.Context, id int) (*models.Makerspace, error)
+}
+
 type MakerspaceRepo struct {
 	DB *sql.DB
 }

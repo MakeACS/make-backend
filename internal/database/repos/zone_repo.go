@@ -6,6 +6,11 @@ import (
 	"make-backend/internal/database/models"
 )
 
+type ZoneRepository interface {
+	GetZoneById(ctx context.Context, id int) (*models.Zone, error)
+	GetZonesByMakerspaceId(ctx context.Context, makerspaceId int) ([]*models.Zone, error)
+}
+
 type ZoneRepo struct {
 	DB *sql.DB
 }

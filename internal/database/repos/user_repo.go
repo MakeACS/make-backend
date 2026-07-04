@@ -6,6 +6,10 @@ import (
 	"make-backend/internal/database/models"
 )
 
+type UserRepository interface {
+	GetUserById(ctx context.Context, id int) (*models.User, error)
+}
+
 type UserRepo struct {
 	DB *sql.DB
 }
