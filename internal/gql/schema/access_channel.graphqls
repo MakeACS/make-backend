@@ -1,0 +1,15 @@
+enum AccessChannelState {
+    IDLE
+    UNLOCKED
+    ALWAYS_ON
+    LOCKED_OUT
+    FAULT
+}
+
+type AccessChannel {
+    id: ID!
+    device_id: ID!
+    channel_id: Int!
+    state: AccessChannelState
+    temp_duration: Int!
+}

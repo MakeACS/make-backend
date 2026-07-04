@@ -42,6 +42,14 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AccessChannel struct {
+		ChannelId    func(childComplexity int) int
+		DeviceId     func(childComplexity int) int
+		Id           func(childComplexity int) int
+		State        func(childComplexity int) int
+		TempDuration func(childComplexity int) int
+	}
+
 	AccessComponent struct {
 		Children func(childComplexity int) int
 		SN       func(childComplexity int) int
@@ -302,6 +310,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AccessChannel.channel_id":
+		if e.ComplexityRoot.AccessChannel.ChannelId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessChannel.ChannelId(childComplexity), true
+	case "AccessChannel.device_id":
+		if e.ComplexityRoot.AccessChannel.DeviceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessChannel.DeviceId(childComplexity), true
+	case "AccessChannel.id":
+		if e.ComplexityRoot.AccessChannel.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessChannel.Id(childComplexity), true
+	case "AccessChannel.state":
+		if e.ComplexityRoot.AccessChannel.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessChannel.State(childComplexity), true
+	case "AccessChannel.temp_duration":
+		if e.ComplexityRoot.AccessChannel.TempDuration == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessChannel.TempDuration(childComplexity), true
 
 	case "AccessComponent.children":
 		if e.ComplexityRoot.AccessComponent.Children == nil {
@@ -1261,7 +1300,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/announcement.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/reservation.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/access_channel.graphqls" "schema/announcement.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/reservation.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1273,6 +1312,7 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
+	{Name: "schema/access_channel.graphqls", Input: sourceData("schema/access_channel.graphqls"), BuiltIn: false},
 	{Name: "schema/announcement.graphqls", Input: sourceData("schema/announcement.graphqls"), BuiltIn: false},
 	{Name: "schema/device.graphqls", Input: sourceData("schema/device.graphqls"), BuiltIn: false},
 	{Name: "schema/equipment.graphqls", Input: sourceData("schema/equipment.graphqls"), BuiltIn: false},
@@ -1648,6 +1688,121 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ***************************** args.gotpl *****************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AccessChannel_id(ctx context.Context, field graphql.CollectedField, obj *models.AccessChannel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessChannel_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessChannel_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessChannel", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccessChannel_device_id(ctx context.Context, field graphql.CollectedField, obj *models.AccessChannel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessChannel_device_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeviceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessChannel_device_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessChannel", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccessChannel_channel_id(ctx context.Context, field graphql.CollectedField, obj *models.AccessChannel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessChannel_channel_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChannelId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessChannel_channel_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessChannel", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccessChannel_state(ctx context.Context, field graphql.CollectedField, obj *models.AccessChannel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessChannel_state(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.AccessChannelState) graphql.Marshaler {
+			return ec.marshalOAccessChannelState2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessChannelState(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccessChannel_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessChannel", field, false, false, errors.New("field of type AccessChannelState does not have child fields"))
+}
+
+func (ec *executionContext) _AccessChannel_temp_duration(ctx context.Context, field graphql.CollectedField, obj *models.AccessChannel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessChannel_temp_duration(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TempDuration, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessChannel_temp_duration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessChannel", field, false, false, errors.New("field of type Int does not have child fields"))
+}
 
 func (ec *executionContext) _AccessComponent_sn(ctx context.Context, field graphql.CollectedField, obj *models.AccessComponent) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -6215,6 +6370,64 @@ func (ec *executionContext) _TrainingBlock(ctx context.Context, sel ast.Selectio
 
 // region    **************************** object.gotpl ****************************
 
+var accessChannelImplementors = []string{"AccessChannel"}
+
+func (ec *executionContext) _AccessChannel(ctx context.Context, sel ast.SelectionSet, obj *models.AccessChannel) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessChannelImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessChannel")
+		case "id":
+			out.Values[i] = ec._AccessChannel_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "device_id":
+			out.Values[i] = ec._AccessChannel_device_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "channel_id":
+			out.Values[i] = ec._AccessChannel_channel_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "state":
+			out.Values[i] = ec._AccessChannel_state(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "temp_duration":
+			out.Values[i] = ec._AccessChannel_temp_duration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var accessComponentImplementors = []string{"AccessComponent"}
 
 func (ec *executionContext) _AccessComponent(ctx context.Context, sel ast.SelectionSet, obj *models.AccessComponent) graphql.Marshaler {
@@ -8740,6 +8953,25 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
+	return res
+}
+
+func (ec *executionContext) unmarshalOAccessChannelState2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessChannelState(ctx context.Context, v any) (*models.AccessChannelState, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := models.AccessChannelState(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccessChannelState2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessChannelState(ctx context.Context, sel ast.SelectionSet, v *models.AccessChannelState) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 
