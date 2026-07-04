@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"make-backend/internal/database/models"
+	"make-backend/internal/gql/scalars"
 	"math"
 	"strconv"
 	"sync/atomic"
@@ -30,6 +31,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
+	DefaultHours() DefaultHoursResolver
 	Makerspace() MakerspaceResolver
 	Query() QueryResolver
 }
@@ -38,6 +40,14 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	DefaultHours struct {
+		CloseTime    func(childComplexity int) int
+		Closed       func(childComplexity int) int
+		DayOfWeek    func(childComplexity int) int
+		MakerspaceId func(childComplexity int) int
+		OpenTime     func(childComplexity int) int
+	}
+
 	Hold struct {
 		CreateDate func(childComplexity int) int
 		CreatorId  func(childComplexity int) int
@@ -80,6 +90,14 @@ type ComplexityRoot struct {
 		TargetId     func(childComplexity int) int
 	}
 
+	SpecialHours struct {
+		CloseTime    func(childComplexity int) int
+		Closed       func(childComplexity int) int
+		MakerspaceId func(childComplexity int) int
+		OpenTime     func(childComplexity int) int
+		SpecialDate  func(childComplexity int) int
+	}
+
 	User struct {
 		Admin         func(childComplexity int) int
 		Archived      func(childComplexity int) int
@@ -107,6 +125,9 @@ type ComplexityRoot struct {
 
 // region    ************************** generated!.gotpl **************************
 
+type DefaultHoursResolver interface {
+	DayOfWeek(ctx context.Context, obj *models.DefaultHours) (int32, error)
+}
 type MakerspaceResolver interface {
 	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
 }
@@ -134,6 +155,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "DefaultHours.close_time":
+		if e.ComplexityRoot.DefaultHours.CloseTime == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DefaultHours.CloseTime(childComplexity), true
+	case "DefaultHours.closed":
+		if e.ComplexityRoot.DefaultHours.Closed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DefaultHours.Closed(childComplexity), true
+	case "DefaultHours.day_of_week":
+		if e.ComplexityRoot.DefaultHours.DayOfWeek == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DefaultHours.DayOfWeek(childComplexity), true
+	case "DefaultHours.makerspace_id":
+		if e.ComplexityRoot.DefaultHours.MakerspaceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DefaultHours.MakerspaceId(childComplexity), true
+	case "DefaultHours.open_time":
+		if e.ComplexityRoot.DefaultHours.OpenTime == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DefaultHours.OpenTime(childComplexity), true
 
 	case "Hold.create_date":
 		if e.ComplexityRoot.Hold.CreateDate == nil {
@@ -322,6 +374,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Restriction.TargetId(childComplexity), true
 
+	case "SpecialHours.close_time":
+		if e.ComplexityRoot.SpecialHours.CloseTime == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpecialHours.CloseTime(childComplexity), true
+	case "SpecialHours.closed":
+		if e.ComplexityRoot.SpecialHours.Closed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpecialHours.Closed(childComplexity), true
+	case "SpecialHours.makerspace_id":
+		if e.ComplexityRoot.SpecialHours.MakerspaceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpecialHours.MakerspaceId(childComplexity), true
+	case "SpecialHours.open_time":
+		if e.ComplexityRoot.SpecialHours.OpenTime == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpecialHours.OpenTime(childComplexity), true
+	case "SpecialHours.special_date":
+		if e.ComplexityRoot.SpecialHours.SpecialDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpecialHours.SpecialDate(childComplexity), true
+
 	case "User.admin":
 		if e.ComplexityRoot.User.Admin == nil {
 			break
@@ -486,7 +569,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/hold.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -499,6 +582,7 @@ func sourceData(filename string) string {
 
 var sources = []*ast.Source{
 	{Name: "schema/hold.graphqls", Input: sourceData("schema/hold.graphqls"), BuiltIn: false},
+	{Name: "schema/hours.graphqls", Input: sourceData("schema/hours.graphqls"), BuiltIn: false},
 	{Name: "schema/image.graphqls", Input: sourceData("schema/image.graphqls"), BuiltIn: false},
 	{Name: "schema/makerspace.graphqls", Input: sourceData("schema/makerspace.graphqls"), BuiltIn: false},
 	{Name: "schema/restriction.graphqls", Input: sourceData("schema/restriction.graphqls"), BuiltIn: false},
@@ -822,6 +906,121 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ***************************** args.gotpl *****************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _DefaultHours_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.DefaultHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DefaultHours_makerspace_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MakerspaceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DefaultHours_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DefaultHours", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DefaultHours_day_of_week(ctx context.Context, field graphql.CollectedField, obj *models.DefaultHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DefaultHours_day_of_week(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.DefaultHours().DayOfWeek(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DefaultHours_day_of_week(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DefaultHours", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DefaultHours_open_time(ctx context.Context, field graphql.CollectedField, obj *models.DefaultHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DefaultHours_open_time(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OpenTime, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOClockTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DefaultHours_open_time(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DefaultHours", field, false, false, errors.New("field of type ClockTime does not have child fields"))
+}
+
+func (ec *executionContext) _DefaultHours_close_time(ctx context.Context, field graphql.CollectedField, obj *models.DefaultHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DefaultHours_close_time(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CloseTime, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOClockTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DefaultHours_close_time(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DefaultHours", field, false, false, errors.New("field of type ClockTime does not have child fields"))
+}
+
+func (ec *executionContext) _DefaultHours_closed(ctx context.Context, field graphql.CollectedField, obj *models.DefaultHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DefaultHours_closed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Closed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DefaultHours_closed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DefaultHours", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
 
 func (ec *executionContext) _Hold_id(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -1611,6 +1810,121 @@ func (ec *executionContext) _Restriction_reason(ctx context.Context, field graph
 }
 func (ec *executionContext) fieldContext_Restriction_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Restriction", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SpecialHours_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.SpecialHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SpecialHours_makerspace_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MakerspaceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SpecialHours_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SpecialHours", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _SpecialHours_special_date(ctx context.Context, field graphql.CollectedField, obj *models.SpecialHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SpecialHours_special_date(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SpecialDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNDate2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SpecialHours_special_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SpecialHours", field, false, false, errors.New("field of type Date does not have child fields"))
+}
+
+func (ec *executionContext) _SpecialHours_open_time(ctx context.Context, field graphql.CollectedField, obj *models.SpecialHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SpecialHours_open_time(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OpenTime, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOClockTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SpecialHours_open_time(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SpecialHours", field, false, false, errors.New("field of type ClockTime does not have child fields"))
+}
+
+func (ec *executionContext) _SpecialHours_close_time(ctx context.Context, field graphql.CollectedField, obj *models.SpecialHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SpecialHours_close_time(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CloseTime, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOClockTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SpecialHours_close_time(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SpecialHours", field, false, false, errors.New("field of type ClockTime does not have child fields"))
+}
+
+func (ec *executionContext) _SpecialHours_closed(ctx context.Context, field graphql.CollectedField, obj *models.SpecialHours) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SpecialHours_closed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Closed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SpecialHours_closed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SpecialHours", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -3048,6 +3362,97 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** object.gotpl ****************************
 
+var defaultHoursImplementors = []string{"DefaultHours"}
+
+func (ec *executionContext) _DefaultHours(ctx context.Context, sel ast.SelectionSet, obj *models.DefaultHours) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, defaultHoursImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DefaultHours")
+		case "makerspace_id":
+			out.Values[i] = ec._DefaultHours_makerspace_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "day_of_week":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DefaultHours_day_of_week(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "open_time":
+			out.Values[i] = ec._DefaultHours_open_time(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "close_time":
+			out.Values[i] = ec._DefaultHours_close_time(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "closed":
+			out.Values[i] = ec._DefaultHours_closed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var holdImplementors = []string{"Hold"}
 
 func (ec *executionContext) _Hold(ctx context.Context, sel ast.SelectionSet, obj *models.Hold) graphql.Marshaler {
@@ -3447,6 +3852,64 @@ func (ec *executionContext) _Restriction(ctx context.Context, sel ast.SelectionS
 			}
 		case "reason":
 			out.Values[i] = ec._Restriction_reason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var specialHoursImplementors = []string{"SpecialHours"}
+
+func (ec *executionContext) _SpecialHours(ctx context.Context, sel ast.SelectionSet, obj *models.SpecialHours) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, specialHoursImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SpecialHours")
+		case "makerspace_id":
+			out.Values[i] = ec._SpecialHours_makerspace_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "special_date":
+			out.Values[i] = ec._SpecialHours_special_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "open_time":
+			out.Values[i] = ec._SpecialHours_open_time(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "close_time":
+			out.Values[i] = ec._SpecialHours_close_time(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "closed":
+			out.Values[i] = ec._SpecialHours_closed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -4025,6 +4488,22 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNDate2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
+	res, err := scalars.UnmarshalDate(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDate2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	_ = sel
+	res := scalars.MarshalDate(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNID2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4033,6 +4512,22 @@ func (ec *executionContext) unmarshalNID2int(ctx context.Context, v any) (int, e
 func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v any) (int32, error) {
+	res, err := graphql.UnmarshalInt32(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt32(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -4269,6 +4764,24 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOClockTime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := scalars.UnmarshalClockTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOClockTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := scalars.MarshalClockTime(*v)
 	return res
 }
 

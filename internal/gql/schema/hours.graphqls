@@ -1,0 +1,19 @@
+
+scalar ClockTime
+scalar Date
+
+type DefaultHours {
+    makerspace_id: ID!
+    day_of_week: Int!
+    open_time: ClockTime
+    close_time: ClockTime
+    closed: Boolean!
+}
+
+type SpecialHours {
+    makerspace_id: ID!
+    special_date: Date!
+    open_time: ClockTime
+    close_time: ClockTime
+    closed: Boolean!
+}

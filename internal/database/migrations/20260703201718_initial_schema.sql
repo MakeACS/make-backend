@@ -58,8 +58,8 @@ CREATE TABLE zones (
 CREATE TABLE default_hours (
     makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
     day_of_week INT NOT NULL CHECK (day_of_week >= 0 AND day_of_week < 7),
-    open_time TIME WITH TIME ZONE,
-    close_time TIME WITH TIME ZONE,
+    open_time TIME,
+    close_time TIME,
     closed BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (makerspace_id, day_of_week)
 );
@@ -67,8 +67,8 @@ CREATE TABLE default_hours (
 CREATE TABLE special_hours (
     makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
     special_date DATE NOT NULL,
-    open_time TIME WITH TIME ZONE,
-    close_time TIME WITH TIME ZONE,
+    open_time TIME,
+    close_time TIME,
     closed BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (makerspace_id, special_date)
 );

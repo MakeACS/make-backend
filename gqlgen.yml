@@ -197,7 +197,8 @@ models:
   Time:
     model: github.com/99designs/gqlgen/graphql.Time
 
-  Makerspace:
-    fields:
-      zones:
-        resolver: true
+  ClockTime:
+    model: make-backend/internal/gql/scalars.ClockTime
+  
+  Date:
+    model: make-backend/internal/gql/scalars.Date
