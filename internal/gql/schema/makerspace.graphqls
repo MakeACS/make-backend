@@ -1,0 +1,14 @@
+
+type Makerspace {
+    id: ID!
+    name: String!
+    subtitle: String!
+    description: String!
+    docs_url: String!
+    image_id: Int
+    hidden: Boolean!
+}
+
+extend type Query {
+    makerspace(id: ID!): Makerspace
+}

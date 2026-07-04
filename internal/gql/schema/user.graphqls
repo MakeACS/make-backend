@@ -1,0 +1,20 @@
+scalar Time
+
+type User {
+    id: ID!
+    username: String!
+    firstname: String!
+    lastname: String!
+    pronouns: String!
+    join_date: Time!
+    setup_complete: Boolean!
+    archived: Boolean!
+    notes: String!
+    admin: Boolean!
+    force_archive: Boolean
+    card_tag: String!
+}
+
+type Query {
+    user(id: ID!): User!
+}
