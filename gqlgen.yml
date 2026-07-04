@@ -202,3 +202,13 @@ models:
   
   Date:
     model: make-backend/internal/gql/scalars.Date
+
+  OptionBlockOption:
+    fields:
+      correct:
+        resolver: true
+  
+  ShortAnswerBlock:
+    fields:
+      correct:
+        resolver: true

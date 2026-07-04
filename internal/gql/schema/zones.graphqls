@@ -8,5 +8,5 @@ type Zone {
 
 extend type Query {
     zone(id: ID!): Zone!
-    zonesByMakerspaceId(makerspace_id: ID!): [Zone!]
+    zonesByMakerspaceId(makerspace_id: ID!): [Zone!]!
 }

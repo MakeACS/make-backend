@@ -1,0 +1,44 @@
+# Being Block Types
+type TextBlock {
+    block_id: String!
+    type: String!
+    content: String!
+}
+
+type ImageBlock {
+    block_id: String!
+    type: String!
+    content: String!
+}
+
+type OptionBlockOption {
+    text: String!
+    correct: Boolean
+}
+
+type OptionBlock {
+    block_id: String!
+    type: String!
+    content: String!
+    options: [OptionBlockOption!]!
+    hint: String!
+    affirmation: String!
+}
+
+type ShortAnswerBlock {
+    block_id: String!
+    type: String!
+    content: String!
+    answer: String
+    hint: String!
+    affirmation: String!
+}
+
+union TrainingBlock = TextBlock | ImageBlock | OptionBlock | ShortAnswerBlock
+
+type Training {
+    id: ID!
+    name: String!
+    makerspace_id: ID
+    blocks: [TrainingBlock!]!
+}

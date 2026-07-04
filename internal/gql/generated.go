@@ -33,7 +33,9 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 type ResolverRoot interface {
 	DefaultHours() DefaultHoursResolver
 	Makerspace() MakerspaceResolver
+	OptionBlockOption() OptionBlockOptionResolver
 	Query() QueryResolver
+	Training() TrainingResolver
 }
 
 type DirectiveRoot struct {
@@ -88,6 +90,12 @@ type ComplexityRoot struct {
 		Identifier func(childComplexity int) int
 	}
 
+	ImageBlock struct {
+		BlockId func(childComplexity int) int
+		Content func(childComplexity int) int
+		Type    func(childComplexity int) int
+	}
+
 	Makerspace struct {
 		Description func(childComplexity int) int
 		DocsUrl     func(childComplexity int) int
@@ -97,6 +105,20 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 		Subtitle    func(childComplexity int) int
 		Zones       func(childComplexity int) int
+	}
+
+	OptionBlock struct {
+		Affirmation func(childComplexity int) int
+		BlockId     func(childComplexity int) int
+		Content     func(childComplexity int) int
+		Hint        func(childComplexity int) int
+		Options     func(childComplexity int) int
+		Type        func(childComplexity int) int
+	}
+
+	OptionBlockOption struct {
+		Correct func(childComplexity int) int
+		Text    func(childComplexity int) int
 	}
 
 	Query struct {
@@ -115,12 +137,34 @@ type ComplexityRoot struct {
 		TargetId     func(childComplexity int) int
 	}
 
+	ShortAnswerBlock struct {
+		Affirmation func(childComplexity int) int
+		Answer      func(childComplexity int) int
+		BlockId     func(childComplexity int) int
+		Content     func(childComplexity int) int
+		Hint        func(childComplexity int) int
+		Type        func(childComplexity int) int
+	}
+
 	SpecialHours struct {
 		CloseTime    func(childComplexity int) int
 		Closed       func(childComplexity int) int
 		MakerspaceId func(childComplexity int) int
 		OpenTime     func(childComplexity int) int
 		SpecialDate  func(childComplexity int) int
+	}
+
+	TextBlock struct {
+		BlockId func(childComplexity int) int
+		Content func(childComplexity int) int
+		Type    func(childComplexity int) int
+	}
+
+	Training struct {
+		Blocks       func(childComplexity int) int
+		Id           func(childComplexity int) int
+		MakerspaceId func(childComplexity int) int
+		Name         func(childComplexity int) int
 	}
 
 	User struct {
@@ -156,11 +200,17 @@ type DefaultHoursResolver interface {
 type MakerspaceResolver interface {
 	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
 }
+type OptionBlockOptionResolver interface {
+	Correct(ctx context.Context, obj *models.OptionBlockOption) (*bool, error)
+}
 type QueryResolver interface {
 	User(ctx context.Context, id int) (*models.User, error)
 	Makerspace(ctx context.Context, id int) (*models.Makerspace, error)
 	Zone(ctx context.Context, id int) (*models.Zone, error)
 	ZonesByMakerspaceID(ctx context.Context, makerspaceID int) ([]*models.Zone, error)
+}
+type TrainingResolver interface {
+	Blocks(ctx context.Context, obj *models.Training) ([]models.TrainingBlock, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -384,6 +434,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Image.Identifier(childComplexity), true
 
+	case "ImageBlock.block_id":
+		if e.ComplexityRoot.ImageBlock.BlockId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ImageBlock.BlockId(childComplexity), true
+	case "ImageBlock.content":
+		if e.ComplexityRoot.ImageBlock.Content == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ImageBlock.Content(childComplexity), true
+	case "ImageBlock.type":
+		if e.ComplexityRoot.ImageBlock.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ImageBlock.Type(childComplexity), true
+
 	case "Makerspace.description":
 		if e.ComplexityRoot.Makerspace.Description == nil {
 			break
@@ -432,6 +501,56 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Makerspace.Zones(childComplexity), true
+
+	case "OptionBlock.affirmation":
+		if e.ComplexityRoot.OptionBlock.Affirmation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OptionBlock.Affirmation(childComplexity), true
+	case "OptionBlock.block_id":
+		if e.ComplexityRoot.OptionBlock.BlockId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OptionBlock.BlockId(childComplexity), true
+	case "OptionBlock.content":
+		if e.ComplexityRoot.OptionBlock.Content == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OptionBlock.Content(childComplexity), true
+	case "OptionBlock.hint":
+		if e.ComplexityRoot.OptionBlock.Hint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OptionBlock.Hint(childComplexity), true
+	case "OptionBlock.options":
+		if e.ComplexityRoot.OptionBlock.Options == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OptionBlock.Options(childComplexity), true
+	case "OptionBlock.type":
+		if e.ComplexityRoot.OptionBlock.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OptionBlock.Type(childComplexity), true
+
+	case "OptionBlockOption.correct":
+		if e.ComplexityRoot.OptionBlockOption.Correct == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OptionBlockOption.Correct(childComplexity), true
+	case "OptionBlockOption.text":
+		if e.ComplexityRoot.OptionBlockOption.Text == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OptionBlockOption.Text(childComplexity), true
 
 	case "Query.makerspace":
 		if e.ComplexityRoot.Query.Makerspace == nil {
@@ -515,6 +634,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Restriction.TargetId(childComplexity), true
 
+	case "ShortAnswerBlock.affirmation":
+		if e.ComplexityRoot.ShortAnswerBlock.Affirmation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShortAnswerBlock.Affirmation(childComplexity), true
+	case "ShortAnswerBlock.answer":
+		if e.ComplexityRoot.ShortAnswerBlock.Answer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShortAnswerBlock.Answer(childComplexity), true
+	case "ShortAnswerBlock.block_id":
+		if e.ComplexityRoot.ShortAnswerBlock.BlockId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShortAnswerBlock.BlockId(childComplexity), true
+	case "ShortAnswerBlock.content":
+		if e.ComplexityRoot.ShortAnswerBlock.Content == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShortAnswerBlock.Content(childComplexity), true
+	case "ShortAnswerBlock.hint":
+		if e.ComplexityRoot.ShortAnswerBlock.Hint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShortAnswerBlock.Hint(childComplexity), true
+	case "ShortAnswerBlock.type":
+		if e.ComplexityRoot.ShortAnswerBlock.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShortAnswerBlock.Type(childComplexity), true
+
 	case "SpecialHours.close_time":
 		if e.ComplexityRoot.SpecialHours.CloseTime == nil {
 			break
@@ -545,6 +701,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SpecialHours.SpecialDate(childComplexity), true
+
+	case "TextBlock.block_id":
+		if e.ComplexityRoot.TextBlock.BlockId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TextBlock.BlockId(childComplexity), true
+	case "TextBlock.content":
+		if e.ComplexityRoot.TextBlock.Content == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TextBlock.Content(childComplexity), true
+	case "TextBlock.type":
+		if e.ComplexityRoot.TextBlock.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TextBlock.Type(childComplexity), true
+
+	case "Training.blocks":
+		if e.ComplexityRoot.Training.Blocks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Training.Blocks(childComplexity), true
+	case "Training.id":
+		if e.ComplexityRoot.Training.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Training.Id(childComplexity), true
+	case "Training.makerspace_id":
+		if e.ComplexityRoot.Training.MakerspaceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Training.MakerspaceId(childComplexity), true
+	case "Training.name":
+		if e.ComplexityRoot.Training.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Training.Name(childComplexity), true
 
 	case "User.admin":
 		if e.ComplexityRoot.User.Admin == nil {
@@ -710,7 +910,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/announcement.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/announcement.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -729,6 +929,7 @@ var sources = []*ast.Source{
 	{Name: "schema/image.graphqls", Input: sourceData("schema/image.graphqls"), BuiltIn: false},
 	{Name: "schema/makerspace.graphqls", Input: sourceData("schema/makerspace.graphqls"), BuiltIn: false},
 	{Name: "schema/restriction.graphqls", Input: sourceData("schema/restriction.graphqls"), BuiltIn: false},
+	{Name: "schema/training.graphqls", Input: sourceData("schema/training.graphqls"), BuiltIn: false},
 	{Name: "schema/user.graphqls", Input: sourceData("schema/user.graphqls"), BuiltIn: false},
 	{Name: "schema/zones.graphqls", Input: sourceData("schema/zones.graphqls"), BuiltIn: false},
 }
@@ -758,6 +959,16 @@ func (ec *executionContext) childFields_Makerspace(ctx context.Context, field gr
 		return ec.fieldContext_Makerspace_zones(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Makerspace", field.Name)
+}
+
+func (ec *executionContext) childFields_OptionBlockOption(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "text":
+		return ec.fieldContext_OptionBlockOption_text(ctx, field)
+	case "correct":
+		return ec.fieldContext_OptionBlockOption_correct(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type OptionBlockOption", field.Name)
 }
 
 func (ec *executionContext) childFields_User(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1809,6 +2020,75 @@ func (ec *executionContext) fieldContext_Image_identifier(_ context.Context, fie
 	return graphql.NewScalarFieldContext("Image", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _ImageBlock_block_id(ctx context.Context, field graphql.CollectedField, obj *models.ImageBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ImageBlock_block_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BlockId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ImageBlock_block_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ImageBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ImageBlock_type(ctx context.Context, field graphql.CollectedField, obj *models.ImageBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ImageBlock_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ImageBlock_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ImageBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ImageBlock_content(ctx context.Context, field graphql.CollectedField, obj *models.ImageBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ImageBlock_content(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Content, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ImageBlock_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ImageBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _Makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1983,10 +2263,10 @@ func (ec *executionContext) _Makerspace_zones(ctx context.Context, field graphql
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*models.Zone) graphql.Marshaler {
-			return ec.marshalOZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx, selections, v)
+			return ec.marshalNZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_Makerspace_zones(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2000,6 +2280,199 @@ func (ec *executionContext) fieldContext_Makerspace_zones(_ context.Context, fie
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _OptionBlock_block_id(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OptionBlock_block_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BlockId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OptionBlock_block_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OptionBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _OptionBlock_type(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OptionBlock_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OptionBlock_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OptionBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _OptionBlock_content(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OptionBlock_content(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Content, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OptionBlock_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OptionBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _OptionBlock_options(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OptionBlock_options(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Options, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []models.OptionBlockOption) graphql.Marshaler {
+			return ec.marshalNOptionBlockOption2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐOptionBlockOptionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OptionBlock_options(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OptionBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_OptionBlockOption(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OptionBlock_hint(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OptionBlock_hint(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Hint, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OptionBlock_hint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OptionBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _OptionBlock_affirmation(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OptionBlock_affirmation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Affirmation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OptionBlock_affirmation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OptionBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _OptionBlockOption_text(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlockOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OptionBlockOption_text(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Text, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OptionBlockOption_text(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OptionBlockOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _OptionBlockOption_correct(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlockOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OptionBlockOption_correct(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.OptionBlockOption().Correct(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *bool) graphql.Marshaler {
+			return ec.marshalOBoolean2ᚖbool(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_OptionBlockOption_correct(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OptionBlockOption", field, true, true, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2148,10 +2621,10 @@ func (ec *executionContext) _Query_zonesByMakerspaceId(ctx context.Context, fiel
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*models.Zone) graphql.Marshaler {
-			return ec.marshalOZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx, selections, v)
+			return ec.marshalNZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_Query_zonesByMakerspaceId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2392,6 +2865,144 @@ func (ec *executionContext) fieldContext_Restriction_reason(_ context.Context, f
 	return graphql.NewScalarFieldContext("Restriction", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _ShortAnswerBlock_block_id(ctx context.Context, field graphql.CollectedField, obj *models.ShortAnswerBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShortAnswerBlock_block_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BlockId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShortAnswerBlock_block_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShortAnswerBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShortAnswerBlock_type(ctx context.Context, field graphql.CollectedField, obj *models.ShortAnswerBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShortAnswerBlock_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShortAnswerBlock_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShortAnswerBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShortAnswerBlock_content(ctx context.Context, field graphql.CollectedField, obj *models.ShortAnswerBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShortAnswerBlock_content(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Content, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShortAnswerBlock_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShortAnswerBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShortAnswerBlock_answer(ctx context.Context, field graphql.CollectedField, obj *models.ShortAnswerBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShortAnswerBlock_answer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Answer, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShortAnswerBlock_answer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShortAnswerBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShortAnswerBlock_hint(ctx context.Context, field graphql.CollectedField, obj *models.ShortAnswerBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShortAnswerBlock_hint(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Hint, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShortAnswerBlock_hint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShortAnswerBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShortAnswerBlock_affirmation(ctx context.Context, field graphql.CollectedField, obj *models.ShortAnswerBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShortAnswerBlock_affirmation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Affirmation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShortAnswerBlock_affirmation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShortAnswerBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _SpecialHours_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.SpecialHours) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2505,6 +3116,167 @@ func (ec *executionContext) _SpecialHours_closed(ctx context.Context, field grap
 }
 func (ec *executionContext) fieldContext_SpecialHours_closed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("SpecialHours", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _TextBlock_block_id(ctx context.Context, field graphql.CollectedField, obj *models.TextBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TextBlock_block_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BlockId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TextBlock_block_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TextBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TextBlock_type(ctx context.Context, field graphql.CollectedField, obj *models.TextBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TextBlock_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TextBlock_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TextBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TextBlock_content(ctx context.Context, field graphql.CollectedField, obj *models.TextBlock) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TextBlock_content(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Content, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TextBlock_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TextBlock", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Training_id(ctx context.Context, field graphql.CollectedField, obj *models.Training) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Training_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Training_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Training", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Training_name(ctx context.Context, field graphql.CollectedField, obj *models.Training) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Training_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Training_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Training", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Training_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Training) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Training_makerspace_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MakerspaceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOID2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Training_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Training", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Training_blocks(ctx context.Context, field graphql.CollectedField, obj *models.Training) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Training_blocks(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Training().Blocks(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []models.TrainingBlock) graphql.Marshaler {
+			return ec.marshalNTrainingBlock2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐTrainingBlockᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Training_blocks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Training", field, true, true, errors.New("field of type TrainingBlock does not have child fields"))
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -3938,6 +4710,39 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    ************************** interface.gotpl ***************************
 
+func (ec *executionContext) _TrainingBlock(ctx context.Context, sel ast.SelectionSet, obj models.TrainingBlock) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case *models.TextBlock:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TextBlock(ctx, sel, obj)
+	case *models.ShortAnswerBlock:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ShortAnswerBlock(ctx, sel, obj)
+	case *models.OptionBlock:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._OptionBlock(ctx, sel, obj)
+	case *models.ImageBlock:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ImageBlock(ctx, sel, obj)
+	default:
+		if typedObj, ok := obj.(graphql.Marshaler); ok {
+			return typedObj
+		} else {
+			panic(fmt.Errorf("unexpected type %T; non-generated variants of TrainingBlock must implement graphql.Marshaler", obj))
+		}
+	}
+}
+
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
@@ -4305,6 +5110,54 @@ func (ec *executionContext) _Image(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var imageBlockImplementors = []string{"ImageBlock", "TrainingBlock"}
+
+func (ec *executionContext) _ImageBlock(ctx context.Context, sel ast.SelectionSet, obj *models.ImageBlock) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, imageBlockImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ImageBlock")
+		case "block_id":
+			out.Values[i] = ec._ImageBlock_block_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._ImageBlock_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "content":
+			out.Values[i] = ec._ImageBlock_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var makerspaceImplementors = []string{"Makerspace"}
 
 func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSet, obj *models.Makerspace) graphql.Marshaler {
@@ -4362,6 +5215,145 @@ func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSe
 					}
 				}()
 				res = ec._Makerspace_zones(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var optionBlockImplementors = []string{"OptionBlock", "TrainingBlock"}
+
+func (ec *executionContext) _OptionBlock(ctx context.Context, sel ast.SelectionSet, obj *models.OptionBlock) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, optionBlockImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OptionBlock")
+		case "block_id":
+			out.Values[i] = ec._OptionBlock_block_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._OptionBlock_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "content":
+			out.Values[i] = ec._OptionBlock_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "options":
+			out.Values[i] = ec._OptionBlock_options(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hint":
+			out.Values[i] = ec._OptionBlock_hint(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "affirmation":
+			out.Values[i] = ec._OptionBlock_affirmation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var optionBlockOptionImplementors = []string{"OptionBlockOption"}
+
+func (ec *executionContext) _OptionBlockOption(ctx context.Context, sel ast.SelectionSet, obj *models.OptionBlockOption) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, optionBlockOptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OptionBlockOption")
+		case "text":
+			out.Values[i] = ec._OptionBlockOption_text(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "correct":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._OptionBlockOption_correct(ctx, field, obj)
 				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4507,7 +5499,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_zonesByMakerspaceId(ctx, field)
-				if res == graphql.RequiredNull {
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -4617,6 +5609,69 @@ func (ec *executionContext) _Restriction(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var shortAnswerBlockImplementors = []string{"ShortAnswerBlock", "TrainingBlock"}
+
+func (ec *executionContext) _ShortAnswerBlock(ctx context.Context, sel ast.SelectionSet, obj *models.ShortAnswerBlock) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, shortAnswerBlockImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ShortAnswerBlock")
+		case "block_id":
+			out.Values[i] = ec._ShortAnswerBlock_block_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._ShortAnswerBlock_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "content":
+			out.Values[i] = ec._ShortAnswerBlock_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "answer":
+			out.Values[i] = ec._ShortAnswerBlock_answer(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "hint":
+			out.Values[i] = ec._ShortAnswerBlock_hint(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "affirmation":
+			out.Values[i] = ec._ShortAnswerBlock_affirmation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var specialHoursImplementors = []string{"SpecialHours"}
 
 func (ec *executionContext) _SpecialHours(ctx context.Context, sel ast.SelectionSet, obj *models.SpecialHours) graphql.Marshaler {
@@ -4654,6 +5709,140 @@ func (ec *executionContext) _SpecialHours(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var textBlockImplementors = []string{"TextBlock", "TrainingBlock"}
+
+func (ec *executionContext) _TextBlock(ctx context.Context, sel ast.SelectionSet, obj *models.TextBlock) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, textBlockImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TextBlock")
+		case "block_id":
+			out.Values[i] = ec._TextBlock_block_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._TextBlock_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "content":
+			out.Values[i] = ec._TextBlock_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var trainingImplementors = []string{"Training"}
+
+func (ec *executionContext) _Training(ctx context.Context, sel ast.SelectionSet, obj *models.Training) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, trainingImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Training")
+		case "id":
+			out.Values[i] = ec._Training_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._Training_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "makerspace_id":
+			out.Values[i] = ec._Training_makerspace_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "blocks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Training_blocks(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5277,6 +6466,26 @@ func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) marshalNOptionBlockOption2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐOptionBlockOption(ctx context.Context, sel ast.SelectionSet, v models.OptionBlockOption) graphql.Marshaler {
+	return ec._OptionBlockOption(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOptionBlockOption2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐOptionBlockOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []models.OptionBlockOption) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNOptionBlockOption2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐOptionBlockOption(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5309,6 +6518,32 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
+func (ec *executionContext) marshalNTrainingBlock2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐTrainingBlock(ctx context.Context, sel ast.SelectionSet, v models.TrainingBlock) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TrainingBlock(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTrainingBlock2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐTrainingBlockᚄ(ctx context.Context, sel ast.SelectionSet, v []models.TrainingBlock) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTrainingBlock2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐTrainingBlock(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNUser2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
@@ -5325,6 +6560,22 @@ func (ec *executionContext) marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabase
 
 func (ec *executionContext) marshalNZone2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZone(ctx context.Context, sel ast.SelectionSet, v models.Zone) graphql.Marshaler {
 	return ec._Zone(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Zone) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNZone2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZone(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNZone2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZone(ctx context.Context, sel ast.SelectionSet, v *models.Zone) graphql.Marshaler {
@@ -5603,25 +6854,6 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	_ = ctx
 	res := graphql.MarshalTime(*v)
 	return res
-}
-
-func (ec *executionContext) marshalOZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Zone) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
-		fc := graphql.GetFieldContext(ctx)
-		fc.Result = &v[i]
-		return ec.marshalNZone2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZone(ctx, sel, v[i])
-	})
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

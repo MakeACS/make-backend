@@ -126,7 +126,7 @@ CREATE TABLE welcome_taps (
 CREATE TABLE trainings (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    questions JSONB NOT NULL,
+    blocks JSONB NOT NULL,
     makerspace_id INT REFERENCES makerspaces(id) ON DELETE CASCADE
 );
 
