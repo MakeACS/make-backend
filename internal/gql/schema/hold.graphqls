@@ -1,0 +1,10 @@
+
+type Hold {
+    id: ID!
+    creator_id: ID!
+    remover_id: ID
+    target_id: ID!
+    reason: String!
+    create_date: Time!
+    remove_date: Time
+}

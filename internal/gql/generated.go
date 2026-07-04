@@ -38,6 +38,16 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Hold struct {
+		CreateDate func(childComplexity int) int
+		CreatorId  func(childComplexity int) int
+		Id         func(childComplexity int) int
+		Reason     func(childComplexity int) int
+		RemoveDate func(childComplexity int) int
+		RemoverId  func(childComplexity int) int
+		TargetId   func(childComplexity int) int
+	}
+
 	Makerspace struct {
 		Description func(childComplexity int) int
 		DocsUrl     func(childComplexity int) int
@@ -110,6 +120,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Hold.create_date":
+		if e.ComplexityRoot.Hold.CreateDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Hold.CreateDate(childComplexity), true
+	case "Hold.creator_id":
+		if e.ComplexityRoot.Hold.CreatorId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Hold.CreatorId(childComplexity), true
+	case "Hold.id":
+		if e.ComplexityRoot.Hold.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Hold.Id(childComplexity), true
+	case "Hold.reason":
+		if e.ComplexityRoot.Hold.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Hold.Reason(childComplexity), true
+	case "Hold.remove_date":
+		if e.ComplexityRoot.Hold.RemoveDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Hold.RemoveDate(childComplexity), true
+	case "Hold.remover_id":
+		if e.ComplexityRoot.Hold.RemoverId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Hold.RemoverId(childComplexity), true
+	case "Hold.target_id":
+		if e.ComplexityRoot.Hold.TargetId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Hold.TargetId(childComplexity), true
 
 	case "Makerspace.description":
 		if e.ComplexityRoot.Makerspace.Description == nil {
@@ -369,7 +422,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/makerspace.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/hold.graphqls" "schema/makerspace.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -381,6 +434,7 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
+	{Name: "schema/hold.graphqls", Input: sourceData("schema/hold.graphqls"), BuiltIn: false},
 	{Name: "schema/makerspace.graphqls", Input: sourceData("schema/makerspace.graphqls"), BuiltIn: false},
 	{Name: "schema/user.graphqls", Input: sourceData("schema/user.graphqls"), BuiltIn: false},
 	{Name: "schema/zones.graphqls", Input: sourceData("schema/zones.graphqls"), BuiltIn: false},
@@ -702,6 +756,167 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ***************************** args.gotpl *****************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Hold_id(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Hold_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Hold_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Hold", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Hold_creator_id(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Hold_creator_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatorId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Hold_creator_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Hold", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Hold_remover_id(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Hold_remover_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemoverId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOID2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Hold_remover_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Hold", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Hold_target_id(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Hold_target_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Hold_target_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Hold", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Hold_reason(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Hold_reason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Hold_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Hold", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Hold_create_date(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Hold_create_date(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreateDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Hold_create_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Hold", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Hold_remove_date(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Hold_remove_date(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemoveDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalOTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Hold_remove_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Hold", field, false, false, errors.New("field of type Time does not have child fields"))
+}
 
 func (ec *executionContext) _Makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -2583,6 +2798,74 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** object.gotpl ****************************
 
+var holdImplementors = []string{"Hold"}
+
+func (ec *executionContext) _Hold(ctx context.Context, sel ast.SelectionSet, obj *models.Hold) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, holdImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Hold")
+		case "id":
+			out.Values[i] = ec._Hold_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "creator_id":
+			out.Values[i] = ec._Hold_creator_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "remover_id":
+			out.Values[i] = ec._Hold_remover_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "target_id":
+			out.Values[i] = ec._Hold_target_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reason":
+			out.Values[i] = ec._Hold_reason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "create_date":
+			out.Values[i] = ec._Hold_create_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "remove_date":
+			out.Values[i] = ec._Hold_remove_date(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var makerspaceImplementors = []string{"Makerspace"}
 
 func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSet, obj *models.Makerspace) graphql.Marshaler {
@@ -3633,6 +3916,24 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalOID2ᚖint(ctx context.Context, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint32(ctx context.Context, v any) (*int32, error) {
 	if v == nil {
 		return nil, nil
@@ -3673,6 +3974,18 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalTime(v)
 	return res
 }
 
