@@ -234,6 +234,13 @@ type ComplexityRoot struct {
 		SpecialDate  func(childComplexity int) int
 	}
 
+	TempCard struct {
+		CardTag func(childComplexity int) int
+		Id      func(childComplexity int) int
+		Issued  func(childComplexity int) int
+		UserId  func(childComplexity int) int
+	}
+
 	TextBlock struct {
 		BlockId func(childComplexity int) int
 		Content func(childComplexity int) int
@@ -1092,6 +1099,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.SpecialHours.SpecialDate(childComplexity), true
 
+	case "TempCard.card_tag":
+		if e.ComplexityRoot.TempCard.CardTag == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TempCard.CardTag(childComplexity), true
+	case "TempCard.id":
+		if e.ComplexityRoot.TempCard.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TempCard.Id(childComplexity), true
+	case "TempCard.issued":
+		if e.ComplexityRoot.TempCard.Issued == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TempCard.Issued(childComplexity), true
+	case "TempCard.user_id":
+		if e.ComplexityRoot.TempCard.UserId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TempCard.UserId(childComplexity), true
+
 	case "TextBlock.block_id":
 		if e.ComplexityRoot.TextBlock.BlockId == nil {
 			break
@@ -1300,7 +1332,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/access_channel.graphqls" "schema/announcement.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/reservation.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/access_channel.graphqls" "schema/announcement.graphqls" "schema/card.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/reservation.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1314,6 +1346,7 @@ func sourceData(filename string) string {
 var sources = []*ast.Source{
 	{Name: "schema/access_channel.graphqls", Input: sourceData("schema/access_channel.graphqls"), BuiltIn: false},
 	{Name: "schema/announcement.graphqls", Input: sourceData("schema/announcement.graphqls"), BuiltIn: false},
+	{Name: "schema/card.graphqls", Input: sourceData("schema/card.graphqls"), BuiltIn: false},
 	{Name: "schema/device.graphqls", Input: sourceData("schema/device.graphqls"), BuiltIn: false},
 	{Name: "schema/equipment.graphqls", Input: sourceData("schema/equipment.graphqls"), BuiltIn: false},
 	{Name: "schema/hold.graphqls", Input: sourceData("schema/hold.graphqls"), BuiltIn: false},
@@ -4741,6 +4774,98 @@ func (ec *executionContext) fieldContext_SpecialHours_closed(_ context.Context, 
 	return graphql.NewScalarFieldContext("SpecialHours", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _TempCard_id(ctx context.Context, field graphql.CollectedField, obj *models.TempCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TempCard_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TempCard_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TempCard", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TempCard_user_id(ctx context.Context, field graphql.CollectedField, obj *models.TempCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TempCard_user_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UserId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TempCard_user_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TempCard", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TempCard_card_tag(ctx context.Context, field graphql.CollectedField, obj *models.TempCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TempCard_card_tag(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CardTag, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TempCard_card_tag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TempCard", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TempCard_issued(ctx context.Context, field graphql.CollectedField, obj *models.TempCard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TempCard_issued(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Issued, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TempCard_issued(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TempCard", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
 func (ec *executionContext) _TextBlock_block_id(ctx context.Context, field graphql.CollectedField, obj *models.TextBlock) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7909,6 +8034,59 @@ func (ec *executionContext) _SpecialHours(ctx context.Context, sel ast.Selection
 			}
 		case "closed":
 			out.Values[i] = ec._SpecialHours_closed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var tempCardImplementors = []string{"TempCard"}
+
+func (ec *executionContext) _TempCard(ctx context.Context, sel ast.SelectionSet, obj *models.TempCard) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tempCardImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TempCard")
+		case "id":
+			out.Values[i] = ec._TempCard_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user_id":
+			out.Values[i] = ec._TempCard_user_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "card_tag":
+			out.Values[i] = ec._TempCard_card_tag(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "issued":
+			out.Values[i] = ec._TempCard_issued(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

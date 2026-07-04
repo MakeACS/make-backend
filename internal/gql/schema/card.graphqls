@@ -1,0 +1,6 @@
+type TempCard {
+    id: ID!
+    user_id: ID!
+    card_tag: String!
+    issued: Time!
+}
