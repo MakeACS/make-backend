@@ -48,6 +48,11 @@ type ComplexityRoot struct {
 		TargetId   func(childComplexity int) int
 	}
 
+	Image struct {
+		Id         func(childComplexity int) int
+		Identifier func(childComplexity int) int
+	}
+
 	Makerspace struct {
 		Description func(childComplexity int) int
 		DocsUrl     func(childComplexity int) int
@@ -64,6 +69,15 @@ type ComplexityRoot struct {
 		User                func(childComplexity int, id int) int
 		Zone                func(childComplexity int, id int) int
 		ZonesByMakerspaceID func(childComplexity int, makerspaceID int) int
+	}
+
+	Restriction struct {
+		CreateDate   func(childComplexity int) int
+		CreatorId    func(childComplexity int) int
+		Id           func(childComplexity int) int
+		MakerspaceId func(childComplexity int) int
+		Reason       func(childComplexity int) int
+		TargetId     func(childComplexity int) int
 	}
 
 	User struct {
@@ -164,6 +178,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Hold.TargetId(childComplexity), true
 
+	case "Image.id":
+		if e.ComplexityRoot.Image.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Image.Id(childComplexity), true
+	case "Image.identifier":
+		if e.ComplexityRoot.Image.Identifier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Image.Identifier(childComplexity), true
+
 	case "Makerspace.description":
 		if e.ComplexityRoot.Makerspace.Description == nil {
 			break
@@ -257,6 +284,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ZonesByMakerspaceID(childComplexity, args["makerspace_id"].(int)), true
+
+	case "Restriction.create_date":
+		if e.ComplexityRoot.Restriction.CreateDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Restriction.CreateDate(childComplexity), true
+	case "Restriction.creator_id":
+		if e.ComplexityRoot.Restriction.CreatorId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Restriction.CreatorId(childComplexity), true
+	case "Restriction.id":
+		if e.ComplexityRoot.Restriction.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Restriction.Id(childComplexity), true
+	case "Restriction.makerspace_id":
+		if e.ComplexityRoot.Restriction.MakerspaceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Restriction.MakerspaceId(childComplexity), true
+	case "Restriction.reason":
+		if e.ComplexityRoot.Restriction.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Restriction.Reason(childComplexity), true
+	case "Restriction.target_id":
+		if e.ComplexityRoot.Restriction.TargetId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Restriction.TargetId(childComplexity), true
 
 	case "User.admin":
 		if e.ComplexityRoot.User.Admin == nil {
@@ -422,7 +486,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/hold.graphqls" "schema/makerspace.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/hold.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -435,7 +499,9 @@ func sourceData(filename string) string {
 
 var sources = []*ast.Source{
 	{Name: "schema/hold.graphqls", Input: sourceData("schema/hold.graphqls"), BuiltIn: false},
+	{Name: "schema/image.graphqls", Input: sourceData("schema/image.graphqls"), BuiltIn: false},
 	{Name: "schema/makerspace.graphqls", Input: sourceData("schema/makerspace.graphqls"), BuiltIn: false},
+	{Name: "schema/restriction.graphqls", Input: sourceData("schema/restriction.graphqls"), BuiltIn: false},
 	{Name: "schema/user.graphqls", Input: sourceData("schema/user.graphqls"), BuiltIn: false},
 	{Name: "schema/zones.graphqls", Input: sourceData("schema/zones.graphqls"), BuiltIn: false},
 }
@@ -907,8 +973,8 @@ func (ec *executionContext) _Hold_remove_date(ctx context.Context, field graphql
 			return obj.RemoveDate, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
-			return ec.marshalOTime2timeᚐTime(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
 		},
 		true,
 		false,
@@ -916,6 +982,52 @@ func (ec *executionContext) _Hold_remove_date(ctx context.Context, field graphql
 }
 func (ec *executionContext) fieldContext_Hold_remove_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Hold", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Image_id(ctx context.Context, field graphql.CollectedField, obj *models.Image) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Image_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Image_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Image", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Image_identifier(ctx context.Context, field graphql.CollectedField, obj *models.Image) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Image_identifier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Identifier, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Image_identifier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Image", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
@@ -1361,6 +1473,144 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _Restriction_id(ctx context.Context, field graphql.CollectedField, obj *models.Restriction) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Restriction_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Restriction_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Restriction", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Restriction_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Restriction) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Restriction_makerspace_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MakerspaceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Restriction_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Restriction", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Restriction_creator_id(ctx context.Context, field graphql.CollectedField, obj *models.Restriction) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Restriction_creator_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatorId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Restriction_creator_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Restriction", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Restriction_target_id(ctx context.Context, field graphql.CollectedField, obj *models.Restriction) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Restriction_target_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Restriction_target_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Restriction", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Restriction_create_date(ctx context.Context, field graphql.CollectedField, obj *models.Restriction) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Restriction_create_date(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreateDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Restriction_create_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Restriction", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Restriction_reason(ctx context.Context, field graphql.CollectedField, obj *models.Restriction) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Restriction_reason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Restriction_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Restriction", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
@@ -2866,6 +3116,49 @@ func (ec *executionContext) _Hold(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
+var imageImplementors = []string{"Image"}
+
+func (ec *executionContext) _Image(ctx context.Context, sel ast.SelectionSet, obj *models.Image) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, imageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Image")
+		case "id":
+			out.Values[i] = ec._Image_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "identifier":
+			out.Values[i] = ec._Image_identifier(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var makerspaceImplementors = []string{"Makerspace"}
 
 func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSet, obj *models.Makerspace) graphql.Marshaler {
@@ -3093,6 +3386,69 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			})
 			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var restrictionImplementors = []string{"Restriction"}
+
+func (ec *executionContext) _Restriction(ctx context.Context, sel ast.SelectionSet, obj *models.Restriction) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, restrictionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Restriction")
+		case "id":
+			out.Values[i] = ec._Restriction_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "makerspace_id":
+			out.Values[i] = ec._Restriction_makerspace_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "creator_id":
+			out.Values[i] = ec._Restriction_creator_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "target_id":
+			out.Values[i] = ec._Restriction_target_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "create_date":
+			out.Values[i] = ec._Restriction_create_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reason":
+			out.Values[i] = ec._Restriction_reason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -3977,15 +4333,21 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
 	res, err := graphql.UnmarshalTime(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
 	_ = sel
 	_ = ctx
-	res := graphql.MarshalTime(v)
+	res := graphql.MarshalTime(*v)
 	return res
 }
 

@@ -1,0 +1,8 @@
+type Restriction {
+    id: ID!
+    makerspace_id: ID!
+    creator_id: ID!
+    target_id: ID!
+    create_date: Time!
+    reason: String!
+}
