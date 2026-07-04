@@ -2,10 +2,20 @@ module make-backend
 
 go 1.26.4
 
+require github.com/lib/pq v1.12.3
+
 require (
-	github.com/mfridman/interpolate v0.0.2 // indirect
-	github.com/pressly/goose/v3 v3.27.2 // indirect
-	github.com/sethvargo/go-retry v0.3.0 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
+	github.com/99designs/gqlgen v0.17.93 // indirect
+	github.com/agnivade/levenshtein v1.2.1 // indirect
+	github.com/goccy/go-yaml v1.19.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/sosodev/duration v1.4.0 // indirect
+	github.com/urfave/cli/v3 v3.10.0 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.35 // indirect
+	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/tools v0.46.0 // indirect
 )
+
+tool github.com/99designs/gqlgen
