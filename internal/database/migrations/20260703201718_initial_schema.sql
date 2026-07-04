@@ -25,7 +25,7 @@ CREATE TABLE holds (
 
 CREATE TABLE images (
     id SERIAL PRIMARY KEY,
-    identifier TEXT NOT NULL
+    identifier TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE makerspaces (
