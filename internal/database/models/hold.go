@@ -9,5 +9,5 @@ type Hold struct {
 	TargetId   int
 	Reason     string
 	CreateDate time.Time
-	RemoveDate time.Time
+	RemoveDate *time.Time
 }
