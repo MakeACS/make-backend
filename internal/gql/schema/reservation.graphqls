@@ -1,0 +1,10 @@
+type Reservation {
+    id: ID!
+    user_id: ID
+    organization_id: ID
+    equipment_id: ID!
+    description: String!
+    start_time: Time!
+    end_time: Time!
+    approved: Boolean!
+}

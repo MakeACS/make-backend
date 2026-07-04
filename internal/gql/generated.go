@@ -189,6 +189,17 @@ type ComplexityRoot struct {
 		ZonesByMakerspaceID func(childComplexity int, makerspaceID int) int
 	}
 
+	Reservation struct {
+		Approved       func(childComplexity int) int
+		Description    func(childComplexity int) int
+		EndTime        func(childComplexity int) int
+		EquipmentId    func(childComplexity int) int
+		Id             func(childComplexity int) int
+		OrganizationId func(childComplexity int) int
+		StartTime      func(childComplexity int) int
+		UserId         func(childComplexity int) int
+	}
+
 	Restriction struct {
 		CreateDate   func(childComplexity int) int
 		CreatorId    func(childComplexity int) int
@@ -888,6 +899,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.ZonesByMakerspaceID(childComplexity, args["makerspace_id"].(int)), true
 
+	case "Reservation.approved":
+		if e.ComplexityRoot.Reservation.Approved == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Reservation.Approved(childComplexity), true
+	case "Reservation.description":
+		if e.ComplexityRoot.Reservation.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Reservation.Description(childComplexity), true
+	case "Reservation.end_time":
+		if e.ComplexityRoot.Reservation.EndTime == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Reservation.EndTime(childComplexity), true
+	case "Reservation.equipment_id":
+		if e.ComplexityRoot.Reservation.EquipmentId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Reservation.EquipmentId(childComplexity), true
+	case "Reservation.id":
+		if e.ComplexityRoot.Reservation.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Reservation.Id(childComplexity), true
+	case "Reservation.organization_id":
+		if e.ComplexityRoot.Reservation.OrganizationId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Reservation.OrganizationId(childComplexity), true
+	case "Reservation.start_time":
+		if e.ComplexityRoot.Reservation.StartTime == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Reservation.StartTime(childComplexity), true
+	case "Reservation.user_id":
+		if e.ComplexityRoot.Reservation.UserId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Reservation.UserId(childComplexity), true
+
 	case "Restriction.create_date":
 		if e.ComplexityRoot.Restriction.CreateDate == nil {
 			break
@@ -1201,7 +1261,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/announcement.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/announcement.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/reservation.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1221,6 +1281,7 @@ var sources = []*ast.Source{
 	{Name: "schema/image.graphqls", Input: sourceData("schema/image.graphqls"), BuiltIn: false},
 	{Name: "schema/makerspace.graphqls", Input: sourceData("schema/makerspace.graphqls"), BuiltIn: false},
 	{Name: "schema/organization.graphqls", Input: sourceData("schema/organization.graphqls"), BuiltIn: false},
+	{Name: "schema/reservation.graphqls", Input: sourceData("schema/reservation.graphqls"), BuiltIn: false},
 	{Name: "schema/restriction.graphqls", Input: sourceData("schema/restriction.graphqls"), BuiltIn: false},
 	{Name: "schema/training.graphqls", Input: sourceData("schema/training.graphqls"), BuiltIn: false},
 	{Name: "schema/user.graphqls", Input: sourceData("schema/user.graphqls"), BuiltIn: false},
@@ -3948,6 +4009,190 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _Reservation_id(ctx context.Context, field graphql.CollectedField, obj *models.Reservation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Reservation_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Reservation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Reservation", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Reservation_user_id(ctx context.Context, field graphql.CollectedField, obj *models.Reservation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Reservation_user_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UserId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOID2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Reservation_user_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Reservation", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Reservation_organization_id(ctx context.Context, field graphql.CollectedField, obj *models.Reservation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Reservation_organization_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOID2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Reservation_organization_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Reservation", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Reservation_equipment_id(ctx context.Context, field graphql.CollectedField, obj *models.Reservation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Reservation_equipment_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EquipmentId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Reservation_equipment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Reservation", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Reservation_description(ctx context.Context, field graphql.CollectedField, obj *models.Reservation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Reservation_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Reservation_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Reservation", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Reservation_start_time(ctx context.Context, field graphql.CollectedField, obj *models.Reservation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Reservation_start_time(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StartTime, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Reservation_start_time(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Reservation", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Reservation_end_time(ctx context.Context, field graphql.CollectedField, obj *models.Reservation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Reservation_end_time(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EndTime, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Reservation_end_time(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Reservation", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Reservation_approved(ctx context.Context, field graphql.CollectedField, obj *models.Reservation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Reservation_approved(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Approved, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Reservation_approved(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Reservation", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _Restriction_id(ctx context.Context, field graphql.CollectedField, obj *models.Restriction) (ret graphql.Marshaler) {
@@ -7196,6 +7441,79 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			})
 			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var reservationImplementors = []string{"Reservation"}
+
+func (ec *executionContext) _Reservation(ctx context.Context, sel ast.SelectionSet, obj *models.Reservation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, reservationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Reservation")
+		case "id":
+			out.Values[i] = ec._Reservation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user_id":
+			out.Values[i] = ec._Reservation_user_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "organization_id":
+			out.Values[i] = ec._Reservation_organization_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "equipment_id":
+			out.Values[i] = ec._Reservation_equipment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._Reservation_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "start_time":
+			out.Values[i] = ec._Reservation_start_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "end_time":
+			out.Values[i] = ec._Reservation_end_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "approved":
+			out.Values[i] = ec._Reservation_approved(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
