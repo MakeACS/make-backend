@@ -17,3 +17,10 @@ type Equipment struct {
 	RequiresInPerson        bool
 	RequiresTrainer         bool
 }
+
+type EquipmentInstance struct {
+	Id              int
+	EquipmentId     int
+	Name            string
+	AccessChannelId *int
+}

@@ -16,3 +16,10 @@ type Equipment {
     requires_in_person: Boolean!
     requires_trainer: Boolean!
 }
+
+type EquipmentInstance {
+    id: ID!
+    equipment_id: ID!
+    name: String!
+    access_channel_id: ID
+}

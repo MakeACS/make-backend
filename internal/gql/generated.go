@@ -122,6 +122,13 @@ type ComplexityRoot struct {
 		ZoneId                  func(childComplexity int) int
 	}
 
+	EquipmentInstance struct {
+		AccessChannelId func(childComplexity int) int
+		EquipmentId     func(childComplexity int) int
+		Id              func(childComplexity int) int
+		Name            func(childComplexity int) int
+	}
+
 	Hold struct {
 		CreateDate func(childComplexity int) int
 		CreatorId  func(childComplexity int) int
@@ -611,6 +618,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Equipment.ZoneId(childComplexity), true
+
+	case "EquipmentInstance.access_channel_id":
+		if e.ComplexityRoot.EquipmentInstance.AccessChannelId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentInstance.AccessChannelId(childComplexity), true
+	case "EquipmentInstance.equipment_id":
+		if e.ComplexityRoot.EquipmentInstance.EquipmentId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentInstance.EquipmentId(childComplexity), true
+	case "EquipmentInstance.id":
+		if e.ComplexityRoot.EquipmentInstance.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentInstance.Id(childComplexity), true
+	case "EquipmentInstance.name":
+		if e.ComplexityRoot.EquipmentInstance.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentInstance.Name(childComplexity), true
 
 	case "Hold.create_date":
 		if e.ComplexityRoot.Hold.CreateDate == nil {
@@ -2818,6 +2850,98 @@ func (ec *executionContext) _Equipment_requires_trainer(ctx context.Context, fie
 }
 func (ec *executionContext) fieldContext_Equipment_requires_trainer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _EquipmentInstance_id(ctx context.Context, field graphql.CollectedField, obj *models.EquipmentInstance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentInstance_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentInstance_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EquipmentInstance", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EquipmentInstance_equipment_id(ctx context.Context, field graphql.CollectedField, obj *models.EquipmentInstance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentInstance_equipment_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EquipmentId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentInstance_equipment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EquipmentInstance", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EquipmentInstance_name(ctx context.Context, field graphql.CollectedField, obj *models.EquipmentInstance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentInstance_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentInstance_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EquipmentInstance", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EquipmentInstance_access_channel_id(ctx context.Context, field graphql.CollectedField, obj *models.EquipmentInstance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentInstance_access_channel_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AccessChannelId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOID2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentInstance_access_channel_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EquipmentInstance", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
 func (ec *executionContext) _Hold_id(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
@@ -6418,6 +6542,59 @@ func (ec *executionContext) _Equipment(ctx context.Context, sel ast.SelectionSet
 		case "requires_trainer":
 			out.Values[i] = ec._Equipment_requires_trainer(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var equipmentInstanceImplementors = []string{"EquipmentInstance"}
+
+func (ec *executionContext) _EquipmentInstance(ctx context.Context, sel ast.SelectionSet, obj *models.EquipmentInstance) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentInstanceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EquipmentInstance")
+		case "id":
+			out.Values[i] = ec._EquipmentInstance_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "equipment_id":
+			out.Values[i] = ec._EquipmentInstance_equipment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._EquipmentInstance_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "access_channel_id":
+			out.Values[i] = ec._EquipmentInstance_access_channel_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
