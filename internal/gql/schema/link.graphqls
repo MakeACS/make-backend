@@ -1,0 +1,4 @@
+type CustomLink {
+    short_url: String!
+    long_url: String!
+}

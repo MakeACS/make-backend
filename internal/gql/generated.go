@@ -86,6 +86,11 @@ type ComplexityRoot struct {
 		Title        func(childComplexity int) int
 	}
 
+	CustomLink struct {
+		LongUrl  func(childComplexity int) int
+		ShortUrl func(childComplexity int) int
+	}
+
 	DefaultHours struct {
 		CloseTime    func(childComplexity int) int
 		Closed       func(childComplexity int) int
@@ -479,6 +484,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Announcement.Title(childComplexity), true
+
+	case "CustomLink.long_url":
+		if e.ComplexityRoot.CustomLink.LongUrl == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomLink.LongUrl(childComplexity), true
+	case "CustomLink.short_url":
+		if e.ComplexityRoot.CustomLink.ShortUrl == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomLink.ShortUrl(childComplexity), true
 
 	case "DefaultHours.close_time":
 		if e.ComplexityRoot.DefaultHours.CloseTime == nil {
@@ -1332,7 +1350,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/access_channel.graphqls" "schema/announcement.graphqls" "schema/card.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/reservation.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/access_channel.graphqls" "schema/announcement.graphqls" "schema/card.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/link.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/reservation.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1352,6 +1370,7 @@ var sources = []*ast.Source{
 	{Name: "schema/hold.graphqls", Input: sourceData("schema/hold.graphqls"), BuiltIn: false},
 	{Name: "schema/hours.graphqls", Input: sourceData("schema/hours.graphqls"), BuiltIn: false},
 	{Name: "schema/image.graphqls", Input: sourceData("schema/image.graphqls"), BuiltIn: false},
+	{Name: "schema/link.graphqls", Input: sourceData("schema/link.graphqls"), BuiltIn: false},
 	{Name: "schema/makerspace.graphqls", Input: sourceData("schema/makerspace.graphqls"), BuiltIn: false},
 	{Name: "schema/organization.graphqls", Input: sourceData("schema/organization.graphqls"), BuiltIn: false},
 	{Name: "schema/reservation.graphqls", Input: sourceData("schema/reservation.graphqls"), BuiltIn: false},
@@ -2363,6 +2382,52 @@ func (ec *executionContext) _Announcement_makerspace_id(ctx context.Context, fie
 }
 func (ec *executionContext) fieldContext_Announcement_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CustomLink_short_url(ctx context.Context, field graphql.CollectedField, obj *models.CustomLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomLink_short_url(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShortUrl, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomLink_short_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CustomLink_long_url(ctx context.Context, field graphql.CollectedField, obj *models.CustomLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomLink_long_url(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LongUrl, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomLink_long_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomLink", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _DefaultHours_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.DefaultHours) (ret graphql.Marshaler) {
@@ -6833,6 +6898,49 @@ func (ec *executionContext) _Announcement(ctx context.Context, sel ast.Selection
 		case "makerspace_id":
 			out.Values[i] = ec._Announcement_makerspace_id(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var customLinkImplementors = []string{"CustomLink"}
+
+func (ec *executionContext) _CustomLink(ctx context.Context, sel ast.SelectionSet, obj *models.CustomLink) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, customLinkImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CustomLink")
+		case "short_url":
+			out.Values[i] = ec._CustomLink_short_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "long_url":
+			out.Values[i] = ec._CustomLink_long_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
