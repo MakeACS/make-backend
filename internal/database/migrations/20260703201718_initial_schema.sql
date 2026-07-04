@@ -6,7 +6,7 @@ CREATE TABLE users (
     pronouns TEXT NOT NULL DEFAULT '',
     join_date TIMESTAMP WITH TIME ZONE NOT NULL,
     setup_complete BOOLEAN NOT NULL DEFAULT FALSE,
-    archived BOOLEAN,
+    archived BOOLEAN NOT NULL DEFAULT FALSE,
     notes TEXT NOT NULL DEFAULT '',
     admin BOOLEAN NOT NULL DEFAULT FALSE,
     force_archive BOOLEAN,
