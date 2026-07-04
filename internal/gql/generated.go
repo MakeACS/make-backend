@@ -31,7 +31,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
-	DefaultHours() DefaultHoursResolver
+	AccessComponent() AccessComponentResolver
 	Makerspace() MakerspaceResolver
 	OptionBlockOption() OptionBlockOptionResolver
 	Query() QueryResolver
@@ -42,6 +42,35 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AccessComponent struct {
+		Children func(childComplexity int) int
+		SN       func(childComplexity int) int
+		Type     func(childComplexity int) int
+	}
+
+	AccessDeployment struct {
+		Components func(childComplexity int) int
+		SN         func(childComplexity int) int
+	}
+
+	AccessDevice struct {
+		Channels           func(childComplexity int) int
+		CurrentCardTag     func(childComplexity int) int
+		DeviceId           func(childComplexity int) int
+		Flags              func(childComplexity int) int
+		LastStatus         func(childComplexity int) int
+		ReportedDeployment func(childComplexity int) int
+		SealedDeployment   func(childComplexity int) int
+		SessionStart       func(childComplexity int) int
+		TempDuration       func(childComplexity int) int
+	}
+
+	AccessDeviceFlags struct {
+		LockWhenIdle      func(childComplexity int) int
+		RestartWhenUnused func(childComplexity int) int
+		Welcoming         func(childComplexity int) int
+	}
+
 	Announcement struct {
 		Body         func(childComplexity int) int
 		Id           func(childComplexity int) int
@@ -55,6 +84,24 @@ type ComplexityRoot struct {
 		DayOfWeek    func(childComplexity int) int
 		MakerspaceId func(childComplexity int) int
 		OpenTime     func(childComplexity int) int
+	}
+
+	Device struct {
+		Firmware       func(childComplexity int) int
+		Hardware       func(childComplexity int) int
+		Id             func(childComplexity int) int
+		KeyCycle       func(childComplexity int) int
+		MakerspaceId   func(childComplexity int) int
+		Name           func(childComplexity int) int
+		Paired         func(childComplexity int) int
+		SN             func(childComplexity int) int
+		TargetFirmware func(childComplexity int) int
+	}
+
+	Dispenser struct {
+		CardsLeft func(childComplexity int) int
+		DeviceId  func(childComplexity int) int
+		Error     func(childComplexity int) int
 	}
 
 	Equipment struct {
@@ -201,8 +248,8 @@ type ComplexityRoot struct {
 
 // region    ************************** generated!.gotpl **************************
 
-type DefaultHoursResolver interface {
-	DayOfWeek(ctx context.Context, obj *models.DefaultHours) (int32, error)
+type AccessComponentResolver interface {
+	Type(ctx context.Context, obj *models.AccessComponent) (int, error)
 }
 type MakerspaceResolver interface {
 	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
@@ -237,6 +284,112 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AccessComponent.children":
+		if e.ComplexityRoot.AccessComponent.Children == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessComponent.Children(childComplexity), true
+	case "AccessComponent.sn":
+		if e.ComplexityRoot.AccessComponent.SN == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessComponent.SN(childComplexity), true
+	case "AccessComponent.type":
+		if e.ComplexityRoot.AccessComponent.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessComponent.Type(childComplexity), true
+
+	case "AccessDeployment.components":
+		if e.ComplexityRoot.AccessDeployment.Components == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDeployment.Components(childComplexity), true
+	case "AccessDeployment.sn":
+		if e.ComplexityRoot.AccessDeployment.SN == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDeployment.SN(childComplexity), true
+
+	case "AccessDevice.channels":
+		if e.ComplexityRoot.AccessDevice.Channels == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.Channels(childComplexity), true
+	case "AccessDevice.current_card_tag":
+		if e.ComplexityRoot.AccessDevice.CurrentCardTag == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.CurrentCardTag(childComplexity), true
+	case "AccessDevice.device_id":
+		if e.ComplexityRoot.AccessDevice.DeviceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.DeviceId(childComplexity), true
+	case "AccessDevice.flags":
+		if e.ComplexityRoot.AccessDevice.Flags == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.Flags(childComplexity), true
+	case "AccessDevice.last_status":
+		if e.ComplexityRoot.AccessDevice.LastStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.LastStatus(childComplexity), true
+	case "AccessDevice.reported_deployment":
+		if e.ComplexityRoot.AccessDevice.ReportedDeployment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.ReportedDeployment(childComplexity), true
+	case "AccessDevice.sealed_deployment":
+		if e.ComplexityRoot.AccessDevice.SealedDeployment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.SealedDeployment(childComplexity), true
+	case "AccessDevice.session_start":
+		if e.ComplexityRoot.AccessDevice.SessionStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.SessionStart(childComplexity), true
+	case "AccessDevice.temp_duration":
+		if e.ComplexityRoot.AccessDevice.TempDuration == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDevice.TempDuration(childComplexity), true
+
+	case "AccessDeviceFlags.lock_when_idle":
+		if e.ComplexityRoot.AccessDeviceFlags.LockWhenIdle == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDeviceFlags.LockWhenIdle(childComplexity), true
+	case "AccessDeviceFlags.restart_when_unused":
+		if e.ComplexityRoot.AccessDeviceFlags.RestartWhenUnused == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDeviceFlags.RestartWhenUnused(childComplexity), true
+	case "AccessDeviceFlags.welcoming":
+		if e.ComplexityRoot.AccessDeviceFlags.Welcoming == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccessDeviceFlags.Welcoming(childComplexity), true
 
 	case "Announcement.body":
 		if e.ComplexityRoot.Announcement.Body == nil {
@@ -293,6 +446,80 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DefaultHours.OpenTime(childComplexity), true
+
+	case "Device.firmware":
+		if e.ComplexityRoot.Device.Firmware == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.Firmware(childComplexity), true
+	case "Device.hardware":
+		if e.ComplexityRoot.Device.Hardware == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.Hardware(childComplexity), true
+	case "Device.id":
+		if e.ComplexityRoot.Device.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.Id(childComplexity), true
+	case "Device.key_cycle":
+		if e.ComplexityRoot.Device.KeyCycle == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.KeyCycle(childComplexity), true
+	case "Device.makerspace_id":
+		if e.ComplexityRoot.Device.MakerspaceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.MakerspaceId(childComplexity), true
+	case "Device.name":
+		if e.ComplexityRoot.Device.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.Name(childComplexity), true
+	case "Device.paired":
+		if e.ComplexityRoot.Device.Paired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.Paired(childComplexity), true
+	case "Device.sn":
+		if e.ComplexityRoot.Device.SN == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.SN(childComplexity), true
+	case "Device.target_firmware":
+		if e.ComplexityRoot.Device.TargetFirmware == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Device.TargetFirmware(childComplexity), true
+
+	case "Dispenser.cards_left":
+		if e.ComplexityRoot.Dispenser.CardsLeft == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dispenser.CardsLeft(childComplexity), true
+	case "Dispenser.device_id":
+		if e.ComplexityRoot.Dispenser.DeviceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dispenser.DeviceId(childComplexity), true
+	case "Dispenser.error":
+		if e.ComplexityRoot.Dispenser.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dispenser.Error(childComplexity), true
 
 	case "Equipment.description":
 		if e.ComplexityRoot.Equipment.Description == nil {
@@ -942,7 +1169,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/announcement.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/announcement.graphqls" "schema/device.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/organization.graphqls" "schema/restriction.graphqls" "schema/training.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -955,6 +1182,7 @@ func sourceData(filename string) string {
 
 var sources = []*ast.Source{
 	{Name: "schema/announcement.graphqls", Input: sourceData("schema/announcement.graphqls"), BuiltIn: false},
+	{Name: "schema/device.graphqls", Input: sourceData("schema/device.graphqls"), BuiltIn: false},
 	{Name: "schema/equipment.graphqls", Input: sourceData("schema/equipment.graphqls"), BuiltIn: false},
 	{Name: "schema/hold.graphqls", Input: sourceData("schema/hold.graphqls"), BuiltIn: false},
 	{Name: "schema/hours.graphqls", Input: sourceData("schema/hours.graphqls"), BuiltIn: false},
@@ -971,6 +1199,40 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // childFields_* functions provide shared child field context lookups.
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
+
+func (ec *executionContext) childFields_AccessComponent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "sn":
+		return ec.fieldContext_AccessComponent_sn(ctx, field)
+	case "type":
+		return ec.fieldContext_AccessComponent_type(ctx, field)
+	case "children":
+		return ec.fieldContext_AccessComponent_children(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccessComponent", field.Name)
+}
+
+func (ec *executionContext) childFields_AccessDeployment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "sn":
+		return ec.fieldContext_AccessDeployment_sn(ctx, field)
+	case "components":
+		return ec.fieldContext_AccessDeployment_components(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccessDeployment", field.Name)
+}
+
+func (ec *executionContext) childFields_AccessDeviceFlags(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "lock_when_idle":
+		return ec.fieldContext_AccessDeviceFlags_lock_when_idle(ctx, field)
+	case "restart_when_unused":
+		return ec.fieldContext_AccessDeviceFlags_restart_when_unused(ctx, field)
+	case "welcoming":
+		return ec.fieldContext_AccessDeviceFlags_welcoming(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccessDeviceFlags", field.Name)
+}
 
 func (ec *executionContext) childFields_Makerspace(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
@@ -1294,6 +1556,442 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _AccessComponent_sn(ctx context.Context, field graphql.CollectedField, obj *models.AccessComponent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessComponent_sn(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SN, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessComponent_sn(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessComponent", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccessComponent_type(ctx context.Context, field graphql.CollectedField, obj *models.AccessComponent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessComponent_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccessComponent().Type(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessComponent_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessComponent", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccessComponent_children(ctx context.Context, field graphql.CollectedField, obj *models.AccessComponent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessComponent_children(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Children, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []models.AccessComponent) graphql.Marshaler {
+			return ec.marshalNAccessComponent2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessComponentᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessComponent_children(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessComponent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccessComponent(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessDeployment_sn(ctx context.Context, field graphql.CollectedField, obj *models.AccessDeployment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDeployment_sn(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SN, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDeployment_sn(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDeployment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDeployment_components(ctx context.Context, field graphql.CollectedField, obj *models.AccessDeployment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDeployment_components(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Components, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []models.AccessComponent) graphql.Marshaler {
+			return ec.marshalNAccessComponent2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessComponentᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDeployment_components(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessDeployment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccessComponent(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessDevice_device_id(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_device_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeviceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_device_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDevice", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDevice_channels(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_channels(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Channels, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_channels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDevice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDevice_temp_duration(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_temp_duration(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TempDuration, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_temp_duration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDevice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDevice_current_card_tag(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_current_card_tag(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentCardTag, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_current_card_tag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDevice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDevice_last_status(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_last_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_last_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDevice", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDevice_session_start(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_session_start(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SessionStart, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_session_start(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDevice", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDevice_flags(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_flags(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Flags, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v models.AccessDeviceFlags) graphql.Marshaler {
+			return ec.marshalNAccessDeviceFlags2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessDeviceFlags(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_flags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccessDeviceFlags(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessDevice_sealed_deployment(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_sealed_deployment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SealedDeployment, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.AccessDeployment) graphql.Marshaler {
+			return ec.marshalOAccessDeployment2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessDeployment(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_sealed_deployment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccessDeployment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessDevice_reported_deployment(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDevice_reported_deployment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReportedDeployment, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.AccessDeployment) graphql.Marshaler {
+			return ec.marshalOAccessDeployment2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessDeployment(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDevice_reported_deployment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccessDeployment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessDeviceFlags_lock_when_idle(ctx context.Context, field graphql.CollectedField, obj *models.AccessDeviceFlags) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDeviceFlags_lock_when_idle(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LockWhenIdle, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDeviceFlags_lock_when_idle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDeviceFlags", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDeviceFlags_restart_when_unused(ctx context.Context, field graphql.CollectedField, obj *models.AccessDeviceFlags) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDeviceFlags_restart_when_unused(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RestartWhenUnused, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDeviceFlags_restart_when_unused(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDeviceFlags", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AccessDeviceFlags_welcoming(ctx context.Context, field graphql.CollectedField, obj *models.AccessDeviceFlags) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccessDeviceFlags_welcoming(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Welcoming, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccessDeviceFlags_welcoming(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccessDeviceFlags", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _Announcement_id(ctx context.Context, field graphql.CollectedField, obj *models.Announcement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1418,18 +2116,18 @@ func (ec *executionContext) _DefaultHours_day_of_week(ctx context.Context, field
 			return ec.fieldContext_DefaultHours_day_of_week(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.DefaultHours().DayOfWeek(ctx, obj)
+			return obj.DayOfWeek, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
-			return ec.marshalNInt2int32(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_DefaultHours_day_of_week(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("DefaultHours", field, true, true, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("DefaultHours", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _DefaultHours_open_time(ctx context.Context, field graphql.CollectedField, obj *models.DefaultHours) (ret graphql.Marshaler) {
@@ -1499,6 +2197,282 @@ func (ec *executionContext) _DefaultHours_closed(ctx context.Context, field grap
 }
 func (ec *executionContext) fieldContext_DefaultHours_closed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DefaultHours", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Device_id(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Device_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Device_name(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Device_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Device_sn(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_sn(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SN, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Device_sn(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Device_paired(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_paired(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Paired, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Device_paired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Device_hardware(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_hardware(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Hardware, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Device_hardware(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Device_firmware(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_firmware(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Firmware, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Device_firmware(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Device_target_firmware(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_target_firmware(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetFirmware, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Device_target_firmware(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Device_key_cycle(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_key_cycle(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.KeyCycle, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Device_key_cycle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Device_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Device) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Device_makerspace_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MakerspaceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Device_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Device", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Dispenser_device_id(ctx context.Context, field graphql.CollectedField, obj *models.Dispenser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dispenser_device_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeviceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Dispenser_device_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Dispenser", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Dispenser_cards_left(ctx context.Context, field graphql.CollectedField, obj *models.Dispenser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dispenser_cards_left(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CardsLeft, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Dispenser_cards_left(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Dispenser", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Dispenser_error(ctx context.Context, field graphql.CollectedField, obj *models.Dispenser) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dispenser_error(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.DispenserError) graphql.Marshaler {
+			return ec.marshalODispenserError2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐDispenserError(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Dispenser_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Dispenser", field, false, false, errors.New("field of type DispenserError does not have child fields"))
 }
 
 func (ec *executionContext) _Equipment_id(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
@@ -4872,6 +5846,256 @@ func (ec *executionContext) _TrainingBlock(ctx context.Context, sel ast.Selectio
 
 // region    **************************** object.gotpl ****************************
 
+var accessComponentImplementors = []string{"AccessComponent"}
+
+func (ec *executionContext) _AccessComponent(ctx context.Context, sel ast.SelectionSet, obj *models.AccessComponent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessComponentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessComponent")
+		case "sn":
+			out.Values[i] = ec._AccessComponent_sn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "type":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessComponent_type(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "children":
+			out.Values[i] = ec._AccessComponent_children(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accessDeploymentImplementors = []string{"AccessDeployment"}
+
+func (ec *executionContext) _AccessDeployment(ctx context.Context, sel ast.SelectionSet, obj *models.AccessDeployment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessDeploymentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessDeployment")
+		case "sn":
+			out.Values[i] = ec._AccessDeployment_sn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "components":
+			out.Values[i] = ec._AccessDeployment_components(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accessDeviceImplementors = []string{"AccessDevice"}
+
+func (ec *executionContext) _AccessDevice(ctx context.Context, sel ast.SelectionSet, obj *models.AccessDevice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessDeviceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessDevice")
+		case "device_id":
+			out.Values[i] = ec._AccessDevice_device_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "channels":
+			out.Values[i] = ec._AccessDevice_channels(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "temp_duration":
+			out.Values[i] = ec._AccessDevice_temp_duration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "current_card_tag":
+			out.Values[i] = ec._AccessDevice_current_card_tag(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "last_status":
+			out.Values[i] = ec._AccessDevice_last_status(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "session_start":
+			out.Values[i] = ec._AccessDevice_session_start(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "flags":
+			out.Values[i] = ec._AccessDevice_flags(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sealed_deployment":
+			out.Values[i] = ec._AccessDevice_sealed_deployment(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "reported_deployment":
+			out.Values[i] = ec._AccessDevice_reported_deployment(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accessDeviceFlagsImplementors = []string{"AccessDeviceFlags"}
+
+func (ec *executionContext) _AccessDeviceFlags(ctx context.Context, sel ast.SelectionSet, obj *models.AccessDeviceFlags) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessDeviceFlagsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessDeviceFlags")
+		case "lock_when_idle":
+			out.Values[i] = ec._AccessDeviceFlags_lock_when_idle(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "restart_when_unused":
+			out.Values[i] = ec._AccessDeviceFlags_restart_when_unused(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "welcoming":
+			out.Values[i] = ec._AccessDeviceFlags_welcoming(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var announcementImplementors = []string{"Announcement"}
 
 func (ec *executionContext) _Announcement(ctx context.Context, sel ast.SelectionSet, obj *models.Announcement) graphql.Marshaler {
@@ -4940,60 +6164,153 @@ func (ec *executionContext) _DefaultHours(ctx context.Context, sel ast.Selection
 		case "makerspace_id":
 			out.Values[i] = ec._DefaultHours_makerspace_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "day_of_week":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DefaultHours_day_of_week(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._DefaultHours_day_of_week(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "open_time":
 			out.Values[i] = ec._DefaultHours_open_time(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "close_time":
 			out.Values[i] = ec._DefaultHours_close_time(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "closed":
 			out.Values[i] = ec._DefaultHours_closed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var deviceImplementors = []string{"Device"}
+
+func (ec *executionContext) _Device(ctx context.Context, sel ast.SelectionSet, obj *models.Device) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deviceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Device")
+		case "id":
+			out.Values[i] = ec._Device_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Device_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sn":
+			out.Values[i] = ec._Device_sn(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "paired":
+			out.Values[i] = ec._Device_paired(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hardware":
+			out.Values[i] = ec._Device_hardware(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "firmware":
+			out.Values[i] = ec._Device_firmware(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "target_firmware":
+			out.Values[i] = ec._Device_target_firmware(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "key_cycle":
+			out.Values[i] = ec._Device_key_cycle(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "makerspace_id":
+			out.Values[i] = ec._Device_makerspace_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispenserImplementors = []string{"Dispenser"}
+
+func (ec *executionContext) _Dispenser(ctx context.Context, sel ast.SelectionSet, obj *models.Dispenser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispenserImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Dispenser")
+		case "device_id":
+			out.Values[i] = ec._Dispenser_device_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cards_left":
+			out.Values[i] = ec._Dispenser_cards_left(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "error":
+			out.Values[i] = ec._Dispenser_error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -6580,6 +7897,30 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAccessComponent2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessComponent(ctx context.Context, sel ast.SelectionSet, v models.AccessComponent) graphql.Marshaler {
+	return ec._AccessComponent(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccessComponent2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessComponentᚄ(ctx context.Context, sel ast.SelectionSet, v []models.AccessComponent) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccessComponent2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessComponent(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAccessDeviceFlags2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessDeviceFlags(ctx context.Context, sel ast.SelectionSet, v models.AccessDeviceFlags) graphql.Marshaler {
+	return ec._AccessDeviceFlags(ctx, sel, &v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6628,14 +7969,14 @@ func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.Selectio
 	return res
 }
 
-func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v any) (int32, error) {
-	res, err := graphql.UnmarshalInt32(v)
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalInt32(v)
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6907,6 +8248,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAccessDeployment2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessDeployment(ctx context.Context, sel ast.SelectionSet, v *models.AccessDeployment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AccessDeployment(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6952,6 +8300,25 @@ func (ec *executionContext) marshalOClockTime2ᚖtimeᚐTime(ctx context.Context
 	_ = sel
 	_ = ctx
 	res := scalars.MarshalClockTime(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalODispenserError2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐDispenserError(ctx context.Context, v any) (*models.DispenserError, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := models.DispenserError(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODispenserError2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐDispenserError(ctx context.Context, sel ast.SelectionSet, v *models.DispenserError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 

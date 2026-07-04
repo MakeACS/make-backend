@@ -190,7 +190,7 @@ CREATE TABLE devices (
 CREATE TABLE access_devices (
     device_id INT PRIMARY KEY REFERENCES devices(id) ON DELETE CASCADE,
     channels INT NOT NULL DEFAULT 0,
-    temp_duration INTERVAL NOT NULL DEFAULT '100 MILLISECONDS',
+    temp_duration INT NOT NULL DEFAULT 100,
     current_card_tag TEXT NOT NULL DEFAULT '',
     last_status TIMESTAMP WITH TIME ZONE,
     session_start TIMESTAMP WITH TIME ZONE,
@@ -206,7 +206,7 @@ CREATE TABLE access_channels (
     device_id INT NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
     channel_id INT NOT NULL,
     state ACCESS_CHANNEL_STATE,
-    temp_duration INTERVAL NOT NULL DEFAULT '100 MILLISECONDS'
+    temp_duration INT NOT NULL DEFAULT 100
 );
 
 CREATE TYPE DISPENSER_ERROR AS ENUM ('CARD_STUCK', 'OUT_OF_CARDS');

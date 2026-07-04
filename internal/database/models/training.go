@@ -12,35 +12,35 @@ type TrainingBlock interface {
 
 // --- BEGIN TRAINING BLOCKS ---
 type TextBlock struct {
-	BlockId string // UUID
-	Type    string
-	Content string
+	BlockId string `json:"block_id"`
+	Type    string `json:"type"`
+	Content string `json:"content"`
 }
 
 func (TextBlock) IsTrainingBlock() {}
 func (*TextBlock) StripAnswer()    {}
 
 type ImageBlock struct {
-	BlockId string // UUID
-	Type    string
-	Content string
+	BlockId string `json:"block_id"`
+	Type    string `json:"type"`
+	Content string `json:"content"`
 }
 
 func (ImageBlock) IsTrainingBlock() {}
 func (*ImageBlock) StripAnswer()    {}
 
 type OptionBlockOption struct {
-	Text    string
-	Correct *bool
+	Text    string `json:"text"`
+	Correct *bool  `json:"correct"`
 }
 
 type OptionBlock struct {
-	BlockId     string // UUID
-	Type        string
-	Content     string
-	Options     []OptionBlockOption
-	Hint        string
-	Affirmation string
+	BlockId     string              `json:"block_id"`
+	Type        string              `json:"type"`
+	Content     string              `json:"content"`
+	Options     []OptionBlockOption `json:"options"`
+	Hint        string              `json:"hint"`
+	Affirmation string              `json:"affirmation"`
 }
 
 func (OptionBlock) IsTrainingBlock() {}
@@ -51,12 +51,12 @@ func (b *OptionBlock) StripAnswer() {
 }
 
 type ShortAnswerBlock struct {
-	BlockId     string // UUID
-	Type        string
-	Content     string
-	Answer      *string
-	Hint        string
-	Affirmation string
+	BlockId     string  `json:"block_id"`
+	Type        string  `json:"type"`
+	Content     string  `json:"content"`
+	Answer      *string `json:"answer"`
+	Hint        string  `json:"hint"`
+	Affirmation string  `json:"affirmation"`
 }
 
 func (ShortAnswerBlock) IsTrainingBlock() {}
