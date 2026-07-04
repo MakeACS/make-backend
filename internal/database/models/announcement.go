@@ -1,6 +1,6 @@
 package models
 
-type Announcements struct {
+type Announcement struct {
 	Id           int
 	Title        string
 	Body         string

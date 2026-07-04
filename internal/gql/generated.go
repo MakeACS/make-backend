@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"make-backend/internal/database/models"
-	"make-backend/internal/gql/model"
 	"make-backend/internal/gql/scalars"
 	"math"
 	"strconv"
@@ -43,8 +42,8 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Announcement struct {
 		Body         func(childComplexity int) int
-		ID           func(childComplexity int) int
-		MakerspaceID func(childComplexity int) int
+		Id           func(childComplexity int) int
+		MakerspaceId func(childComplexity int) int
 		Title        func(childComplexity int) int
 	}
 
@@ -54,6 +53,24 @@ type ComplexityRoot struct {
 		DayOfWeek    func(childComplexity int) int
 		MakerspaceId func(childComplexity int) int
 		OpenTime     func(childComplexity int) int
+	}
+
+	Equipment struct {
+		Description             func(childComplexity int) int
+		Hidden                  func(childComplexity int) int
+		Id                      func(childComplexity int) int
+		ImageId                 func(childComplexity int) int
+		Name                    func(childComplexity int) int
+		NeedsWelcome            func(childComplexity int) int
+		RequiresInPerson        func(childComplexity int) int
+		RequiresTrainer         func(childComplexity int) int
+		Reservable              func(childComplexity int) int
+		ReservationInstructions func(childComplexity int) int
+		ReservationOnly         func(childComplexity int) int
+		SignOffUrl              func(childComplexity int) int
+		SopUrl                  func(childComplexity int) int
+		SubName                 func(childComplexity int) int
+		ZoneId                  func(childComplexity int) int
 	}
 
 	Hold struct {
@@ -171,17 +188,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Announcement.Body(childComplexity), true
 	case "Announcement.id":
-		if e.ComplexityRoot.Announcement.ID == nil {
+		if e.ComplexityRoot.Announcement.Id == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Announcement.ID(childComplexity), true
+		return e.ComplexityRoot.Announcement.Id(childComplexity), true
 	case "Announcement.makerspace_id":
-		if e.ComplexityRoot.Announcement.MakerspaceID == nil {
+		if e.ComplexityRoot.Announcement.MakerspaceId == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Announcement.MakerspaceID(childComplexity), true
+		return e.ComplexityRoot.Announcement.MakerspaceId(childComplexity), true
 	case "Announcement.title":
 		if e.ComplexityRoot.Announcement.Title == nil {
 			break
@@ -219,6 +236,97 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DefaultHours.OpenTime(childComplexity), true
+
+	case "Equipment.description":
+		if e.ComplexityRoot.Equipment.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.Description(childComplexity), true
+	case "Equipment.hidden":
+		if e.ComplexityRoot.Equipment.Hidden == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.Hidden(childComplexity), true
+	case "Equipment.id":
+		if e.ComplexityRoot.Equipment.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.Id(childComplexity), true
+	case "Equipment.image_id":
+		if e.ComplexityRoot.Equipment.ImageId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.ImageId(childComplexity), true
+	case "Equipment.name":
+		if e.ComplexityRoot.Equipment.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.Name(childComplexity), true
+	case "Equipment.needs_welcome":
+		if e.ComplexityRoot.Equipment.NeedsWelcome == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.NeedsWelcome(childComplexity), true
+	case "Equipment.requires_in_person":
+		if e.ComplexityRoot.Equipment.RequiresInPerson == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.RequiresInPerson(childComplexity), true
+	case "Equipment.requires_trainer":
+		if e.ComplexityRoot.Equipment.RequiresTrainer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.RequiresTrainer(childComplexity), true
+	case "Equipment.reservable":
+		if e.ComplexityRoot.Equipment.Reservable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.Reservable(childComplexity), true
+	case "Equipment.reservation_instructions":
+		if e.ComplexityRoot.Equipment.ReservationInstructions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.ReservationInstructions(childComplexity), true
+	case "Equipment.reservation_only":
+		if e.ComplexityRoot.Equipment.ReservationOnly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.ReservationOnly(childComplexity), true
+	case "Equipment.sign_off_url":
+		if e.ComplexityRoot.Equipment.SignOffUrl == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.SignOffUrl(childComplexity), true
+	case "Equipment.sop_url":
+		if e.ComplexityRoot.Equipment.SopUrl == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.SopUrl(childComplexity), true
+	case "Equipment.sub_name":
+		if e.ComplexityRoot.Equipment.SubName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.SubName(childComplexity), true
+	case "Equipment.zone_id":
+		if e.ComplexityRoot.Equipment.ZoneId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Equipment.ZoneId(childComplexity), true
 
 	case "Hold.create_date":
 		if e.ComplexityRoot.Hold.CreateDate == nil {
@@ -602,7 +710,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/announcement.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/announcement.graphqls" "schema/equipment.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -615,6 +723,7 @@ func sourceData(filename string) string {
 
 var sources = []*ast.Source{
 	{Name: "schema/announcement.graphqls", Input: sourceData("schema/announcement.graphqls"), BuiltIn: false},
+	{Name: "schema/equipment.graphqls", Input: sourceData("schema/equipment.graphqls"), BuiltIn: false},
 	{Name: "schema/hold.graphqls", Input: sourceData("schema/hold.graphqls"), BuiltIn: false},
 	{Name: "schema/hours.graphqls", Input: sourceData("schema/hours.graphqls"), BuiltIn: false},
 	{Name: "schema/image.graphqls", Input: sourceData("schema/image.graphqls"), BuiltIn: false},
@@ -941,7 +1050,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Announcement_id(ctx context.Context, field graphql.CollectedField, obj *model.Announcement) (ret graphql.Marshaler) {
+func (ec *executionContext) _Announcement_id(ctx context.Context, field graphql.CollectedField, obj *models.Announcement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -950,7 +1059,7 @@ func (ec *executionContext) _Announcement_id(ctx context.Context, field graphql.
 			return ec.fieldContext_Announcement_id(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
+			return obj.Id, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
@@ -964,7 +1073,7 @@ func (ec *executionContext) fieldContext_Announcement_id(_ context.Context, fiel
 	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _Announcement_title(ctx context.Context, field graphql.CollectedField, obj *model.Announcement) (ret graphql.Marshaler) {
+func (ec *executionContext) _Announcement_title(ctx context.Context, field graphql.CollectedField, obj *models.Announcement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -987,7 +1096,7 @@ func (ec *executionContext) fieldContext_Announcement_title(_ context.Context, f
 	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _Announcement_body(ctx context.Context, field graphql.CollectedField, obj *model.Announcement) (ret graphql.Marshaler) {
+func (ec *executionContext) _Announcement_body(ctx context.Context, field graphql.CollectedField, obj *models.Announcement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1010,7 +1119,7 @@ func (ec *executionContext) fieldContext_Announcement_body(_ context.Context, fi
 	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _Announcement_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *model.Announcement) (ret graphql.Marshaler) {
+func (ec *executionContext) _Announcement_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Announcement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1019,7 +1128,7 @@ func (ec *executionContext) _Announcement_makerspace_id(ctx context.Context, fie
 			return ec.fieldContext_Announcement_makerspace_id(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.MakerspaceID, nil
+			return obj.MakerspaceId, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
@@ -1146,6 +1255,351 @@ func (ec *executionContext) _DefaultHours_closed(ctx context.Context, field grap
 }
 func (ec *executionContext) fieldContext_DefaultHours_closed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DefaultHours", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_id(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_name(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_sub_name(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_sub_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_sub_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_zone_id(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_zone_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ZoneId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_zone_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_hidden(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_hidden(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Hidden, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_hidden(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_image_id(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_image_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ImageId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOID2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_image_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_sop_url(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_sop_url(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SopUrl, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_sop_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_sign_off_url(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_sign_off_url(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SignOffUrl, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_sign_off_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_description(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_reservable(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_reservable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reservable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_reservable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_reservation_only(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_reservation_only(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReservationOnly, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_reservation_only(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_reservation_instructions(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_reservation_instructions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReservationInstructions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_reservation_instructions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_needs_welcome(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_needs_welcome(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NeedsWelcome, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_needs_welcome(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_requires_in_person(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_requires_in_person(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiresInPerson, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_requires_in_person(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Equipment_requires_trainer(ctx context.Context, field graphql.CollectedField, obj *models.Equipment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Equipment_requires_trainer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiresTrainer, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Equipment_requires_trainer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Equipment", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _Hold_id(ctx context.Context, field graphql.CollectedField, obj *models.Hold) (ret graphql.Marshaler) {
@@ -3490,7 +3944,7 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 var announcementImplementors = []string{"Announcement"}
 
-func (ec *executionContext) _Announcement(ctx context.Context, sel ast.SelectionSet, obj *model.Announcement) graphql.Marshaler {
+func (ec *executionContext) _Announcement(ctx context.Context, sel ast.SelectionSet, obj *models.Announcement) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, announcementImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -3610,6 +4064,114 @@ func (ec *executionContext) _DefaultHours(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._DefaultHours_closed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var equipmentImplementors = []string{"Equipment"}
+
+func (ec *executionContext) _Equipment(ctx context.Context, sel ast.SelectionSet, obj *models.Equipment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Equipment")
+		case "id":
+			out.Values[i] = ec._Equipment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Equipment_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sub_name":
+			out.Values[i] = ec._Equipment_sub_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "zone_id":
+			out.Values[i] = ec._Equipment_zone_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hidden":
+			out.Values[i] = ec._Equipment_hidden(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "image_id":
+			out.Values[i] = ec._Equipment_image_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "sop_url":
+			out.Values[i] = ec._Equipment_sop_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sign_off_url":
+			out.Values[i] = ec._Equipment_sign_off_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._Equipment_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reservable":
+			out.Values[i] = ec._Equipment_reservable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reservation_only":
+			out.Values[i] = ec._Equipment_reservation_only(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reservation_instructions":
+			out.Values[i] = ec._Equipment_reservation_instructions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "needs_welcome":
+			out.Values[i] = ec._Equipment_needs_welcome(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requires_in_person":
+			out.Values[i] = ec._Equipment_requires_in_person(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requires_trainer":
+			out.Values[i] = ec._Equipment_requires_trainer(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))

@@ -2,12 +2,5 @@
 
 package model
 
-type Announcement struct {
-	ID           int    `json:"id"`
-	Title        string `json:"title"`
-	Body         string `json:"body"`
-	MakerspaceID *int   `json:"makerspace_id,omitempty"`
-}
-
 type Query struct {
 }
