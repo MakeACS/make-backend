@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"make-backend/internal/database/models"
+	"make-backend/internal/gql/model"
 	"make-backend/internal/gql/scalars"
 	"math"
 	"strconv"
@@ -40,6 +41,13 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Announcement struct {
+		Body         func(childComplexity int) int
+		ID           func(childComplexity int) int
+		MakerspaceID func(childComplexity int) int
+		Title        func(childComplexity int) int
+	}
+
 	DefaultHours struct {
 		CloseTime    func(childComplexity int) int
 		Closed       func(childComplexity int) int
@@ -155,6 +163,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Announcement.body":
+		if e.ComplexityRoot.Announcement.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Announcement.Body(childComplexity), true
+	case "Announcement.id":
+		if e.ComplexityRoot.Announcement.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Announcement.ID(childComplexity), true
+	case "Announcement.makerspace_id":
+		if e.ComplexityRoot.Announcement.MakerspaceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Announcement.MakerspaceID(childComplexity), true
+	case "Announcement.title":
+		if e.ComplexityRoot.Announcement.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Announcement.Title(childComplexity), true
 
 	case "DefaultHours.close_time":
 		if e.ComplexityRoot.DefaultHours.CloseTime == nil {
@@ -569,7 +602,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
+//go:embed "schema/announcement.graphqls" "schema/hold.graphqls" "schema/hours.graphqls" "schema/image.graphqls" "schema/makerspace.graphqls" "schema/restriction.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -581,6 +614,7 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
+	{Name: "schema/announcement.graphqls", Input: sourceData("schema/announcement.graphqls"), BuiltIn: false},
 	{Name: "schema/hold.graphqls", Input: sourceData("schema/hold.graphqls"), BuiltIn: false},
 	{Name: "schema/hours.graphqls", Input: sourceData("schema/hours.graphqls"), BuiltIn: false},
 	{Name: "schema/image.graphqls", Input: sourceData("schema/image.graphqls"), BuiltIn: false},
@@ -906,6 +940,98 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ***************************** args.gotpl *****************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Announcement_id(ctx context.Context, field graphql.CollectedField, obj *model.Announcement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Announcement_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Announcement_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Announcement_title(ctx context.Context, field graphql.CollectedField, obj *model.Announcement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Announcement_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Announcement_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Announcement_body(ctx context.Context, field graphql.CollectedField, obj *model.Announcement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Announcement_body(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Body, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Announcement_body(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Announcement_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *model.Announcement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Announcement_makerspace_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MakerspaceID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOID2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Announcement_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
 
 func (ec *executionContext) _DefaultHours_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.DefaultHours) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -3361,6 +3487,59 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var announcementImplementors = []string{"Announcement"}
+
+func (ec *executionContext) _Announcement(ctx context.Context, sel ast.SelectionSet, obj *model.Announcement) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, announcementImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Announcement")
+		case "id":
+			out.Values[i] = ec._Announcement_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._Announcement_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "body":
+			out.Values[i] = ec._Announcement_body(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "makerspace_id":
+			out.Values[i] = ec._Announcement_makerspace_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
 
 var defaultHoursImplementors = []string{"DefaultHours"}
 
