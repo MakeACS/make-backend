@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"time"
 )
 
@@ -16,6 +15,6 @@ type User struct {
 	Archived      bool
 	Notes         string
 	Admin         bool
-	ForceArchive  sql.NullBool
+	ForceArchive  *bool
 	CardTag       string
 }

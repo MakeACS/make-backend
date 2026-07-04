@@ -8,7 +8,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"make-backend/internal/gql/model"
+	"make-backend/internal/database/models"
 	"math"
 	"strconv"
 	"sync/atomic"
@@ -30,6 +30,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
+	Makerspace() MakerspaceResolver
 	Query() QueryResolver
 }
 
@@ -39,17 +40,20 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Makerspace struct {
 		Description func(childComplexity int) int
-		DocsURL     func(childComplexity int) int
+		DocsUrl     func(childComplexity int) int
 		Hidden      func(childComplexity int) int
-		ID          func(childComplexity int) int
-		ImageID     func(childComplexity int) int
+		Id          func(childComplexity int) int
+		ImageId     func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Subtitle    func(childComplexity int) int
+		Zones       func(childComplexity int) int
 	}
 
 	Query struct {
-		Makerspace func(childComplexity int, id int) int
-		User       func(childComplexity int, id int) int
+		Makerspace          func(childComplexity int, id int) int
+		User                func(childComplexity int, id int) int
+		Zone                func(childComplexity int, id int) int
+		ZonesByMakerspaceID func(childComplexity int, makerspaceID int) int
 	}
 
 	User struct {
@@ -58,7 +62,7 @@ type ComplexityRoot struct {
 		CardTag       func(childComplexity int) int
 		Firstname     func(childComplexity int) int
 		ForceArchive  func(childComplexity int) int
-		ID            func(childComplexity int) int
+		Id            func(childComplexity int) int
 		JoinDate      func(childComplexity int) int
 		Lastname      func(childComplexity int) int
 		Notes         func(childComplexity int) int
@@ -66,15 +70,27 @@ type ComplexityRoot struct {
 		SetupComplete func(childComplexity int) int
 		Username      func(childComplexity int) int
 	}
+
+	Zone struct {
+		Hidden       func(childComplexity int) int
+		Id           func(childComplexity int) int
+		MakerspaceId func(childComplexity int) int
+		Name         func(childComplexity int) int
+	}
 }
 
 // endregion ***************************** api!.gotpl *****************************
 
 // region    ************************** generated!.gotpl **************************
 
+type MakerspaceResolver interface {
+	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
+}
 type QueryResolver interface {
-	User(ctx context.Context, id int) (*model.User, error)
-	Makerspace(ctx context.Context, id int) (*model.Makerspace, error)
+	User(ctx context.Context, id int) (*models.User, error)
+	Makerspace(ctx context.Context, id int) (*models.Makerspace, error)
+	Zone(ctx context.Context, id int) (*models.Zone, error)
+	ZonesByMakerspaceID(ctx context.Context, makerspaceID int) ([]*models.Zone, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -102,11 +118,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Makerspace.Description(childComplexity), true
 	case "Makerspace.docs_url":
-		if e.ComplexityRoot.Makerspace.DocsURL == nil {
+		if e.ComplexityRoot.Makerspace.DocsUrl == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Makerspace.DocsURL(childComplexity), true
+		return e.ComplexityRoot.Makerspace.DocsUrl(childComplexity), true
 	case "Makerspace.hidden":
 		if e.ComplexityRoot.Makerspace.Hidden == nil {
 			break
@@ -114,17 +130,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Makerspace.Hidden(childComplexity), true
 	case "Makerspace.id":
-		if e.ComplexityRoot.Makerspace.ID == nil {
+		if e.ComplexityRoot.Makerspace.Id == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Makerspace.ID(childComplexity), true
+		return e.ComplexityRoot.Makerspace.Id(childComplexity), true
 	case "Makerspace.image_id":
-		if e.ComplexityRoot.Makerspace.ImageID == nil {
+		if e.ComplexityRoot.Makerspace.ImageId == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Makerspace.ImageID(childComplexity), true
+		return e.ComplexityRoot.Makerspace.ImageId(childComplexity), true
 	case "Makerspace.name":
 		if e.ComplexityRoot.Makerspace.Name == nil {
 			break
@@ -137,6 +153,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Makerspace.Subtitle(childComplexity), true
+	case "Makerspace.zones":
+		if e.ComplexityRoot.Makerspace.Zones == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Makerspace.Zones(childComplexity), true
 
 	case "Query.makerspace":
 		if e.ComplexityRoot.Query.Makerspace == nil {
@@ -160,6 +182,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.User(childComplexity, args["id"].(int)), true
+	case "Query.zone":
+		if e.ComplexityRoot.Query.Zone == nil {
+			break
+		}
+
+		args, err := ec.field_Query_zone_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Zone(childComplexity, args["id"].(int)), true
+	case "Query.zonesByMakerspaceId":
+		if e.ComplexityRoot.Query.ZonesByMakerspaceID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_zonesByMakerspaceId_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ZonesByMakerspaceID(childComplexity, args["makerspace_id"].(int)), true
 
 	case "User.admin":
 		if e.ComplexityRoot.User.Admin == nil {
@@ -192,11 +236,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.User.ForceArchive(childComplexity), true
 	case "User.id":
-		if e.ComplexityRoot.User.ID == nil {
+		if e.ComplexityRoot.User.Id == nil {
 			break
 		}
 
-		return e.ComplexityRoot.User.ID(childComplexity), true
+		return e.ComplexityRoot.User.Id(childComplexity), true
 	case "User.join_date":
 		if e.ComplexityRoot.User.JoinDate == nil {
 			break
@@ -233,6 +277,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.Username(childComplexity), true
+
+	case "Zone.hidden":
+		if e.ComplexityRoot.Zone.Hidden == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Zone.Hidden(childComplexity), true
+	case "Zone.id":
+		if e.ComplexityRoot.Zone.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Zone.Id(childComplexity), true
+	case "Zone.makerspace_id":
+		if e.ComplexityRoot.Zone.MakerspaceId == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Zone.MakerspaceId(childComplexity), true
+	case "Zone.name":
+		if e.ComplexityRoot.Zone.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Zone.Name(childComplexity), true
 
 	}
 	return 0, false
@@ -300,7 +369,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema/makerspace.graphqls" "schema/user.graphqls"
+//go:embed "schema/makerspace.graphqls" "schema/user.graphqls" "schema/zones.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -314,6 +383,7 @@ func sourceData(filename string) string {
 var sources = []*ast.Source{
 	{Name: "schema/makerspace.graphqls", Input: sourceData("schema/makerspace.graphqls"), BuiltIn: false},
 	{Name: "schema/user.graphqls", Input: sourceData("schema/user.graphqls"), BuiltIn: false},
+	{Name: "schema/zones.graphqls", Input: sourceData("schema/zones.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -337,6 +407,8 @@ func (ec *executionContext) childFields_Makerspace(ctx context.Context, field gr
 		return ec.fieldContext_Makerspace_image_id(ctx, field)
 	case "hidden":
 		return ec.fieldContext_Makerspace_hidden(ctx, field)
+	case "zones":
+		return ec.fieldContext_Makerspace_zones(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Makerspace", field.Name)
 }
@@ -369,6 +441,20 @@ func (ec *executionContext) childFields_User(ctx context.Context, field graphql.
 		return ec.fieldContext_User_card_tag(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+}
+
+func (ec *executionContext) childFields_Zone(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Zone_id(ctx, field)
+	case "makerspace_id":
+		return ec.fieldContext_Zone_makerspace_id(ctx, field)
+	case "name":
+		return ec.fieldContext_Zone_name(ctx, field)
+	case "hidden":
+		return ec.fieldContext_Zone_hidden(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Zone", field.Name)
 }
 
 func (ec *executionContext) childFields___Directive(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -529,6 +615,34 @@ func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_zone_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_zonesByMakerspaceId_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "makerspace_id",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["makerspace_id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Directive_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -589,7 +703,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Makerspace_id(ctx context.Context, field graphql.CollectedField, obj *model.Makerspace) (ret graphql.Marshaler) {
+func (ec *executionContext) _Makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -598,7 +712,7 @@ func (ec *executionContext) _Makerspace_id(ctx context.Context, field graphql.Co
 			return ec.fieldContext_Makerspace_id(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
+			return obj.Id, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
@@ -612,7 +726,7 @@ func (ec *executionContext) fieldContext_Makerspace_id(_ context.Context, field 
 	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _Makerspace_name(ctx context.Context, field graphql.CollectedField, obj *model.Makerspace) (ret graphql.Marshaler) {
+func (ec *executionContext) _Makerspace_name(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -635,7 +749,7 @@ func (ec *executionContext) fieldContext_Makerspace_name(_ context.Context, fiel
 	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _Makerspace_subtitle(ctx context.Context, field graphql.CollectedField, obj *model.Makerspace) (ret graphql.Marshaler) {
+func (ec *executionContext) _Makerspace_subtitle(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -658,7 +772,7 @@ func (ec *executionContext) fieldContext_Makerspace_subtitle(_ context.Context, 
 	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _Makerspace_description(ctx context.Context, field graphql.CollectedField, obj *model.Makerspace) (ret graphql.Marshaler) {
+func (ec *executionContext) _Makerspace_description(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -681,7 +795,7 @@ func (ec *executionContext) fieldContext_Makerspace_description(_ context.Contex
 	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _Makerspace_docs_url(ctx context.Context, field graphql.CollectedField, obj *model.Makerspace) (ret graphql.Marshaler) {
+func (ec *executionContext) _Makerspace_docs_url(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -690,7 +804,7 @@ func (ec *executionContext) _Makerspace_docs_url(ctx context.Context, field grap
 			return ec.fieldContext_Makerspace_docs_url(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.DocsURL, nil
+			return obj.DocsUrl, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
@@ -704,7 +818,7 @@ func (ec *executionContext) fieldContext_Makerspace_docs_url(_ context.Context, 
 	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _Makerspace_image_id(ctx context.Context, field graphql.CollectedField, obj *model.Makerspace) (ret graphql.Marshaler) {
+func (ec *executionContext) _Makerspace_image_id(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -713,7 +827,7 @@ func (ec *executionContext) _Makerspace_image_id(ctx context.Context, field grap
 			return ec.fieldContext_Makerspace_image_id(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.ImageID, nil
+			return obj.ImageId, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *int32) graphql.Marshaler {
@@ -727,7 +841,7 @@ func (ec *executionContext) fieldContext_Makerspace_image_id(_ context.Context, 
 	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _Makerspace_hidden(ctx context.Context, field graphql.CollectedField, obj *model.Makerspace) (ret graphql.Marshaler) {
+func (ec *executionContext) _Makerspace_hidden(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -750,6 +864,38 @@ func (ec *executionContext) fieldContext_Makerspace_hidden(_ context.Context, fi
 	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _Makerspace_zones(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Makerspace_zones(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Makerspace().Zones(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.Zone) graphql.Marshaler {
+			return ec.marshalOZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Makerspace_zones(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Makerspace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Zone(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -763,8 +909,8 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 			return ec.Resolvers.Query().User(ctx, fc.Args["id"].(int))
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *model.User) graphql.Marshaler {
-			return ec.marshalNUser2ᚖmakeᚑbackendᚋinternalᚋgqlᚋmodelᚐUser(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *models.User) graphql.Marshaler {
+			return ec.marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx, selections, v)
 		},
 		true,
 		true,
@@ -807,8 +953,8 @@ func (ec *executionContext) _Query_makerspace(ctx context.Context, field graphql
 			return ec.Resolvers.Query().Makerspace(ctx, fc.Args["id"].(int))
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *model.Makerspace) graphql.Marshaler {
-			return ec.marshalOMakerspace2ᚖmakeᚑbackendᚋinternalᚋgqlᚋmodelᚐMakerspace(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *models.Makerspace) graphql.Marshaler {
+			return ec.marshalOMakerspace2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐMakerspace(ctx, selections, v)
 		},
 		true,
 		false,
@@ -832,6 +978,94 @@ func (ec *executionContext) fieldContext_Query_makerspace(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_makerspace_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_zone(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_zone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Zone(ctx, fc.Args["id"].(int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.Zone) graphql.Marshaler {
+			return ec.marshalNZone2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZone(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_zone(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Zone(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_zone_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_zonesByMakerspaceId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_zonesByMakerspaceId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().ZonesByMakerspaceID(ctx, fc.Args["makerspace_id"].(int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.Zone) graphql.Marshaler {
+			return ec.marshalOZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_zonesByMakerspaceId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Zone(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_zonesByMakerspaceId_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -914,7 +1148,7 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -923,7 +1157,7 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 			return ec.fieldContext_User_id(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
+			return obj.Id, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
@@ -937,7 +1171,7 @@ func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphq
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -960,7 +1194,7 @@ func (ec *executionContext) fieldContext_User_username(_ context.Context, field 
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _User_firstname(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_firstname(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -983,7 +1217,7 @@ func (ec *executionContext) fieldContext_User_firstname(_ context.Context, field
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _User_lastname(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_lastname(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1006,7 +1240,7 @@ func (ec *executionContext) fieldContext_User_lastname(_ context.Context, field 
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _User_pronouns(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_pronouns(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1029,7 +1263,7 @@ func (ec *executionContext) fieldContext_User_pronouns(_ context.Context, field 
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _User_join_date(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_join_date(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1052,7 +1286,7 @@ func (ec *executionContext) fieldContext_User_join_date(_ context.Context, field
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Time does not have child fields"))
 }
 
-func (ec *executionContext) _User_setup_complete(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_setup_complete(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1075,7 +1309,7 @@ func (ec *executionContext) fieldContext_User_setup_complete(_ context.Context, 
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
-func (ec *executionContext) _User_archived(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_archived(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1098,7 +1332,7 @@ func (ec *executionContext) fieldContext_User_archived(_ context.Context, field 
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
-func (ec *executionContext) _User_notes(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_notes(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1121,7 +1355,7 @@ func (ec *executionContext) fieldContext_User_notes(_ context.Context, field gra
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _User_admin(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_admin(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1144,7 +1378,7 @@ func (ec *executionContext) fieldContext_User_admin(_ context.Context, field gra
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
-func (ec *executionContext) _User_force_archive(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_force_archive(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1167,7 +1401,7 @@ func (ec *executionContext) fieldContext_User_force_archive(_ context.Context, f
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
-func (ec *executionContext) _User_card_tag(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_card_tag(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1188,6 +1422,98 @@ func (ec *executionContext) _User_card_tag(ctx context.Context, field graphql.Co
 }
 func (ec *executionContext) fieldContext_User_card_tag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Zone_id(ctx context.Context, field graphql.CollectedField, obj *models.Zone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Zone_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Zone_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Zone", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Zone_makerspace_id(ctx context.Context, field graphql.CollectedField, obj *models.Zone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Zone_makerspace_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MakerspaceId, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Zone_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Zone", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Zone_name(ctx context.Context, field graphql.CollectedField, obj *models.Zone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Zone_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Zone_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Zone", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Zone_hidden(ctx context.Context, field graphql.CollectedField, obj *models.Zone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Zone_hidden(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Hidden, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Zone_hidden(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Zone", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2259,7 +2585,7 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 var makerspaceImplementors = []string{"Makerspace"}
 
-func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSet, obj *model.Makerspace) graphql.Marshaler {
+func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSet, obj *models.Makerspace) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, makerspaceImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -2272,38 +2598,76 @@ func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSe
 		case "id":
 			out.Values[i] = ec._Makerspace_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._Makerspace_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "subtitle":
 			out.Values[i] = ec._Makerspace_subtitle(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "description":
 			out.Values[i] = ec._Makerspace_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "docs_url":
 			out.Values[i] = ec._Makerspace_docs_url(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "image_id":
 			out.Values[i] = ec._Makerspace_image_id(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "hidden":
 			out.Values[i] = ec._Makerspace_hidden(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "zones":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Makerspace_zones(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2389,6 +2753,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "zone":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_zone(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "zonesByMakerspaceId":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_zonesByMakerspaceId(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -2426,7 +2834,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 
 var userImplementors = []string{"User"}
 
-func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
+func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *models.User) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -2493,6 +2901,59 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "card_tag":
 			out.Values[i] = ec._User_card_tag(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var zoneImplementors = []string{"Zone"}
+
+func (ec *executionContext) _Zone(ctx context.Context, sel ast.SelectionSet, obj *models.Zone) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, zoneImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Zone")
+		case "id":
+			out.Values[i] = ec._Zone_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "makerspace_id":
+			out.Values[i] = ec._Zone_makerspace_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Zone_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hidden":
+			out.Values[i] = ec._Zone_hidden(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -2973,11 +3434,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNUser2makeᚑbackendᚋinternalᚋgqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖmakeᚑbackendᚋinternalᚋgqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -2985,6 +3446,20 @@ func (ec *executionContext) marshalNUser2ᚖmakeᚑbackendᚋinternalᚋgqlᚋmo
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNZone2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZone(ctx context.Context, sel ast.SelectionSet, v models.Zone) graphql.Marshaler {
+	return ec._Zone(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNZone2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZone(ctx context.Context, sel ast.SelectionSet, v *models.Zone) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Zone(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -3176,7 +3651,7 @@ func (ec *executionContext) marshalOInt2ᚖint32(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalOMakerspace2ᚖmakeᚑbackendᚋinternalᚋgqlᚋmodelᚐMakerspace(ctx context.Context, sel ast.SelectionSet, v *model.Makerspace) graphql.Marshaler {
+func (ec *executionContext) marshalOMakerspace2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐMakerspace(ctx context.Context, sel ast.SelectionSet, v *models.Makerspace) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3199,6 +3674,25 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOZone2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZoneᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Zone) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNZone2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐZone(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

@@ -1,13 +1,11 @@
 package models
 
-import "database/sql"
-
 type Makerspace struct {
 	Id          int
 	Name        string
 	Subtitle    string
 	Description string
 	DocsUrl     string
-	ImageId     sql.NullInt32
+	ImageId     *int32
 	Hidden      bool
 }

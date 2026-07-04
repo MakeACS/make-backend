@@ -7,11 +7,30 @@ package gql
 
 import (
 	"context"
-	"fmt"
-	"make-backend/internal/gql/model"
+	"make-backend/internal/database/models"
 )
 
-// Makerspace is the resolver for the makerspace field.
-func (r *queryResolver) Makerspace(ctx context.Context, id int) (*model.Makerspace, error) {
-	panic(fmt.Errorf("not implemented: Makerspace - makerspace"))
+// Zones is the resolver for the zones field.
+func (r *makerspaceResolver) Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error) {
+	zones, err := r.Store.Zones.GetZonesByMakerspaceId(ctx, obj.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return zones, err
 }
+
+// Makerspace is the resolver for the makerspace field.
+func (r *queryResolver) Makerspace(ctx context.Context, id int) (*models.Makerspace, error) {
+	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return makerspace, nil
+}
+
+// Makerspace returns MakerspaceResolver implementation.
+func (r *Resolver) Makerspace() MakerspaceResolver { return &makerspaceResolver{r} }
+
+type makerspaceResolver struct{ *Resolver }

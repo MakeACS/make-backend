@@ -8,11 +8,11 @@ package gql
 import (
 	"context"
 	"fmt"
-	"make-backend/internal/gql/model"
+	"make-backend/internal/database/models"
 )
 
 // User is the resolver for the user field.
-func (r *queryResolver) User(ctx context.Context, id int) (*model.User, error) {
+func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) {
 	panic(fmt.Errorf("not implemented: User - user"))
 }
 
