@@ -2,8 +2,12 @@ package database
 
 import (
 	"database/sql"
+	"embed"
 	"make-backend/internal/database/repos"
 )
+
+//go:embed migrations/*.sql
+var EmbedMigrations embed.FS
 
 type Store struct {
 	Users       repos.UserRepository

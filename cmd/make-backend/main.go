@@ -16,6 +16,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -40,6 +41,16 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	log.Println("Running migrations...")
+	goose.SetBaseFS(database.EmbedMigrations)
+	if err := goose.SetDialect("postgres"); err != nil {
+		log.Fatalf("Failed to set goose dialect: %s", err)
+	}
+
+	if err := goose.Up(db, "migrations"); err != nil {
+		log.Fatalf("Failed to run migrations: %s", err)
+	}
 
 	store := database.NewStore(db)
 
