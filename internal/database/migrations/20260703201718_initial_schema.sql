@@ -1,11 +1,11 @@
 -- +goose Up
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
+    first_name TEXT NOT NULL DEFAULT '',
+    last_name TEXT NOT NULL DEFAULT '',
     username TEXT NOT NULL UNIQUE,
     pronouns TEXT NOT NULL DEFAULT '',
-    join_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    join_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     setup_complete BOOLEAN NOT NULL DEFAULT FALSE,
     archived BOOLEAN NOT NULL DEFAULT FALSE,
     notes TEXT NOT NULL DEFAULT '',
