@@ -83,3 +83,59 @@ func (r *MakerspaceRepo) AddStaff(ctx context.Context, makerspace_id int, user_i
 
 	return nil
 }
+
+func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]*models.User, error) {
+	query := `SELECT
+		users.id
+		users.username
+		users.firstname
+		users.lastname
+		users.pronouns
+		users.join_date
+		users.setup_complete
+		users.archived
+		users.notes
+		users.admin
+		users.force_archive
+		users.card_tag
+		FROM users JOIN managers ON users.id = managers.user_id
+		WHERE managers.makerspace_id = $1
+	`
+
+	rows, err := r.DB.QueryContext(ctx, query, makerspace_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*models.User
+	for rows.Next() {
+		var user models.User
+
+		err := rows.Scan(
+			&user.Id,
+			&user.Username,
+			&user.Firstname,
+			&user.Lastname,
+			&user.Pronouns,
+			&user.JoinDate,
+			&user.SetupComplete,
+			&user.Archived,
+			&user.Notes,
+			&user.Admin,
+			&user.ForceArchive,
+			&user.CardTag,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, &user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
