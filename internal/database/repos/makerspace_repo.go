@@ -101,17 +101,17 @@ func (r *MakerspaceRepo) AddStaff(ctx context.Context, makerspace_id int, user_i
 
 func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]*models.User, error) {
 	query := `SELECT
-		users.id
-		users.username
-		users.firstname
-		users.lastname
-		users.pronouns
-		users.join_date
-		users.setup_complete
-		users.archived
-		users.notes
-		users.admin
-		users.force_archive
+		users.id,
+		users.username,
+		users.firstname,
+		users.lastname,
+		users.pronouns,
+		users.join_date,
+		users.setup_complete,
+		users.archived,
+		users.notes,
+		users.admin,
+		users.force_archive,
 		users.card_tag
 		FROM users JOIN managers ON users.id = managers.user_id
 		WHERE managers.makerspace_id = $1
