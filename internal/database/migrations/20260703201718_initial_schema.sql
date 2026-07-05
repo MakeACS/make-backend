@@ -37,6 +37,7 @@ CREATE TABLE makerspaces (
     docs_url TEXT NOT NULL DEFAULT '',
     image_id INT REFERENCES images(id) ON DELETE SET NULL,
     hidden BOOLEAN NOT NULL
+    timezone TEXT NOT NULL DEFAULT 'America/New_York'
 );
 
 CREATE TABLE restrictions (

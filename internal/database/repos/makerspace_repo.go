@@ -28,7 +28,8 @@ func (r *MakerspaceRepo) GetMakerspaceById(ctx context.Context, id int) (*models
 		description,
 		docs_url,
 		image_id,
-		hidden
+		hidden,
+		timezone
 		FROM makerspaces where makerspaces.id = $1
 	`
 
@@ -40,6 +41,7 @@ func (r *MakerspaceRepo) GetMakerspaceById(ctx context.Context, id int) (*models
 		&makerspace_result.DocsUrl,
 		&makerspace_result.ImageId,
 		&makerspace_result.Hidden,
+		&makerspace_result.Timezone,
 	)
 
 	if err != nil {

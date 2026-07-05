@@ -171,6 +171,7 @@ type ComplexityRoot struct {
 		ImageId     func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Subtitle    func(childComplexity int) int
+		Timezone    func(childComplexity int) int
 		Zones       func(childComplexity int) int
 	}
 
@@ -836,6 +837,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Makerspace.Subtitle(childComplexity), true
+	case "Makerspace.timezone":
+		if e.ComplexityRoot.Makerspace.Timezone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Makerspace.Timezone(childComplexity), true
 	case "Makerspace.zones":
 		if e.ComplexityRoot.Makerspace.Zones == nil {
 			break
@@ -1435,6 +1442,8 @@ func (ec *executionContext) childFields_Makerspace(ctx context.Context, field gr
 		return ec.fieldContext_Makerspace_image_id(ctx, field)
 	case "hidden":
 		return ec.fieldContext_Makerspace_hidden(ctx, field)
+	case "timezone":
+		return ec.fieldContext_Makerspace_timezone(ctx, field)
 	case "zones":
 		return ec.fieldContext_Makerspace_zones(ctx, field)
 	}
@@ -3693,6 +3702,29 @@ func (ec *executionContext) _Makerspace_hidden(ctx context.Context, field graphq
 }
 func (ec *executionContext) fieldContext_Makerspace_hidden(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Makerspace_timezone(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Makerspace_timezone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Timezone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Makerspace_timezone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Makerspace", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Makerspace_zones(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
@@ -7512,6 +7544,11 @@ func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSe
 			}
 		case "hidden":
 			out.Values[i] = ec._Makerspace_hidden(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "timezone":
+			out.Values[i] = ec._Makerspace_timezone(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

@@ -8,4 +8,5 @@ type Makerspace struct {
 	DocsUrl     string
 	ImageId     *int32
 	Hidden      bool
+	Timezone    string
 }
