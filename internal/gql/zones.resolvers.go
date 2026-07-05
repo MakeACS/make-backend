@@ -13,7 +13,12 @@ import (
 
 // Zone is the resolver for the zone field.
 func (r *queryResolver) Zone(ctx context.Context, id int) (*models.Zone, error) {
-	panic(fmt.Errorf("not implemented: Zone - zone"))
+	zone, err := r.Store.Zones.GetZoneById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return zone, nil
 }
 
 // ZonesByMakerspaceID is the resolver for the zonesByMakerspaceId field.
