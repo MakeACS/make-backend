@@ -17,4 +17,5 @@ type Query {
 
 type Mutation {
     createMakerspace(name: String!, hidden: Boolean!): ID!
+    deleteMakerspace(id: ID!): Boolean!
 }

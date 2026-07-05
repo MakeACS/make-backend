@@ -10,6 +10,7 @@ import (
 type MakerspaceRepository interface {
 	GetMakerspaceById(ctx context.Context, id int) (*models.Makerspace, error)
 	CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error)
+	DeleteMakerspace(ctx context.Context, id int) (bool, error)
 	AddManager(ctx context.Context, makerspace_id int, user_id int) error
 	AddStaff(ctx context.Context, makerspace_id int, user_id int) error
 }
@@ -62,6 +63,17 @@ func (r *MakerspaceRepo) CreateMakerspace(ctx context.Context, name string, hidd
 	}
 
 	return id_result, nil
+}
+
+func (r *MakerspaceRepo) DeleteMakerspace(ctx context.Context, id int) (bool, error) {
+	query := `DELETE FROM makerspaces WHERE id = $1`
+
+	_, err := r.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *MakerspaceRepo) AddManager(ctx context.Context, makerspace_id int, user_id int) error {

@@ -30,6 +30,16 @@ func (r *mutationResolver) CreateMakerspace(ctx context.Context, name string, hi
 	return id, nil
 }
 
+// DeleteMakerspace is the resolver for the deleteMakerspace field.
+func (r *mutationResolver) DeleteMakerspace(ctx context.Context, id int) (bool, error) {
+	success, err := r.Store.Makerspaces.DeleteMakerspace(ctx, id)
+	if err != nil {
+		return success, err
+	}
+
+	return success, err
+}
+
 // Makerspace is the resolver for the makerspace field.
 func (r *queryResolver) Makerspace(ctx context.Context, id int) (*models.Makerspace, error) {
 	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, id)
