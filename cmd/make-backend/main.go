@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"make-backend/internal/database"
 	"make-backend/internal/gql"
@@ -25,14 +23,9 @@ func main() {
 		log.Fatal("No PORT env found")
 	}
 
-	db_user, db_pass, db_host, db_port, db_name := os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME")
-
-	db_url := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", db_user, db_pass, db_host, db_port, db_name)
-
-	// setup postgresql connection pool
-	db, err := sql.Open("postgres", db_url)
+	db, err := database.SetupDB()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to setup DB: %s", err)
 	}
 	defer db.Close()
 
