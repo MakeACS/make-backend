@@ -14,18 +14,12 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Failed to load .env: %s", err)
-	}
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("No PORT env found")
