@@ -11,6 +11,10 @@ type Makerspace {
     zones: [Zone!]!
 }
 
-extend type Query {
+type Query {
     makerspace(id: ID!): Makerspace
+}
+
+type Mutation {
+    createMakerspace(name: String!, hidden: Boolean!): ID!
 }

@@ -20,6 +20,16 @@ func (r *makerspaceResolver) Zones(ctx context.Context, obj *models.Makerspace) 
 	return zones, err
 }
 
+// CreateMakerspace is the resolver for the createMakerspace field.
+func (r *mutationResolver) CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error) {
+	id, err := r.Store.Makerspaces.CreateMakerspace(ctx, name, hidden)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
 // Makerspace is the resolver for the makerspace field.
 func (r *queryResolver) Makerspace(ctx context.Context, id int) (*models.Makerspace, error) {
 	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, id)
@@ -33,4 +43,14 @@ func (r *queryResolver) Makerspace(ctx context.Context, id int) (*models.Makersp
 // Makerspace returns MakerspaceResolver implementation.
 func (r *Resolver) Makerspace() MakerspaceResolver { return &makerspaceResolver{r} }
 
-type makerspaceResolver struct{ *Resolver }
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+type (
+	makerspaceResolver struct{ *Resolver }
+	mutationResolver   struct{ *Resolver }
+	queryResolver      struct{ *Resolver }
+)
