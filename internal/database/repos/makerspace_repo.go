@@ -8,6 +8,7 @@ import (
 
 type MakerspaceRepository interface {
 	GetMakerspaceById(ctx context.Context, id int) (*models.Makerspace, error)
+	CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error)
 }
 
 type MakerspaceRepo struct {
@@ -43,4 +44,17 @@ func (r *MakerspaceRepo) GetMakerspaceById(ctx context.Context, id int) (*models
 	}
 
 	return &makerspace_result, nil
+}
+
+func (r *MakerspaceRepo) CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error) {
+	var id_result int
+
+	query := `INSERT INTO makerspaces (name, hidden) VALUES ($1, $2) RETURNING id`
+
+	err := r.DB.QueryRowContext(ctx, query, name, hidden).Scan(&id_result)
+	if err != nil {
+		return 0, err
+	}
+
+	return id_result, nil
 }
