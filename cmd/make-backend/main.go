@@ -22,7 +22,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Failed to load .env: %s", err)
+		log.Fatalf("Failed to load .env: %w", err)
 	}
 
 	port := os.Getenv("PORT")

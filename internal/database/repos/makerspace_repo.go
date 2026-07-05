@@ -3,12 +3,14 @@ package repos
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"make-backend/internal/database/models"
 )
 
 type MakerspaceRepository interface {
 	GetMakerspaceById(ctx context.Context, id int) (*models.Makerspace, error)
 	CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error)
+	AddManager(ctx context.Context, makerspace_id int, user_id int) error
 }
 
 type MakerspaceRepo struct {
@@ -57,4 +59,16 @@ func (r *MakerspaceRepo) CreateMakerspace(ctx context.Context, name string, hidd
 	}
 
 	return id_result, nil
+}
+
+func (r *MakerspaceRepo) AddManager(ctx context.Context, makerspace_id int, user_id int) error {
+
+	query := `INSERT INTO managers (makerspace_id, user_id) VALUES ($1, $2)`
+
+	_, err := r.DB.ExecContext(ctx, query, makerspace_id, user_id)
+	if err != nil {
+		return fmt.Errorf("Failed to insert manager (makerspace %d, user: %d): %w", makerspace_id, user_id, err)
+	}
+
+	return nil
 }
