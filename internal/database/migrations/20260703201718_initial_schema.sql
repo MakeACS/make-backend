@@ -3,6 +3,7 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    username TEXT NOT NULL UNIQUE,
     pronouns TEXT NOT NULL DEFAULT '',
     join_date TIMESTAMP WITH TIME ZONE NOT NULL,
     setup_complete BOOLEAN NOT NULL DEFAULT FALSE,
