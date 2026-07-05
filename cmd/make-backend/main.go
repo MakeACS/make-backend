@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"make-backend/internal/auth"
 	"make-backend/internal/database"
 	"make-backend/internal/gql"
 	"net/http"
@@ -23,12 +24,14 @@ func main() {
 		log.Fatal("No PORT env found")
 	}
 
+	// Database
 	db, err := database.SetupDB()
 	if err != nil {
 		log.Fatalf("Failed to setup DB: %s", err)
 	}
 	defer db.Close()
 
+	// Migrations
 	log.Println("Running migrations...")
 	goose.SetBaseFS(database.EmbedMigrations)
 	if err := goose.SetDialect("postgres"); err != nil {
@@ -39,8 +42,11 @@ func main() {
 		log.Fatalf("Failed to run migrations: %s", err)
 	}
 
-	store := database.NewStore(db)
+	// Sessions
+	sessionManager := auth.SetupSessionManager(db)
 
+	// GraphQL
+	store := database.NewStore(db)
 	srv := handler.New(gql.NewExecutableSchema(gql.Config{Resolvers: &gql.Resolver{Store: store}}))
 
 	srv.AddTransport(transport.Options{})
@@ -54,7 +60,7 @@ func main() {
 		Cache: lru.New[string](100),
 	})
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
