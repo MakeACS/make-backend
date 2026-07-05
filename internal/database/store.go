@@ -9,6 +9,7 @@ type Store struct {
 	Users       repos.UserRepository
 	Makerspaces repos.MakerspaceRepository
 	Zones       repos.ZoneRepository
+	Equipment   repos.EquipmentRepository
 }
 
 func NewStore(db *sql.DB) *Store {
@@ -16,5 +17,6 @@ func NewStore(db *sql.DB) *Store {
 		Users:       &repos.UserRepo{DB: db},
 		Makerspaces: &repos.MakerspaceRepo{DB: db},
 		Zones:       &repos.ZoneRepo{DB: db},
+		Equipment:   &repos.EquipmentRepo{DB: db},
 	}
 }
