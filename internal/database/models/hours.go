@@ -2,6 +2,10 @@ package models
 
 import "time"
 
+type MakerspaceHours interface {
+	IsMakerspaceHours()
+}
+
 type DefaultHours struct {
 	MakerspaceId int
 	DayOfWeek    int
@@ -10,6 +14,8 @@ type DefaultHours struct {
 	Closed       bool
 }
 
+func (DefaultHours) IsMakerspaceHours() {}
+
 type SpecialHours struct {
 	MakerspaceId int
 	SpecialDate  time.Time
@@ -17,3 +23,5 @@ type SpecialHours struct {
 	CloseTime    *time.Time
 	Closed       bool
 }
+
+func (SpecialHours) IsMakerspaceHours() {}

@@ -1,4 +1,6 @@
 
+union MakerspaceHours = DefaultHours | SpecialHours
+
 type Makerspace {
     id: ID!
     name: String!
@@ -9,6 +11,7 @@ type Makerspace {
     hidden: Boolean!
     timezone: String!
     zones: [Zone!]!
+    hours: [MakerspaceHours!]!
 }
 
 type Query {

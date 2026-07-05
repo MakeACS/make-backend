@@ -168,6 +168,7 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		DocsUrl     func(childComplexity int) int
 		Hidden      func(childComplexity int) int
+		Hours       func(childComplexity int) int
 		Id          func(childComplexity int) int
 		ImageId     func(childComplexity int) int
 		Name        func(childComplexity int) int
@@ -298,6 +299,7 @@ type AccessComponentResolver interface {
 }
 type MakerspaceResolver interface {
 	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
+	Hours(ctx context.Context, obj *models.Makerspace) ([]models.MakerspaceHours, error)
 }
 type MutationResolver interface {
 	CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error)
@@ -823,6 +825,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Makerspace.Hidden(childComplexity), true
+	case "Makerspace.hours":
+		if e.ComplexityRoot.Makerspace.Hours == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Makerspace.Hours(childComplexity), true
 	case "Makerspace.id":
 		if e.ComplexityRoot.Makerspace.Id == nil {
 			break
@@ -1494,6 +1502,8 @@ func (ec *executionContext) childFields_Makerspace(ctx context.Context, field gr
 		return ec.fieldContext_Makerspace_timezone(ctx, field)
 	case "zones":
 		return ec.fieldContext_Makerspace_zones(ctx, field)
+	case "hours":
+		return ec.fieldContext_Makerspace_hours(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Makerspace", field.Name)
 }
@@ -3841,6 +3851,29 @@ func (ec *executionContext) fieldContext_Makerspace_zones(_ context.Context, fie
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _Makerspace_hours(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Makerspace_hours(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Makerspace().Hours(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []models.MakerspaceHours) graphql.Marshaler {
+			return ec.marshalNMakerspaceHours2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐMakerspaceHoursᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Makerspace_hours(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Makerspace", field, true, true, errors.New("field of type MakerspaceHours does not have child fields"))
 }
 
 func (ec *executionContext) _Mutation_createMakerspace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6727,6 +6760,33 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    ************************** interface.gotpl ***************************
 
+func (ec *executionContext) _MakerspaceHours(ctx context.Context, sel ast.SelectionSet, obj models.MakerspaceHours) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case models.SpecialHours:
+		return ec._SpecialHours(ctx, sel, &obj)
+	case *models.SpecialHours:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SpecialHours(ctx, sel, obj)
+	case models.DefaultHours:
+		return ec._DefaultHours(ctx, sel, &obj)
+	case *models.DefaultHours:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DefaultHours(ctx, sel, obj)
+	default:
+		if typedObj, ok := obj.(graphql.Marshaler); ok {
+			return typedObj
+		} else {
+			panic(fmt.Errorf("unexpected type %T; non-generated variants of MakerspaceHours must implement graphql.Marshaler", obj))
+		}
+	}
+}
+
 func (ec *executionContext) _TrainingBlock(ctx context.Context, sel ast.SelectionSet, obj models.TrainingBlock) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -7168,7 +7228,7 @@ func (ec *executionContext) _CustomLink(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var defaultHoursImplementors = []string{"DefaultHours"}
+var defaultHoursImplementors = []string{"DefaultHours", "MakerspaceHours"}
 
 func (ec *executionContext) _DefaultHours(ctx context.Context, sel ast.SelectionSet, obj *models.DefaultHours) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, defaultHoursImplementors)
@@ -7734,6 +7794,44 @@ func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSe
 					}
 				}()
 				res = ec._Makerspace_zones(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "hours":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Makerspace_hours(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -8372,7 +8470,7 @@ func (ec *executionContext) _ShortAnswerBlock(ctx context.Context, sel ast.Selec
 	return out
 }
 
-var specialHoursImplementors = []string{"SpecialHours"}
+var specialHoursImplementors = []string{"SpecialHours", "MakerspaceHours"}
 
 func (ec *executionContext) _SpecialHours(ctx context.Context, sel ast.SelectionSet, obj *models.SpecialHours) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, specialHoursImplementors)
@@ -9241,6 +9339,32 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNMakerspaceHours2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐMakerspaceHours(ctx context.Context, sel ast.SelectionSet, v models.MakerspaceHours) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MakerspaceHours(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMakerspaceHours2ᚕmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐMakerspaceHoursᚄ(ctx context.Context, sel ast.SelectionSet, v []models.MakerspaceHours) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMakerspaceHours2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐMakerspaceHours(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNOptionBlockOption2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐOptionBlockOption(ctx context.Context, sel ast.SelectionSet, v models.OptionBlockOption) graphql.Marshaler {

@@ -20,6 +20,21 @@ func (r *makerspaceResolver) Zones(ctx context.Context, obj *models.Makerspace) 
 	return zones, err
 }
 
+// Hours is the resolver for the hours field.
+func (r *makerspaceResolver) Hours(ctx context.Context, obj *models.Makerspace) ([]models.MakerspaceHours, error) {
+	default_hours, err := r.Store.Makerspaces.GetDefaultHours(ctx, obj.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	hours := make([]models.MakerspaceHours, len(default_hours))
+	for i, h := range default_hours {
+		hours[i] = h
+	}
+
+	return hours, nil
+}
+
 // CreateMakerspace is the resolver for the createMakerspace field.
 func (r *mutationResolver) CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error) {
 	id, err := r.Store.Makerspaces.CreateMakerspace(ctx, name, hidden)

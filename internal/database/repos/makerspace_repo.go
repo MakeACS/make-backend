@@ -13,6 +13,7 @@ type MakerspaceRepository interface {
 	DeleteMakerspace(ctx context.Context, id int) (bool, error)
 	AddManager(ctx context.Context, makerspace_id int, user_id int) error
 	AddStaff(ctx context.Context, makerspace_id int, user_id int) error
+	GetDefaultHours(ctx context.Context, makerspace_id int) ([]*models.DefaultHours, error)
 }
 
 type MakerspaceRepo struct {
@@ -152,4 +153,47 @@ func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]
 	}
 
 	return users, nil
+}
+
+func (r *MakerspaceRepo) GetDefaultHours(ctx context.Context, makerspace_id int) ([]*models.DefaultHours, error) {
+	query := `SELECT
+		makerspace_id,
+		day_of_week,
+		open_time,
+		close_time,
+		closed
+		FROM default_hours WHERE makerspace_id = $1 ORDER BY day_of_week ASC
+	`
+
+	rows, err := r.DB.QueryContext(ctx, query, makerspace_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var default_hours []*models.DefaultHours
+	for rows.Next() {
+		var default_hour models.DefaultHours
+
+		err := rows.Scan(
+			&default_hour.MakerspaceId,
+			&default_hour.DayOfWeek,
+			&default_hour.OpenTime,
+			&default_hour.CloseTime,
+			&default_hour.Closed,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		default_hours = append(default_hours, &default_hour)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return default_hours, nil
+
 }

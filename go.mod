@@ -4,7 +4,6 @@ go 1.26.4
 
 require (
 	github.com/99designs/gqlgen v0.17.93
-	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.12.3
 	github.com/pressly/goose/v3 v3.27.2
 	github.com/vektah/gqlparser/v2 v2.5.35
