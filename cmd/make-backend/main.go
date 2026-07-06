@@ -42,11 +42,12 @@ func main() {
 		log.Fatalf("Failed to run migrations: %s", err)
 	}
 
-	// Sessions
-	sessionManager := auth.SetupSessionManager(db)
+	store := database.NewStore(db)
+
+	// Auth
+	samlMiddleware := auth.SetupSamlSP(store)
 
 	// GraphQL
-	store := database.NewStore(db)
 	srv := handler.New(gql.NewExecutableSchema(gql.Config{Resolvers: &gql.Resolver{Store: store}}))
 
 	srv.AddTransport(transport.Options{})
