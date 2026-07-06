@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"make-backend/internal/auth"
 	"make-backend/internal/database"
 	"make-backend/internal/gql"
@@ -18,6 +19,16 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/vektah/gqlparser/v2/ast"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	programLevel := &slog.LevelVar{} // Defaults to Info level
+	opts := &slog.HandlerOptions{Level: programLevel}
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, opts)))
+	programLevel.Set(slog.LevelDebug)
+
+}
 
 func main() {
 	err := godotenv.Load()

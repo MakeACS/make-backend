@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -19,6 +20,7 @@ func AuthContextMiddleware(next http.Handler) http.Handler {
 		session := samlsp.SessionFromContext(r.Context())
 		if session == nil {
 			http.Error(w, "Unauthorized: No active session", http.StatusUnauthorized)
+			slog.Error("Unauthorized: No active session")
 			return
 		}
 
@@ -27,6 +29,7 @@ func AuthContextMiddleware(next http.Handler) http.Handler {
 		user_id, err := strconv.Atoi(claims.Attributes.Get("make_user_id"))
 		if err != nil {
 			http.Error(w, "Internal Server Error: Invalid user ID", http.StatusInternalServerError)
+			slog.Error("Invalid User ID", "err", err)
 			return
 		}
 
