@@ -22,8 +22,8 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int) (*models.User, error
 	query := `SELECT
 		id,
 		username,
-		firstname,
-		lastname,
+		first_name,
+		last_name,
 		pronouns,
 		join_date,
 		setup_complete,
@@ -62,8 +62,8 @@ func (r *UserRepo) GetUserByUsername(ctx context.Context, username string) (*mod
 	query := `SELECT
 		id,
 		username,
-		firstname,
-		lastname,
+		first_name,
+		last_name,
 		pronouns,
 		join_date,
 		setup_complete,
