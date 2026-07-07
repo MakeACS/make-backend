@@ -44,8 +44,11 @@ func main() {
 
 	store := database.NewStore(db)
 
+	// Sessions
+	sessionManager := auth.SetupSessions(db)
+
 	// Auth
-	samlMiddleware := auth.SetupSamlSP(store)
+	samlMiddleware := auth.SetupSamlSP(store, sessionManager)
 
 	// GraphQL
 	srv := handler.New(gql.NewExecutableSchema(gql.Config{Resolvers: &gql.Resolver{Store: store}}))
@@ -63,12 +66,10 @@ func main() {
 
 	http.Handle("/saml/", samlMiddleware)
 
-	protectedQueryHandler := samlMiddleware.RequireAccount(
-		auth.AuthContextMiddleware(srv),
-	)
+	protectedRoute := sessionManager.LoadAndSave(auth.AuthContextMiddleware(srv, sessionManager))
 
 	http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", protectedQueryHandler)
+	http.Handle("/query", protectedRoute)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

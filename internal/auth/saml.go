@@ -9,13 +9,13 @@ import (
 	"make-backend/internal/database"
 	"net/http"
 	"net/url"
-	"strconv"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 )
 
-func SetupSamlSP(store *database.Store) *samlsp.Middleware {
+func SetupSamlSP(store *database.Store, sessionManager *scs.SessionManager) *samlsp.Middleware {
 	keyPair, err := tls.LoadX509KeyPair("", "")
 	if err != nil {
 		log.Fatalf("Failed to load SAML keypair: %s", err)
@@ -51,51 +51,42 @@ func SetupSamlSP(store *database.Store) *samlsp.Middleware {
 		log.Fatalf("Failed to create samlSP: %s", err)
 	}
 
-	samlSP.Session = CustomSessionProvider{
-		CookieSessionProvider: samlSP.Session.(samlsp.CookieSessionProvider),
-		Store:                 store,
+	samlSP.Session = SCSSessionProvider{
+		SessionManager: sessionManager,
+		Store:          store,
 	}
 
 	return samlSP
 }
 
-type CustomSessionProvider struct {
-	CookieSessionProvider samlsp.CookieSessionProvider
-	Store                 *database.Store
+type SCSSessionProvider struct {
+	SessionManager *scs.SessionManager
+	Store          *database.Store
 }
 
-func (c CustomSessionProvider) CreateSession(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion) error {
-	username := "TODO" // assertion.ID
+func (p SCSSessionProvider) CreateSession(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion) error {
+	username := "placeholder" // TODO get username from assertion
 
-	user, err := c.Store.Users.GetUserByUsername(r.Context(), username)
+	user, err := p.Store.Users.GetUserByUsername(r.Context(), username)
 	if err != nil {
 		return err
 	}
 
-	user_id := strconv.Itoa(user.Id)
+	p.SessionManager.Put(r.Context(), "user_id", user.Id)
 
-	customAttribute := saml.Attribute{
-		Name:   "make_user_id",
-		Values: []saml.AttributeValue{{Value: user_id}},
-	}
-
-	if len(assertion.AttributeStatements) > 0 {
-		assertion.AttributeStatements[0].Attributes = append(assertion.AttributeStatements[0].Attributes, customAttribute)
-	} else {
-		assertion.AttributeStatements = []saml.AttributeStatement{
-			{
-				Attributes: []saml.Attribute{customAttribute},
-			},
-		}
-	}
-
-	return c.CookieSessionProvider.CreateSession(w, r, assertion)
+	return nil
 }
 
-func (c CustomSessionProvider) GetSession(r *http.Request) (samlsp.Session, error) {
-	return c.CookieSessionProvider.GetSession(r)
+func (p SCSSessionProvider) DeleteSession(w http.ResponseWriter, r *http.Request) error {
+	return p.SessionManager.Destroy(r.Context())
 }
 
-func (c CustomSessionProvider) DeleteSession(w http.ResponseWriter, r *http.Request) error {
-	return c.CookieSessionProvider.DeleteSession(w, r)
+type dummysession struct{}
+
+func (p SCSSessionProvider) GetSession(r *http.Request) (samlsp.Session, error) {
+	if p.SessionManager.Exists(r.Context(), "user_id") {
+		return dummysession{}, nil
+	}
+
+	return nil, samlsp.ErrNoSession
 }
