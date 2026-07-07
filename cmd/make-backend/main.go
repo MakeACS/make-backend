@@ -5,6 +5,7 @@ import (
 	"make-backend/internal/auth"
 	"make-backend/internal/database"
 	"make-backend/internal/gql"
+	"make-backend/internal/gql/directives"
 	"make-backend/internal/gql/resolvers"
 	"net/http"
 	"os"
@@ -52,7 +53,9 @@ func main() {
 	samlMiddleware := auth.SetupSamlSP(store, sessionManager)
 
 	// GraphQL
-	srv := handler.New(gql.NewExecutableSchema(gql.Config{Resolvers: &resolvers.Resolver{Store: store}}))
+	graphqlConfig := gql.Config{Resolvers: &resolvers.Resolver{Store: store}}
+	directives.SetupDirectives(&graphqlConfig, store)
+	srv := handler.New(gql.NewExecutableSchema(graphqlConfig))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
