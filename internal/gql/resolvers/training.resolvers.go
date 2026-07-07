@@ -1,4 +1,4 @@
-package gql
+package resolvers
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"make-backend/internal/database/models"
+	"make-backend/internal/gql"
 )
 
 // Correct is the resolver for the correct field.
@@ -21,13 +22,13 @@ func (r *trainingResolver) Blocks(ctx context.Context, obj *models.Training) ([]
 	return []models.TrainingBlock(obj.Blocks), nil
 }
 
-// OptionBlockOption returns OptionBlockOptionResolver implementation.
-func (r *Resolver) OptionBlockOption() OptionBlockOptionResolver {
+// OptionBlockOption returns gql.OptionBlockOptionResolver implementation.
+func (r *Resolver) OptionBlockOption() gql.OptionBlockOptionResolver {
 	return &optionBlockOptionResolver{r}
 }
 
-// Training returns TrainingResolver implementation.
-func (r *Resolver) Training() TrainingResolver { return &trainingResolver{r} }
+// Training returns gql.TrainingResolver implementation.
+func (r *Resolver) Training() gql.TrainingResolver { return &trainingResolver{r} }
 
 type (
 	optionBlockOptionResolver struct{ *Resolver }

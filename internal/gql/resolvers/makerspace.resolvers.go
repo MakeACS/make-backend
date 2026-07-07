@@ -1,4 +1,4 @@
-package gql
+package resolvers
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -8,6 +8,7 @@ package gql
 import (
 	"context"
 	"make-backend/internal/database/models"
+	"make-backend/internal/gql"
 )
 
 // Zones is the resolver for the zones field.
@@ -65,14 +66,14 @@ func (r *queryResolver) Makerspace(ctx context.Context, id int) (*models.Makersp
 	return makerspace, nil
 }
 
-// Makerspace returns MakerspaceResolver implementation.
-func (r *Resolver) Makerspace() MakerspaceResolver { return &makerspaceResolver{r} }
+// Makerspace returns gql.MakerspaceResolver implementation.
+func (r *Resolver) Makerspace() gql.MakerspaceResolver { return &makerspaceResolver{r} }
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+// Mutation returns gql.MutationResolver implementation.
+func (r *Resolver) Mutation() gql.MutationResolver { return &mutationResolver{r} }
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+// Query returns gql.QueryResolver implementation.
+func (r *Resolver) Query() gql.QueryResolver { return &queryResolver{r} }
 
 type (
 	makerspaceResolver struct{ *Resolver }

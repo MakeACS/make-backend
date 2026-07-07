@@ -6,7 +6,7 @@ type Device {
     hardware: String
     firmware: String
     target_firmware: String
-    key_cycle: Int!
+    key_cycle: Int! @isAdmin
     makerspace_id: ID!
 }
 

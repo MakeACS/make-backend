@@ -1,4 +1,4 @@
-package gql
+package resolvers
 
 // This file will be automatically regenerated based on the schema, any resolver
 // implementations
@@ -8,6 +8,7 @@ package gql
 import (
 	"context"
 	"make-backend/internal/database/models"
+	"make-backend/internal/gql"
 )
 
 // Type is the resolver for the type field.
@@ -15,7 +16,7 @@ func (r *accessComponentResolver) Type(ctx context.Context, obj *models.AccessCo
 	return int(obj.Type), nil
 }
 
-// AccessComponent returns AccessComponentResolver implementation.
-func (r *Resolver) AccessComponent() AccessComponentResolver { return &accessComponentResolver{r} }
+// AccessComponent returns gql.AccessComponentResolver implementation.
+func (r *Resolver) AccessComponent() gql.AccessComponentResolver { return &accessComponentResolver{r} }
 
 type accessComponentResolver struct{ *Resolver }
