@@ -13,12 +13,8 @@ func AuthContextMiddleware(next http.Handler, sessionManager *scs.SessionManager
 		userId := sessionManager.GetInt(r.Context(), "user_id")
 
 		if userId > 0 {
-
 			ctx := context.WithValue(r.Context(), "user_id", userId)
 			r = r.WithContext(ctx)
-		} else {
-			http.Error(w, "Unathorized: No valid session found", http.StatusUnauthorized)
-			return
 		}
 
 		next.ServeHTTP(w, r)
