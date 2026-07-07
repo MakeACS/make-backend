@@ -66,10 +66,10 @@ func main() {
 
 	http.Handle("/saml/", samlMiddleware)
 
-	protectedRoute := sessionManager.LoadAndSave(auth.AuthContextMiddleware(srv, sessionManager))
+	protectedQueryHandler := sessionManager.LoadAndSave(auth.AuthContextMiddleware(srv, sessionManager))
 
 	http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", protectedRoute)
+	http.Handle("/query", protectedQueryHandler)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
