@@ -11,7 +11,8 @@ CREATE TABLE users (
     notes TEXT NOT NULL DEFAULT '',
     admin BOOLEAN NOT NULL DEFAULT FALSE,
     force_archive BOOLEAN,
-    card_tag TEXT NOT NULL DEFAULT ''
+    card_tag TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE holds (
