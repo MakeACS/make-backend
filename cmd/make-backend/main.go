@@ -7,6 +7,9 @@ import (
 	"make-backend/internal/auth"
 	"make-backend/internal/database"
 	"make-backend/internal/gql"
+
+	acsmqtt "make-backend/internal/api/acs-mqtt"
+	acsrest "make-backend/internal/api/acs-rest"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -22,12 +25,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/pressly/goose/v3"
 	"github.com/vektah/gqlparser/v2/ast"
-
-	mqtt "github.com/mochi-mqtt/server/v2"
-	mqttauth "github.com/mochi-mqtt/server/v2/hooks/auth"
-	"github.com/mochi-mqtt/server/v2/listeners"
 )
 
 func init() {
@@ -69,22 +67,11 @@ func main() {
 	}
 	defer db.Close()
 
-	// Migrations
-	log.Println("Running migrations...")
-	goose.SetBaseFS(database.EmbedMigrations)
-	if err := goose.SetDialect("postgres"); err != nil {
-		log.Fatalf("Failed to set goose dialect: %s", err)
-	}
-
-	if err := goose.Up(db, "migrations"); err != nil {
-		log.Fatalf("Failed to run migrations: %s", err)
-	}
-
 	store := database.NewStore(db)
 
 	httpServer := startHttp(store, httpPort)
-	mqttServer := mqttSetup(mqttPort)
-	reverseProxy := rproxySetup(port, httpPort, mqttPort)
+	mqttServer := acsmqtt.StartMqtt(mqttPort)
+	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
 
 	<-done
 	slog.Warn("caught signal, stopping...")
@@ -96,7 +83,7 @@ func main() {
 
 }
 
-func rproxySetup(port string, httpPort, mqttPort int) *http.Server {
+func StartReverseProxy(port string, httpPort, mqttPort int) *http.Server {
 	targetHttp, _ := url.Parse(fmt.Sprintf("http://localhost:%d", httpPort))
 	targetMqtt, _ := url.Parse(fmt.Sprintf("http://localhost:%d", mqttPort))
 
@@ -155,6 +142,8 @@ func startHttp(store *database.Store, port int) *http.Server {
 
 	log.Printf("connect to http://localhost:%d/ for GraphQL playground", port)
 
+	acsrest.RegisterHandlers(mux)
+
 	server := &http.Server{
 		Addr:     fmt.Sprintf(":%d", port),
 		Handler:  mux,
@@ -164,28 +153,5 @@ func startHttp(store *database.Store, port int) *http.Server {
 		log.Fatal(server.ListenAndServe())
 	}()
 
-	return server
-}
-
-func mqttSetup(port int) *mqtt.Server {
-	wsCfg := listeners.Config{
-		Type:    listeners.TypeWS,
-		ID:      "std-listener",
-		Address: fmt.Sprintf(":%v", port)}
-
-	server := mqtt.New(&mqtt.Options{
-		Logger: slog.Default().With("server", "mqtt"),
-	})
-
-	_ = server.AddHook(new(mqttauth.AllowHook), nil)
-
-	wsListener := listeners.NewWebsocket(wsCfg)
-
-	err := server.AddListener(wsListener)
-	if err != nil {
-		log.Fatalf("Failed to add listener: %v", err)
-	}
-
-	go server.Serve()
 	return server
 }
