@@ -12,6 +12,7 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, username string) (int, error)
 	IsManager(ctx context.Context, id int) (bool, error)
 	IsStaff(ctx context.Context, id int) (bool, error)
+	IsTrainer(ctx context.Context, id int) (bool, error)
 }
 
 type UserRepo struct {
@@ -128,6 +129,19 @@ func (r *UserRepo) IsStaff(ctx context.Context, id int) (bool, error) {
 	var isStaaff bool
 
 	query := `SELECT EXISTS(SELECT 1 FROM staff WHERE user_id = $1)`
+
+	err := r.DB.QueryRowContext(ctx, query, id).Scan(&isStaaff)
+	if err != nil {
+		return false, err
+	}
+
+	return isStaaff, nil
+}
+
+func (r *UserRepo) IsTrainer(ctx context.Context, id int) (bool, error) {
+	var isStaaff bool
+
+	query := `SELECT EXISTS(SELECT 1 FROM trainers WHERE user_id = $1)`
 
 	err := r.DB.QueryRowContext(ctx, query, id).Scan(&isStaaff)
 	if err != nil {
