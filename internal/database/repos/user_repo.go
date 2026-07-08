@@ -13,6 +13,9 @@ type UserRepository interface {
 	IsManager(ctx context.Context, id int) (bool, error)
 	IsStaff(ctx context.Context, id int) (bool, error)
 	IsTrainer(ctx context.Context, id int) (bool, error)
+	IsManagerFor(ctx context.Context, user_id int, makerspace_id int) (bool, error)
+	IsStaffFor(ctx context.Context, user_id int, makerspace_id int) (bool, error)
+	IsTrainerFor(ctx context.Context, user_id int, equipment_id int) (bool, error)
 }
 
 type UserRepo struct {
@@ -139,14 +142,53 @@ func (r *UserRepo) IsStaff(ctx context.Context, id int) (bool, error) {
 }
 
 func (r *UserRepo) IsTrainer(ctx context.Context, id int) (bool, error) {
-	var isStaaff bool
+	var isTrainer bool
 
 	query := `SELECT EXISTS(SELECT 1 FROM trainers WHERE user_id = $1)`
 
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&isStaaff)
+	err := r.DB.QueryRowContext(ctx, query, id).Scan(&isTrainer)
 	if err != nil {
 		return false, err
 	}
 
-	return isStaaff, nil
+	return isTrainer, nil
+}
+
+func (r *UserRepo) IsManagerFor(ctx context.Context, user_id int, makerspace_id int) (bool, error) {
+	var isManager bool
+
+	query := `SELECT EXISTS(SELECT 1 FROM managers WHERE user_id = $1 AND makerspace_id = $2)`
+
+	err := r.DB.QueryRowContext(ctx, query, user_id, makerspace_id).Scan(&isManager)
+	if err != nil {
+		return false, err
+	}
+
+	return isManager, nil
+}
+
+func (r *UserRepo) IsStaffFor(ctx context.Context, user_id int, makerspace_id int) (bool, error) {
+	var isStaff bool
+
+	query := `SELECT EXISTS(SELECT 1 FROM staff WHERE user_id = $1 AND makerspace_id = $2)`
+
+	err := r.DB.QueryRowContext(ctx, query, user_id, makerspace_id).Scan(&isStaff)
+	if err != nil {
+		return false, err
+	}
+
+	return isStaff, nil
+}
+
+func (r *UserRepo) IsTrainerFor(ctx context.Context, user_id int, equipment_id int) (bool, error) {
+	var isTrainer bool
+
+	query := `SELECT EXISTS(SELECT 1 FROM trainers WHERE user_id = $1 AND equipment_id = $2)`
+
+	err := r.DB.QueryRowContext(ctx, query, user_id, equipment_id).Scan(&isTrainer)
+	if err != nil {
+		return false, err
+	}
+
+	return isTrainer, nil
 }

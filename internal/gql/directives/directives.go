@@ -11,7 +11,6 @@ import (
 
 func isAdmin(store *database.Store, ctx context.Context) (bool, error) {
 	user_id, ok := ctx.Value("user_id").(int)
-
 	if !ok {
 		return false, fmt.Errorf("Access denied")
 	}
@@ -26,7 +25,6 @@ func isAdmin(store *database.Store, ctx context.Context) (bool, error) {
 
 func isManager(store *database.Store, ctx context.Context) (bool, error) {
 	user_id, ok := ctx.Value("user_id").(int)
-
 	if !ok {
 		return false, fmt.Errorf("Failed to get user_id from context")
 	}
@@ -41,7 +39,6 @@ func isManager(store *database.Store, ctx context.Context) (bool, error) {
 
 func isStaff(store *database.Store, ctx context.Context) (bool, error) {
 	user_id, ok := ctx.Value("user_id").(int)
-
 	if !ok {
 		return false, fmt.Errorf("Could not extract user_id from context")
 	}
@@ -56,7 +53,6 @@ func isStaff(store *database.Store, ctx context.Context) (bool, error) {
 
 func isTrainer(store *database.Store, ctx context.Context) (bool, error) {
 	user_id, ok := ctx.Value("user_id").(int)
-
 	if !ok {
 		return false, fmt.Errorf("Failed to get user_id from context")
 	}
@@ -77,12 +73,87 @@ func isSelf(ctx context.Context) (bool, error) {
 
 	target_id, ok := fc.Args["target_id"].(int)
 	if !ok {
+		return false, fmt.Errorf("Failed to get target_id from field context")
+	}
+
+	user_id, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return false, fmt.Errorf("Failed to get user_id from session context")
+	}
+
+	return target_id == user_id, nil
+}
+
+func isManagerFor(store *database.Store, ctx context.Context) (bool, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return false, fmt.Errorf("Failed to get field context")
+	}
+
+	makerspace_id, ok := fc.Args["makerspace_id"].(int)
+	if !ok {
 		return false, fmt.Errorf("Failed to get user_id from field context")
 	}
 
-	user_id := ctx.Value("user_id").(int)
+	user_id, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return false, fmt.Errorf("Failed to get user_id from session context")
+	}
 
-	return target_id == user_id, nil
+	managerFor, err := store.Users.IsManagerFor(ctx, user_id, makerspace_id)
+	if err != nil {
+		return false, err
+	}
+
+	return managerFor, nil
+}
+
+func isStaffFor(store *database.Store, ctx context.Context) (bool, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return false, fmt.Errorf("Failed to get field context")
+	}
+
+	makerspace_id, ok := fc.Args["makerspace_id"].(int)
+	if !ok {
+		return false, fmt.Errorf("Failed to get user_id from field context")
+	}
+
+	user_id, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return false, fmt.Errorf("Failed to get user_id from session context")
+	}
+
+	staffFor, err := store.Users.IsStaffFor(ctx, user_id, makerspace_id)
+	if err != nil {
+		return false, err
+	}
+
+	return staffFor, nil
+}
+
+func isTrainerFor(store *database.Store, ctx context.Context) (bool, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return false, fmt.Errorf("Failed to get field context")
+	}
+
+	equipment_id, ok := fc.Args["equipment_id"].(int)
+	if !ok {
+		return false, fmt.Errorf("Failed to get user_id from field context")
+	}
+
+	user_id, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return false, fmt.Errorf("Failed to get user_id from session context")
+	}
+
+	trainerFor, err := store.Users.IsTrainerFor(ctx, user_id, equipment_id)
+	if err != nil {
+		return false, err
+	}
+
+	return trainerFor, nil
 }
 
 func SetupDirectives(config *gql.Config, store *database.Store) {
@@ -145,6 +216,63 @@ func SetupDirectives(config *gql.Config, store *database.Store) {
 		}
 
 		if self {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+	}
+
+	config.Directives.IsManagerFor = func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
+		managerFor, err := isManagerFor(store, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if managerFor {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+	}
+
+	config.Directives.IsStaffFor = func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
+		staffFor, err := isStaffFor(store, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if staffFor {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+	}
+
+	config.Directives.IsTrainerFor = func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
+		trainerFor, err := isTrainerFor(store, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if trainerFor {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+	}
+
+	config.Directives.IsStaffOrSelf = func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
+		staff, err := isStaff(store, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		self, err := isSelf(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if self || staff {
 			return next(ctx)
 		} else {
 			return nil, fmt.Errorf("Unauthorized")
