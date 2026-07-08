@@ -77,21 +77,30 @@ func isTrainer(store *database.Store) func(ctx context.Context, obj any, next gr
 	}
 }
 
+func evalSelf(ctx context.Context) (bool, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if fc == nil {
+		return false, fmt.Errorf("Failed to get field context")
+	}
+
+	target_id, ok := fc.Args["target_id"].(int)
+	if !ok {
+		return false, fmt.Errorf("Failed to get user_id from field context")
+	}
+
+	user_id := ctx.Value("user_id").(int)
+
+	return target_id == user_id, nil
+}
+
 func isSelf() func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
 	return func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
-		fc := graphql.GetFieldContext(ctx)
-		if fc == nil {
-			return nil, fmt.Errorf("Failed to get field context")
+		self, err := evalSelf(ctx)
+		if err != nil {
+			return nil, err
 		}
 
-		target_id, ok := fc.Args["target_id"].(int)
-		if !ok {
-			return nil, fmt.Errorf("Failed to get user_id from field context")
-		}
-
-		user_id := ctx.Value("user_id").(int)
-
-		if user_id == target_id {
+		if self {
 			return next(ctx)
 		} else {
 			return nil, fmt.Errorf("Unauthorized")
