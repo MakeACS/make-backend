@@ -158,7 +158,7 @@ func startHttp(store *database.Store, port int) *http.Server {
 	server := &http.Server{
 		Addr:     fmt.Sprintf(":%d", port),
 		Handler:  mux,
-		ErrorLog: slog.NewLogLogger(slog.Default().With("server", "http").Handler(), slog.LevelDebug)}
+		ErrorLog: slog.NewLogLogger(slog.Default().With("server", "http").Handler(), slog.LevelInfo)}
 
 	go func() {
 		log.Fatal(server.ListenAndServe())

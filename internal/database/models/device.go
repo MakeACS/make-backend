@@ -1,10 +1,19 @@
 package models
 
 import (
+	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/sha256"
 	"database/sql/driver"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"os"
 	"time"
+
+	"golang.org/x/crypto/scrypt"
 )
 
 type Device struct {
@@ -17,6 +26,55 @@ type Device struct {
 	TargetFirmware *string
 	KeyCycle       int
 	MakerspaceId   int
+}
+
+// PKCS7Padding adds padding to the plaintext so its length is a multiple of the block size
+// needed for compatibility with original implementation
+func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
+	padding := blockSize - (len(ciphertext) % blockSize)
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(ciphertext, padtext...)
+}
+
+func (dev Device) GenerateKey() (string, error) {
+	// 1. Get environment variable or fallback
+	serverApiPass := os.Getenv("SERVER_API_PASSWORD")
+	if serverApiPass == "" {
+		serverApiPass = "unsecure_server_password"
+	}
+
+	// 2. Node.js scryptSync default parameters: N=16384, r=8, p=1
+	salt := []byte("makerspace-salt¯_(ツ)_/¯")
+	serverKey, err := scrypt.Key([]byte(serverApiPass), salt, 16384, 8, 1, 24)
+	if err != nil {
+		return "", fmt.Errorf("scrypt error: %w", err)
+	}
+
+	// 3. Generate plain text string
+	plainTextStr := fmt.Sprintf("shlug:%s:%d", dev.SN, dev.KeyCycle)
+	plainText := []byte(plainTextStr)
+	// 4. Generate IV (SHA-256 hash of ISO string, sliced to 16 bytes)
+	// Node's toISOString() uses UTC with 'Z' suffix (e.g., 2026-07-08T12:46:00.000Z)
+	isoTimeStr := dev.Paired.UTC().Format("2006-01-02T15:04:05.000Z")
+	hash := sha256.Sum256([]byte(isoTimeStr))
+	iv := hash[:16]
+
+	// 5. Setup AES-192 (determined by 24-byte key length)
+	block, err := aes.NewCipher(serverKey)
+	if err != nil {
+		return "", fmt.Errorf("cipher setup error: %w", err)
+	}
+
+	// Node's createCipheriv automatically uses PKCS7 padding
+	paddedPlainText := PKCS7Padding(plainText, block.BlockSize())
+
+	// 6. Encrypt using CBC mode
+	encrypted := make([]byte, len(paddedPlainText))
+	mode := cipher.NewCBCEncrypter(block, iv)
+	mode.CryptBlocks(encrypted, paddedPlainText)
+
+	// Return as hex string
+	return hex.EncodeToString(encrypted), nil
 }
 
 type AccessDeviceFlags struct {
