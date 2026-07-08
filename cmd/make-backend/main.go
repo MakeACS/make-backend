@@ -89,7 +89,7 @@ func main() {
 	<-done
 	slog.Warn("caught signal, stopping...")
 	reverseProxy.Close()
-	_ = mqttServer.Close()
+	mqttServer.Close()
 	httpServer.Close()
 
 	slog.Info("main.go finished")
