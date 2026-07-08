@@ -83,9 +83,12 @@ func main() {
 	protectedQueryHandler := samlMiddleware.RequireAccount(
 		auth.AuthContextMiddleware(srv),
 	)
-
 	http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", protectedQueryHandler)
+
+	fileHandler := http.StripPrefix("/app/", http.FileServer(http.Dir("./client")))
+	http.Handle("/app/", fileHandler)
+	http.Handle("/", http.RedirectHandler("/app/", http.StatusFound))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

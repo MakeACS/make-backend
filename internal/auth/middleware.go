@@ -12,7 +12,7 @@ import (
 type UserContextKey struct{}
 
 type User struct {
-	id int
+	Id int
 }
 
 func AuthContextMiddleware(next http.Handler) http.Handler {
@@ -34,7 +34,7 @@ func AuthContextMiddleware(next http.Handler) http.Handler {
 		}
 
 		user := &User{
-			id: user_id,
+			Id: user_id,
 		}
 
 		ctx := context.WithValue(r.Context(), UserContextKey{}, user)

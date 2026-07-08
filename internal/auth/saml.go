@@ -99,8 +99,16 @@ func (c CustomSessionProvider) CreateSession(w http.ResponseWriter, r *http.Requ
 
 	user, err := c.Store.Users.GetUserByUsername(r.Context(), username)
 	if err != nil {
-		// slog.Error("")
-		return err
+		user_id, err2 := c.Store.Users.CreateUser(r.Context(), username)
+		if err2 != nil {
+			slog.Error("Failed to create new account on first login", "err", err2)
+			return err2
+		}
+		user, err2 = c.Store.Users.GetUserById(r.Context(), user_id)
+		if err2 != nil {
+			slog.Error("Failed to get new account on first login", "err", err2)
+			return err2
+		}
 	}
 
 	user_id := strconv.Itoa(user.Id)
