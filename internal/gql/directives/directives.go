@@ -77,9 +77,33 @@ func isTrainer(store *database.Store) func(ctx context.Context, obj any, next gr
 	}
 }
 
+func isSelf() func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
+	return func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
+		fc := graphql.GetFieldContext(ctx)
+		if fc == nil {
+			return nil, fmt.Errorf("Failed to get field context")
+		}
+
+		target_id, ok := fc.Args["target_id"].(int)
+		if !ok {
+			return nil, fmt.Errorf("Failed to get user_id from field context")
+		}
+
+		user_id := ctx.Value("user_id").(int)
+
+		if user_id == target_id {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+	}
+}
+
 func SetupDirectives(config *gql.Config, store *database.Store) {
 	config.Directives.IsAdmin = isAdmin(store)
 	config.Directives.IsManager = isManager(store)
 	config.Directives.IsStaff = isStaff(store)
 	config.Directives.IsTrainer = isTrainer(store)
+
+	config.Directives.IsSelf = isSelf()
 }

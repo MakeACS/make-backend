@@ -9,7 +9,8 @@ directive @isTrainer on FIELD_DEFINITION
 directive @isManagerFor on FIELD_DEFINITION # REQUIRES a makerspace_id parameter
 directive @isStaffFor on FIELD_DEFINITION # REQUIRES a makerspace_id parameter
 directive @isTrainerFor on FIELD_DEFINITION # REQUIRES an equipment_id parameter
-directive @isStaffOrSelf on FIELD_DEFINITION # REQUIRES a user_id parameter
+directive @isSelf on FIELD_DEFINITION # REQUIRES a target_id parameter
+directive @isStaffOrSelf on FIELD_DEFINITION # REQUIRES a target_id parameter
 
 type User {
     id: ID!
@@ -27,5 +28,5 @@ type User {
 }
 
 extend type Query {
-    user(user_id: ID!): User! @isStaffOrSelf
+    user(target_id: ID!): User! @isStaffOrSelf
 }

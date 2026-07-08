@@ -43,6 +43,7 @@ type DirectiveRoot struct {
 	IsAdmin       func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 	IsManager     func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 	IsManagerFor  func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	IsSelf        func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 	IsStaff       func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 	IsStaffFor    func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 	IsStaffOrSelf func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
@@ -213,7 +214,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Makerspace          func(childComplexity int, id int) int
-		User                func(childComplexity int, userID int) int
+		User                func(childComplexity int, targetID int) int
 		Zone                func(childComplexity int, id int) int
 		ZonesByMakerspaceID func(childComplexity int, makerspaceID int) int
 	}
@@ -318,7 +319,7 @@ type OptionBlockOptionResolver interface {
 }
 type QueryResolver interface {
 	Makerspace(ctx context.Context, id int) (*models.Makerspace, error)
-	User(ctx context.Context, userID int) (*models.User, error)
+	User(ctx context.Context, targetID int) (*models.User, error)
 	Zone(ctx context.Context, id int) (*models.Zone, error)
 	ZonesByMakerspaceID(ctx context.Context, makerspaceID int) ([]*models.Zone, error)
 }
@@ -995,7 +996,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.User(childComplexity, args["user_id"].(int)), true
+		return e.ComplexityRoot.Query.User(childComplexity, args["target_id"].(int)), true
 	case "Query.zone":
 		if e.ComplexityRoot.Query.Zone == nil {
 			break
@@ -1753,14 +1754,14 @@ func (ec *executionContext) field_Query_makerspace_args(ctx context.Context, raw
 func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "user_id",
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "target_id",
 		func(ctx context.Context, v any) (int, error) {
 			return ec.unmarshalNID2int(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["user_id"] = arg0
+	args["target_id"] = arg0
 	return args, nil
 }
 
@@ -4324,7 +4325,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().User(ctx, fc.Args["user_id"].(int))
+			return ec.Resolvers.Query().User(ctx, fc.Args["target_id"].(int))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
