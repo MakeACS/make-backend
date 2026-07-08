@@ -8,10 +8,14 @@ package gql
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
 )
+
+// UpdateStudentProfile is the resolver for the updateStudentProfile field.
+func (r *mutationResolver) UpdateStudentProfile(ctx context.Context, userID int, pronouns *string, college *string, expectedGraduation *string) (*models.User, error) {
+	panic(fmt.Errorf("not implemented: UpdateStudentProfile - updateStudentProfile"))
+}
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) {
@@ -21,10 +25,8 @@ func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) 
 // CurrentUser is the resolver for the currentUser field.
 func (r *queryResolver) CurrentUser(ctx context.Context) (*models.User, error) {
 	auth_user := ctx.Value(auth.UserContextKey{}).(*auth.User)
-	slog.Info("User asked for themselves", "user", auth_user)
 
 	user, err := r.Store.Users.GetUserById(ctx, auth_user.Id)
-	slog.Info("User asked for themselves and got ", "user", user)
 
 	return user, err
 }

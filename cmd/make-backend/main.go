@@ -86,7 +86,7 @@ func main() {
 	http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", protectedQueryHandler)
 
-	fileHandler := http.StripPrefix("/app/", http.FileServer(http.Dir("./client")))
+	fileHandler := http.StripPrefix("/app/", http.FileServer(http.Dir("./client/build")))
 	http.Handle("/app/", fileHandler)
 	http.Handle("/", http.RedirectHandler("/app/", http.StatusFound))
 

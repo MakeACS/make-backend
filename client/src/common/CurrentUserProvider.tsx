@@ -40,15 +40,15 @@ const CurrentUserContext = createContext<CurrentUser | undefined>(undefined);
 function mapUser(data: any): CurrentUser | undefined {
   if (!data?.currentUser) return undefined;
 
-  const hasHolds = data.currentUser.holds.some(
-    (hold: { removeDate: string }) => !hold.removeDate
-  );
+  // const hasHolds = data.currentUser.holds.some(
+    // (hold: { removeDate: string }) => !hold.removeDate
+  // );
 
   //const hasCardTag = data.currentUser.cardTagID != null && data.currentUser.cardTagID != "";
 
   return {
     ...data.currentUser,
-    hasHolds,
+    // hasHolds,
     //hasCardTag,
   };
 }

@@ -213,7 +213,7 @@ export const GET_CURRENT_USER = gql`
     currentUser {
       id
       username
-      firstmame
+      firstname
       lastname
       setup_complete
       archived

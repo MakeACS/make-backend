@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@apollo/client": "^4.1.9",
+    "@apollo/client": "^3.13.9",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@hello-pangea/dnd": "^18.0.1",
@@ -43,6 +43,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
+    "preview": "vite preview",
+    "watch": "vite build --mode development --watch",
     "lint:fix": "eslint -c eslint.config.js --fix src/**/*.{ts,tsx}",
     "lint": "eslint -c eslint.config.js src/**/*.{ts,tsx}"
   },

@@ -1,4 +1,4 @@
-import { Outlet, useParams } from "react-router-dom";
+import { createBrowserRouter, Outlet, useParams } from "react-router-dom";
 import { CurrentUserProvider, useCurrentUser } from "./common/CurrentUserProvider";
 import { isAdmin, isManagerFor, isOnlyTrainer, isStaffFor } from "./common/PrivilegeUtils";
 import NoPrivilegePage from "./pages/NoPrivilegePage";
@@ -109,135 +109,137 @@ function AdminRoute() {
   }
 }
 
-export const routes = [
-  {
-    path: "/",
-    element: <AppRoot />,
-    children: [
-      { path: "/signup", element: <SignupPage /> },
+export const appRouter = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <AppRoot />,
+      children: [
+        { path: "/signup", element: <SignupPage /> },
 
-      /* Routes for the static displays around the makerspaces */
-      {
-        path: "/display",
-        children: [
-          { path: "/display/announcements", element: <AnnouncementsDisplay /> },
-          { path: "/display/hours/:makerspaceID", element: <HoursDisplay /> },
-          { path: "/display/events", element: <EventsDisplay /> },
-        ],
-      },
-      /* END STATIC DISPLAYS */
+        /* Routes for the static displays around the makerspaces */
+        {
+          path: "/display",
+          children: [
+            { path: "/display/announcements", element: <AnnouncementsDisplay /> },
+            { path: "/display/hours/:makerspaceID", element: <HoursDisplay /> },
+            { path: "/display/events", element: <EventsDisplay /> },
+          ],
+        },
+        /* END STATIC DISPLAYS */
 
-      {
-        path: "/",
-        element: <TopNav />,
+        {
+          path: "/",
+          element: <TopNav />,
 
-        children: [
-          { path: "/", element: <Dashboard /> },
-          { path: "/makerspace/:makerspaceID", element: <MakerspacePage /> },
-          { path: "/terms", element: <TermsPage /> },
-          { path: "/help", element: <HelpPage /> },
+          children: [
+            { path: "/", element: <Dashboard /> },
+            { path: "/makerspace/:makerspaceID", element: <MakerspacePage /> },
+            { path: "/terms", element: <TermsPage /> },
+            { path: "/help", element: <HelpPage /> },
 
-          /* Routes that need to be protected by auth */
-          {
-            element: <AuthedRoute />,
-            children: [
-              { path: "/user/trainings", element: <UserTraingingsPage /> },
-              { path: "/user/settings", element: <UserSettingsPage /> },
+            /* Routes that need to be protected by auth */
+            {
+              element: <AuthedRoute />,
+              children: [
+                { path: "/user/trainings", element: <UserTraingingsPage /> },
+                { path: "/user/settings", element: <UserSettingsPage /> },
 
-              { path: "/makerspace/:makerspaceID/reserve/:equipmentID", element: <ReservationRequestPage /> },
+                { path: "/makerspace/:makerspaceID/reserve/:equipmentID", element: <ReservationRequestPage /> },
 
-              /* Routes for trainers + higher */
-              {
-                element: <TrainerRoute />,
-                children: [
-                  {
-                    path: "/makerspace/:makerspaceID",
-                    element: <Box padding={"0px 10px"}><StaffBar /></Box>,
-                    children: [
-                      { path: "/makerspace/:makerspaceID/people", element: <UsersPage /> },
-                      { path: "/makerspace/:makerspaceID/people/:userID", element: <UserPage /> },
-
-                      /* Routes for staff + higher */
-                      {
-                        element: <StaffRoute />,
-                        children: [
-                          { path: "/makerspace/:makerspaceID/trainings", element: <TrainingModulesPage /> },
-                          { path: "/makerspace/:makerspaceID/training/new", element: <NewModulePage /> },
-                          { path: "/makerspace/:makerspaceID/training/:id", element: <EditActiveModulePage /> },
-
-                          { path: "/makerspace/:makerspaceID/equipment/new", element: <NewEquipmentPage /> },
-                          { path: "/makerspace/:makerspaceID/equipment/:equipmentID", element: <ManageEquipmentPage /> },
-
-                          { path: "/makerspace/:makerspaceID/inventory", element: <InventoryPage /> },
-                          { path: "/makerspace/:makerspaceID/inventory/quick/item/:invID", element: <QuickEditInventoryPage fromTag={false} /> },
-                          { path: "/makerspace/:makerspaceID/inventory/quick/tag/:invID", element: <QuickEditInventoryPage fromTag={true} /> },
-
-                          { path: "/makerspace/:makerspaceID/tools", element: <ToolItemPage /> },
-                          { path: "/makerspace/:makerspaceID/tools/type/:typeid", element: <ToolItemPage /> },
-                          { path: "/makerspace/:makerspaceID/tools/type/", element: <ToolItemPage /> },
-                          { path: "/makerspace/:makerspaceID/tools/instance/:instanceid", element: <ToolItemPage /> },
-                          { path: "/makerspace/:makerspaceID/tools/instance/", element: <ToolItemPage /> },
-
-                          { path: "/makerspace/:makerspaceID/history", element: <AuditLogsPage /> },
-                          { path: "/makerspace/:makerspaceID/organizations", element: <OrganizationsPage /> },
-                          { path: "/makerspace/:makerspaceID/maintenance", element: <MaintenancePage /> },
-                          { path: "/makerspace/:makerspaceID/reservations", element: <ManageReservationsPage /> },
-
-                          /* Routes for manager + higher */
-                          {
-                            element: <ManagerRoute />,
-                            children: [
-                              { path: "/makerspace/:makerspaceID/edit", element: <ManageMakerspacePage /> },
-                              { path: "/makerspace/:makerspaceID/edit/room/:roomID", element: <ManageRoomPage /> },
-                              { path: "/makerspace/:makerspaceID/currency", element: <CurrencyPage /> },
-
-                              { path: "/makerspace/:makerspaceID/devices", element: <DevicesPage /> },
-                              { path: "/makerspace/:makerspaceID/devices/new", element: <NewDevicePage /> },
-                            ],
-                          },
-                          /* End manager routes */
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-
-              /* Routes for admins */
-              {
-                element: <AdminRoute />,
-                children: [{
-                  path: "/admin",
-                  element: <AdminBar />,
+                /* Routes for trainers + higher */
+                {
+                  element: <TrainerRoute />,
                   children: [
-                    { path: "/admin/announcements", element: <AnnouncementsPage /> },
-                    { path: "/admin/announcements/:id", element: <EditAnnouncement /> },
-                    { path: "/admin/announcements/new", element: <NewAnnouncementPage /> },
+                    {
+                      path: "/makerspace/:makerspaceID",
+                      element: <Box padding={"0px 10px"}><StaffBar /></Box>,
+                      children: [
+                        { path: "/makerspace/:makerspaceID/people", element: <UsersPage /> },
+                        { path: "/makerspace/:makerspaceID/people/:userID", element: <UserPage /> },
 
-                    { path: "/admin/themes", element: <ThemeManagementPage /> },
-                    { path: "/admin/themes/new", element: <NewThemePage /> },
-                    { path: "/admin/themes/:themeKey", element: <ManageThemePage /> },
+                        /* Routes for staff + higher */
+                        {
+                          element: <StaffRoute />,
+                          children: [
+                            { path: "/makerspace/:makerspaceID/trainings", element: <TrainingModulesPage /> },
+                            { path: "/makerspace/:makerspaceID/training/new", element: <NewModulePage /> },
+                            { path: "/makerspace/:makerspaceID/training/:id", element: <EditActiveModulePage /> },
 
-                    { path: "/admin/inventory", element: <AdminInventoryPage /> },
-                    { path: "/admin/makerspaces", element: <ManageMakerspacesAdminPage /> },
-                    { path: "/admin/links", element: <LinkManagementAdminPage /> },
-                    { path: "/admin/history", element: <AdminHistoryPage /> },
-                  ]
-                }],
-              },
+                            { path: "/makerspace/:makerspaceID/equipment/new", element: <NewEquipmentPage /> },
+                            { path: "/makerspace/:makerspaceID/equipment/:equipmentID", element: <ManageEquipmentPage /> },
 
-              { path: "/maker/training/:id", element: <QuizPage /> },
-              { path: "/maker/training/:id/results/", element: <QuizResults /> },
-              { path: "/maker/training/:id/results/:submissionID", element: <QuizResults /> },
-            ],
-          },
-          /* END OF PROTECTED ROUTES */
+                            { path: "/makerspace/:makerspaceID/inventory", element: <InventoryPage /> },
+                            { path: "/makerspace/:makerspaceID/inventory/quick/item/:invID", element: <QuickEditInventoryPage fromTag={false} /> },
+                            { path: "/makerspace/:makerspaceID/inventory/quick/tag/:invID", element: <QuickEditInventoryPage fromTag={true} /> },
 
-          { path: "/logoutprompt", element: <LogoutPromptPage /> },
+                            { path: "/makerspace/:makerspaceID/tools", element: <ToolItemPage /> },
+                            { path: "/makerspace/:makerspaceID/tools/type/:typeid", element: <ToolItemPage /> },
+                            { path: "/makerspace/:makerspaceID/tools/type/", element: <ToolItemPage /> },
+                            { path: "/makerspace/:makerspaceID/tools/instance/:instanceid", element: <ToolItemPage /> },
+                            { path: "/makerspace/:makerspaceID/tools/instance/", element: <ToolItemPage /> },
 
-          { path: "*", element: <NotFoundPage /> },
-        ],
-      },
-    ],
-  },
-];
+                            { path: "/makerspace/:makerspaceID/history", element: <AuditLogsPage /> },
+                            { path: "/makerspace/:makerspaceID/organizations", element: <OrganizationsPage /> },
+                            { path: "/makerspace/:makerspaceID/maintenance", element: <MaintenancePage /> },
+                            { path: "/makerspace/:makerspaceID/reservations", element: <ManageReservationsPage /> },
+
+                            /* Routes for manager + higher */
+                            {
+                              element: <ManagerRoute />,
+                              children: [
+                                { path: "/makerspace/:makerspaceID/edit", element: <ManageMakerspacePage /> },
+                                { path: "/makerspace/:makerspaceID/edit/room/:roomID", element: <ManageRoomPage /> },
+                                { path: "/makerspace/:makerspaceID/currency", element: <CurrencyPage /> },
+
+                                { path: "/makerspace/:makerspaceID/devices", element: <DevicesPage /> },
+                                { path: "/makerspace/:makerspaceID/devices/new", element: <NewDevicePage /> },
+                              ],
+                            },
+                            /* End manager routes */
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+
+                /* Routes for admins */
+                {
+                  element: <AdminRoute />,
+                  children: [{
+                    path: "/admin",
+                    element: <AdminBar />,
+                    children: [
+                      { path: "/admin/announcements", element: <AnnouncementsPage /> },
+                      { path: "/admin/announcements/:id", element: <EditAnnouncement /> },
+                      { path: "/admin/announcements/new", element: <NewAnnouncementPage /> },
+
+                      { path: "/admin/themes", element: <ThemeManagementPage /> },
+                      { path: "/admin/themes/new", element: <NewThemePage /> },
+                      { path: "/admin/themes/:themeKey", element: <ManageThemePage /> },
+
+                      { path: "/admin/inventory", element: <AdminInventoryPage /> },
+                      { path: "/admin/makerspaces", element: <ManageMakerspacesAdminPage /> },
+                      { path: "/admin/links", element: <LinkManagementAdminPage /> },
+                      { path: "/admin/history", element: <AdminHistoryPage /> },
+                    ]
+                  }],
+                },
+
+                { path: "/maker/training/:id", element: <QuizPage /> },
+                { path: "/maker/training/:id/results/", element: <QuizResults /> },
+                { path: "/maker/training/:id/results/:submissionID", element: <QuizResults /> },
+              ],
+            },
+            /* END OF PROTECTED ROUTES */
+
+            { path: "/logoutprompt", element: <LogoutPromptPage /> },
+
+            { path: "*", element: <NotFoundPage /> },
+          ],
+        },
+      ],
+    }
+  ]
+);

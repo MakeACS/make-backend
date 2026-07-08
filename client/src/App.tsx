@@ -1,28 +1,31 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
 import { ApolloProvider } from "@apollo/client/react";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ThemeController } from "./types/site_settings/ThemeController";
 import { IsMobileProvider } from "./common/IsMobileProvider";
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ToastContainer, Slide } from "react-toastify";
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers';
-import { SiteSettings } from "./types/site_settings/SiteSettings";
-import { MakeTheme } from "./types/site_settings/MakeTheme";
 import { MakeThemeProvider } from "./common/MakeThemeProvider";
+import { appRouter } from "./AppRouter";
+import { RouterProvider } from "react-router-dom";
 
+
+const link = new HttpLink({
+  uri: import.meta.env.VITE_GRAPHQL_URL ?? "http://localhost:8080/graphql", 
+  credentials: "include",
+});
 
 const apolloClient = new ApolloClient({
-  uri: import.meta.env.VITE_GRAPHQL_URL ?? "http://localhost:3000/graphql",
-  credentials: "include",
+  link: link,
   cache: new InMemoryCache(),
 });
 
-export default function App(props: { siteSettings: SiteSettings, children: ReactNode, apolloClient: ApolloClient }) {
+export default function App() {
   const [theme, setTheme] = useState(ThemeController.activeTheme.getTheme());
 
   ThemeController.addThemeWatcher(setTheme);
-  props.siteSettings.themes.map((theme) => ThemeController.registerTheme(theme.key, new MakeTheme(theme)))
 
   useEffect(() => {
     // Executes once when client is loaded
@@ -30,14 +33,14 @@ export default function App(props: { siteSettings: SiteSettings, children: React
   }, [])
 
   return (
-    <ApolloProvider client={props.apolloClient}>
+    <ApolloProvider client={apolloClient}>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <MakeThemeProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <IsMobileProvider>
               <>
-                {props.children}
+                <RouterProvider router={appRouter} />
                 <ToastContainer position="bottom-left" transition={Slide} />
               </>
             </IsMobileProvider>
