@@ -43,20 +43,34 @@ func isManager(store *database.Store) func(ctx context.Context, obj any, next gr
 	}
 }
 
+func evalStaff(store *database.Store, ctx context.Context) (bool, error) {
+	user_id, ok := ctx.Value("user_id").(int)
+
+	if !ok {
+		return false, fmt.Errorf("Could not extract user_id from context")
+	}
+
+	isStaff, err := store.Users.IsStaff(ctx, user_id)
+	if err != nil {
+		return false, err
+	}
+
+	return isStaff, nil
+}
+
 func isStaff(store *database.Store) func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
 	return func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
-		user_id, ok := ctx.Value("user_id").(int)
 
-		if !ok {
-			return nil, fmt.Errorf("Access denied")
-		}
-
-		isStaff, err := store.Users.IsStaff(ctx, user_id)
+		staff, err := evalStaff(store, ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		return isStaff, nil
+		if staff {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
 	}
 }
 
