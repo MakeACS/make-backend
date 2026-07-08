@@ -213,6 +213,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		CurrentUser         func(childComplexity int) int
 		Makerspace          func(childComplexity int, id int) int
 		User                func(childComplexity int, targetID int) int
 		Zone                func(childComplexity int, id int) int
@@ -319,7 +320,8 @@ type OptionBlockOptionResolver interface {
 }
 type QueryResolver interface {
 	Makerspace(ctx context.Context, id int) (*models.Makerspace, error)
-	User(ctx context.Context, targetID int) (*models.User, error)
+	User(ctx context.Context, id int) (*models.User, error)
+	CurrentUser(ctx context.Context) (*models.User, error)
 	Zone(ctx context.Context, id int) (*models.Zone, error)
 	ZonesByMakerspaceID(ctx context.Context, makerspaceID int) ([]*models.Zone, error)
 }
@@ -974,6 +976,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Organization.Notes(childComplexity), true
+
+	case "Query.currentUser":
+		if e.ComplexityRoot.Query.CurrentUser == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CurrentUser(childComplexity), true
 
 	case "Query.makerspace":
 		if e.ComplexityRoot.Query.Makerspace == nil {
@@ -4368,6 +4377,38 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 	if fc.Args, err = ec.field_Query_user_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_currentUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_currentUser(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().CurrentUser(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.User) graphql.Marshaler {
+			return ec.marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_currentUser(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
 	}
 	return fc, nil
 }
@@ -8228,6 +8269,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_user(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "currentUser":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_currentUser(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

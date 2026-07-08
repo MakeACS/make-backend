@@ -28,5 +28,6 @@ type User {
 }
 
 extend type Query {
-    user(target_id: ID!): User! @isStaffOrSelf
+    user(id: ID!): User!
+    currentUser: User!
 }

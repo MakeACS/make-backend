@@ -8,10 +8,23 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
 )
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, targetID int) (*models.User, error) {
 	panic(fmt.Errorf("not implemented: User - user"))
+}
+
+// CurrentUser is the resolver for the currentUser field.
+func (r *queryResolver) CurrentUser(ctx context.Context) (*models.User, error) {
+	auth_user := ctx.Value(auth.UserContextKey{}).(*auth.User)
+	slog.Info("User asked for themselves", "user", auth_user)
+
+	user, err := r.Store.Users.GetUserById(ctx, auth_user.Id)
+	slog.Info("User asked for themselves and got ", "user", user)
+
+	return user, err
 }

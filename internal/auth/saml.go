@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"log"
+	"log/slog"
 	"make-backend/internal/database"
 	"net/http"
 	"net/url"
@@ -15,6 +16,8 @@ import (
 	"github.com/crewjam/saml/samlsp"
 )
 
+func SetupSamlSP(store *database.Store) *samlsp.Middleware {
+	keyPair, err := tls.LoadX509KeyPair("certs/SPcert.pem", "certs/SPkey.pem")
 func SetupSamlSP(store *database.Store, sessionManager *scs.SessionManager) *samlsp.Middleware {
 	keyPair, err := tls.LoadX509KeyPair("", "")
 	if err != nil {
@@ -26,7 +29,7 @@ func SetupSamlSP(store *database.Store, sessionManager *scs.SessionManager) *sam
 		log.Fatalf("Failed to parse leaf cert: %s", err)
 	}
 
-	idpMetadataURL, err := url.Parse("")
+	idpMetadataURL, err := url.Parse("http://mocksaml.com/api/saml/metadata")
 	if err != nil {
 		log.Fatalf("Failed to parse idpMetadataURL: %s", err)
 	}
@@ -36,17 +39,20 @@ func SetupSamlSP(store *database.Store, sessionManager *scs.SessionManager) *sam
 		log.Fatalf("Failed to fetch idpMetadata: %s", err)
 	}
 
-	rootUrl, err := url.Parse("")
+	rootUrl, err := url.Parse("http://localhost:8080")
 	if err != nil {
 		log.Fatalf("Failed to parse root url: %s", err)
 	}
 
 	samlSP, err := samlsp.New(samlsp.Options{
+
 		URL:         *rootUrl,
 		Key:         keyPair.PrivateKey.(*rsa.PrivateKey),
 		Certificate: keyPair.Leaf,
 		IDPMetadata: idpMetadata,
 	})
+	samlSP.ServiceProvider.AuthnNameIDFormat = saml.EmailAddressNameIDFormat
+
 	if err != nil {
 		log.Fatalf("Failed to create samlSP: %s", err)
 	}
