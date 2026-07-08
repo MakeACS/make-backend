@@ -100,9 +100,9 @@ func rproxySetup(port string, httpPort, mqttPort int) *http.Server {
 	targetHttp, _ := url.Parse(fmt.Sprintf("http://localhost:%d", httpPort))
 	targetMqtt, _ := url.Parse(fmt.Sprintf("http://localhost:%d", mqttPort))
 
-	// Create proxy instances
 	proxyHttp := httputil.NewSingleHostReverseProxy(targetHttp)
 	proxyMqtt := httputil.NewSingleHostReverseProxy(targetMqtt)
+
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/mqtt") {
 			r.Host = targetMqtt.Host
@@ -155,7 +155,10 @@ func startHttp(store *database.Store, port int) *http.Server {
 
 	log.Printf("connect to http://localhost:%d/ for GraphQL playground", port)
 
-	server := &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: mux}
+	server := &http.Server{
+		Addr:     fmt.Sprintf(":%d", port),
+		Handler:  mux,
+		ErrorLog: slog.NewLogLogger(slog.Default().With("server", "http").Handler(), slog.LevelDebug)}
 
 	go func() {
 		log.Fatal(server.ListenAndServe())
@@ -170,7 +173,10 @@ func mqttSetup(port int) *mqtt.Server {
 		ID:      "std-listener",
 		Address: fmt.Sprintf(":%v", port)}
 
-	server := mqtt.New(nil)
+	server := mqtt.New(&mqtt.Options{
+		Logger: slog.Default().With("server", "mqtt"),
+	})
+
 	_ = server.AddHook(new(mqttauth.AllowHook), nil)
 
 	wsListener := listeners.NewWebsocket(wsCfg)
