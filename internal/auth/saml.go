@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"log"
 	"make-backend/internal/database"
 	"net/http"
@@ -36,7 +37,7 @@ func SetupSamlSP(store *database.Store, sessionManager *scs.SessionManager) *sam
 		log.Fatalf("Failed to parse leaf cert: %s", err)
 	}
 
-	idpMetadataURL, err := url.Parse("http://mocksaml.com/api/saml/metadata")
+	idpMetadataURL, err := url.Parse(os.Getenv("SAML_SP_METADATA_URL"))
 	if err != nil {
 		log.Fatalf("Failed to parse idpMetadataURL: %s", err)
 	}
@@ -46,7 +47,12 @@ func SetupSamlSP(store *database.Store, sessionManager *scs.SessionManager) *sam
 		log.Fatalf("Failed to fetch idpMetadata: %s", err)
 	}
 
-	rootUrl, err := url.Parse("http://localhost:8080")
+	rootHost := os.Getenv("HOST_URL")
+	if rootHost == "" {
+		log.Fatalf("No HOST_URL provided")
+	}
+
+	rootUrl, err := url.Parse(fmt.Sprintf("%s:%s", rootHost, os.Getenv("PORT")))
 	if err != nil {
 		log.Fatalf("Failed to parse root url: %s", err)
 	}

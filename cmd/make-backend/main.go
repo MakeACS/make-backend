@@ -105,6 +105,7 @@ func StartReverseProxy(port string, httpPort, mqttPort int) *http.Server {
 	return server
 
 }
+
 func startHttp(db *sql.DB, store *database.Store, port int) *http.Server {
 	// Sessions
 	sessionManager := auth.SetupSessions(db)
