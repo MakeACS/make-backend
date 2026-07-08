@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"log/slog"
@@ -25,7 +26,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -52,11 +52,6 @@ func main() {
 		done <- true
 	}()
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("No PORT env found")
@@ -71,10 +66,7 @@ func main() {
 
 	store := database.NewStore(db)
 
-	// Sessions
-	sessionManager := auth.SetupSessions(db)
-
-	httpServer := startHttp(store, httpPort)
+	httpServer := startHttp(db, store, httpPort)
 	mqttServer := acsmqtt.StartMqtt(mqttPort)
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
 
@@ -113,7 +105,9 @@ func StartReverseProxy(port string, httpPort, mqttPort int) *http.Server {
 	return server
 
 }
-func startHttp(store *database.Store, port int) *http.Server {
+func startHttp(db *sql.DB, store *database.Store, port int) *http.Server {
+	// Sessions
+	sessionManager := auth.SetupSessions(db)
 	// Auth
 	samlMiddleware := auth.SetupSamlSP(store, sessionManager)
 

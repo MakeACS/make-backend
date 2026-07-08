@@ -6,20 +6,27 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"log"
-	"log/slog"
 	"make-backend/internal/database"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 )
 
-func SetupSamlSP(store *database.Store) *samlsp.Middleware {
-	keyPair, err := tls.LoadX509KeyPair("certs/SPcert.pem", "certs/SPkey.pem")
 func SetupSamlSP(store *database.Store, sessionManager *scs.SessionManager) *samlsp.Middleware {
-	keyPair, err := tls.LoadX509KeyPair("", "")
+	spCert := os.Getenv("SAML_SP_CERT")
+	spKey := os.Getenv("SAML_SP_KEY")
+	if spCert == "" {
+		log.Fatal("No SAML SP Cert provided")
+	}
+	if spKey == "" {
+		log.Fatal("No SAML SP Key provided")
+	}
+
+	keyPair, err := tls.X509KeyPair([]byte(spCert), []byte(spKey))
 	if err != nil {
 		log.Fatalf("Failed to load SAML keypair: %s", err)
 	}
