@@ -1,0 +1,33 @@
+scalar Time
+
+directive @isAdmin on FIELD_DEFINITION
+directive @isManager on FIELD_DEFINITION
+directive @isStaff on FIELD_DEFINITION
+directive @isTrainer on FIELD_DEFINITION
+
+# These directives REQUIRE the queries to have specific parameters in order to function properly
+directive @isManagerFor on FIELD_DEFINITION # REQUIRES a makerspace_id parameter
+directive @isStaffFor on FIELD_DEFINITION # REQUIRES a makerspace_id parameter
+directive @isTrainerFor on FIELD_DEFINITION # REQUIRES an equipment_id parameter
+directive @isSelf on FIELD_DEFINITION # REQUIRES a target_id parameter
+directive @isStaffOrSelf on FIELD_DEFINITION # REQUIRES a target_id parameter
+
+type User {
+    id: ID!
+    username: String!
+    firstname: String!
+    lastname: String!
+    pronouns: String!
+    join_date: Time!
+    setup_complete: Boolean!
+    archived: Boolean!
+    notes: String!
+    admin: Boolean!
+    force_archive: Boolean
+    card_tag: String! @isStaff
+}
+
+extend type Query {
+    user(id: ID!): User!
+    currentUser: User!
+}

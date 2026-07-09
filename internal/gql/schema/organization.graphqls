@@ -1,0 +1,6 @@
+type Organization {
+    id: ID!
+    display_name: String!
+    email: String!
+    notes: String!
+}

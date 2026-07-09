@@ -1,0 +1,12 @@
+
+type Zone {
+    id: ID!
+    makerspace_id: ID!
+    name: String!
+    hidden: Boolean!
+}
+
+extend type Query {
+    zone(id: ID!): Zone!
+    zonesByMakerspaceId(makerspace_id: ID!): [Zone!]!
+}

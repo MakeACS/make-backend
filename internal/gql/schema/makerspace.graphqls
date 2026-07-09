@@ -1,0 +1,24 @@
+
+union MakerspaceHours = DefaultHours | SpecialHours
+
+type Makerspace {
+    id: ID!
+    name: String!
+    subtitle: String!
+    description: String!
+    docs_url: String!
+    image_id: Int
+    hidden: Boolean!
+    timezone: String!
+    zones: [Zone!]!
+    hours: [MakerspaceHours!]!
+}
+
+type Query {
+    makerspace(id: ID!): Makerspace
+}
+
+type Mutation {
+    createMakerspace(name: String!, hidden: Boolean!): ID!
+    deleteMakerspace(id: ID!): Boolean!
+}

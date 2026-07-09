@@ -1,0 +1,25 @@
+
+type Equipment {
+    id: ID!
+    name: String!
+    sub_name: String!
+    zone_id: ID!
+    hidden: Boolean!
+    image_id: ID
+    sop_url: String!
+    sign_off_url: String!
+    description: String!
+    reservable: Boolean!
+    reservation_only: Boolean!
+    reservation_instructions: String!
+    needs_welcome: Boolean!
+    requires_in_person: Boolean!
+    requires_trainer: Boolean!
+}
+
+type EquipmentInstance {
+    id: ID!
+    equipment_id: ID!
+    name: String!
+    access_channel_id: ID
+}

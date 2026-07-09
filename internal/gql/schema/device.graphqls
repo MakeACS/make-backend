@@ -1,0 +1,51 @@
+type Device {
+    id: ID!
+    name: String!
+    sn: String!
+    paired: Time!
+    hardware: String
+    firmware: String
+    target_firmware: String
+    key_cycle: Int! @isAdmin
+    makerspace_id: ID!
+}
+
+type AccessDeviceFlags {
+    lock_when_idle: Boolean!
+    restart_when_unused: Boolean!
+    welcoming: Boolean!
+}
+
+type AccessComponent {
+    sn: String!
+    type: Int!
+    children: [AccessComponent!]!
+}
+
+type AccessDeployment {
+    sn: String!
+    components: [AccessComponent!]!
+}
+
+type AccessDevice {
+    device_id: ID!
+    channels: Int!
+    temp_duration: Int!
+    current_card_tag: String!
+    last_status: Time
+    session_start: Time
+    flags: AccessDeviceFlags!
+    sealed_deployment: AccessDeployment
+    reported_deployment: AccessDeployment
+}
+
+enum DispenserError {
+    CARD_STUCK
+    OUT_OF_CARDS
+}
+
+type Dispenser {
+    device_id: ID!
+    cards_left: Int!
+    error: DispenserError
+}
