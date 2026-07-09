@@ -135,3 +135,41 @@ func (r *DeviceRepo) GetAccessChannelByDeviceAndChannelId(ctx context.Context, d
 
 	return &access_channel_result, nil
 }
+
+func (r *DeviceRepo) UpdateAccessDevice(ctx context.Context, acDevice models.AccessDevice) (*models.AccessDevice, error) {
+	var access_device_result models.AccessDevice
+
+	query := `UPDATE access_devices SET
+		(channels, temp_duration, current_card_tag, last_status, session_start, flags, sealed_deployment, reported_deployment)
+		= ($1, $2, $3, $4, $5, $6, $7, $8)
+		WHERE device_id = $9
+		RETURNING device_id, channels, temp_duration, current_card_tag, last_status, session_start, flags, sealed_deployment, reported_deployment
+	`
+
+	err := r.DB.QueryRowContext(ctx, query,
+		acDevice.Channels,
+		acDevice.TempDuration,
+		acDevice.CurrentCardTag,
+		acDevice.LastStatus,
+		acDevice.SessionStart,
+		acDevice.Flags,
+		acDevice.SealedDeployment,
+		acDevice.ReportedDeployment,
+		acDevice.DeviceId,
+	).Scan(
+		&access_device_result.DeviceId,
+		&access_device_result.Channels,
+		&access_device_result.TempDuration,
+		&access_device_result.CurrentCardTag,
+		&access_device_result.LastStatus,
+		&access_device_result.SessionStart,
+		&access_device_result.Flags,
+		&access_device_result.SealedDeployment,
+		&access_device_result.ReportedDeployment,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &access_device_result, nil
+}
