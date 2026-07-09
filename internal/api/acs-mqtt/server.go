@@ -5,10 +5,10 @@ import (
 	"io"
 	"log"
 	"log/slog"
+	"make-backend/internal/database"
 	"os"
 
 	mqtt "github.com/mochi-mqtt/server/v2"
-	"github.com/mochi-mqtt/server/v2/hooks/auth"
 	"github.com/mochi-mqtt/server/v2/listeners"
 )
 
@@ -17,7 +17,7 @@ var (
 	serverPassword = os.Getenv("SERVER_MQTT_PASSWORD")
 )
 
-func StartMqtt(port int) io.Closer {
+func StartMqtt(port int, store *database.Store) io.Closer {
 	wsCfg := listeners.Config{
 		Type:    listeners.TypeWS,
 		ID:      "std-listener",
@@ -34,7 +34,7 @@ func StartMqtt(port int) io.Closer {
 		log.Fatalf("Can not start MQTT Server without server password")
 	}
 
-	_ = server.AddHook(new(auth.AllowHook), nil)
+	_ = server.AddHook(&AuthHook{store: store}, nil)
 
 	wsListener := listeners.NewWebsocket(wsCfg)
 

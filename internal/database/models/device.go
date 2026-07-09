@@ -28,6 +28,17 @@ type Device struct {
 	MakerspaceId   int
 }
 
+func (dev Device) CredentialsMatch(SN string, key string) (bool, error) {
+	if SN != dev.SN {
+		return false, nil
+	}
+	keyToMatch, err := dev.GenerateKey()
+	if err != nil {
+		return false, fmt.Errorf("Failed to generate key: %w", err)
+	}
+	return keyToMatch == key, nil
+}
+
 // PKCS7Padding adds padding to the plaintext so its length is a multiple of the block size
 // needed for compatibility with original implementation
 func PKCS7Padding(ciphertext []byte, blockSize int) []byte {

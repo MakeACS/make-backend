@@ -2,15 +2,37 @@ package acsmqtt
 
 import (
 	"bytes"
+	"context"
 	"log/slog"
+	"make-backend/internal/database"
 	"strings"
 
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/packets"
 )
 
+var knownDevicePubTopics []SNPair = []SNPair{
+	SNPair{"makerspace/device/+/status", 2},
+	SNPair{"makerspace/device/+/stateChange", 2},
+	SNPair{"makerspace/device/+/log", 2},
+	SNPair{"makerspace/device/+/authTo/request", 2},
+	SNPair{"makerspace/device/+/config/report", 2},
+	SNPair{"makerspace/device/+/info/request", 2},
+	SNPair{"makerspace/device/+/welcome/request", 2},
+}
+
+var knownDeviceSubTopics []SNPair = []SNPair{
+	// topics server gives
+	SNPair{"makerspace/device/+/welcome/response", 2},
+	SNPair{"makerspace/device/+/command", 2},
+	SNPair{"makerspace/device/+/info/response", 2},
+	SNPair{"makerspace/device/+/config/update", 2},
+	SNPair{"makerspace/device/+/authTo/response", 2},
+}
+
 type AuthHook struct {
 	mqtt.HookBase
+	store *database.Store
 }
 
 // ID returns the ID of the hook.
@@ -26,29 +48,59 @@ func (h *AuthHook) Provides(b byte) bool {
 	}, []byte{b})
 }
 
-// OnConnectAuthenticate returns true/allowed for all requests.
+// OnConnectAuthenticate returns true/allowed if server or a registered device.
 func (h *AuthHook) OnConnectAuthenticate(cl *mqtt.Client, pk packets.Packet) bool {
-	return true
+	if string(cl.Properties.Username) == serverUsername {
+		return string(pk.Connect.Password) == serverPassword
+	}
+
+	sn := string(cl.Properties.Username)
+	dev, err := h.store.Devices.GetDeviceBySN(context.TODO(), sn)
+	if err != nil {
+		slog.Warn("failed to authenticate device", "sn", sn, "err", err)
+		return false
+	}
+	ok, err := dev.CredentialsMatch(sn, string(pk.Connect.Password))
+	if err != nil {
+		slog.Warn("failed to check credentials on device", "sn", sn, "err", err)
+		return false
+	}
+	return ok
 }
 
 // OnACLCheck returns true/allowed for all checks.
 func (h *AuthHook) OnACLCheck(cl *mqtt.Client, topic string, write bool) bool {
-	if cl.ID == serverUsername {
+	username := string(cl.Properties.Username)
+	if username == serverUsername {
 		// allow server access to all channels
 		return true
 	}
 	// otherwise, assume you're a device
 	// only allow if it matches a channel we know and your SN aligns with
+	var ok bool = false
 	if write {
-		return isDeviceAllowedToPublish(cl.ID, topic)
+		ok = isDeviceAllowedToPublish(username, topic)
 	} else {
-		return isDeviceAllowedToSubscribe(cl.ID, topic)
+		ok = isDeviceAllowedToSubscribe(username, topic)
 	}
+
+	return ok
+}
+
+func isDeviceAllowedToPublish(ID string, topic string) bool {
+	return doesTopicMatchAllowed(ID, topic, knownDevicePubTopics)
+}
+func isDeviceAllowedToSubscribe(ID string, topic string) bool {
+	return doesTopicMatchAllowed(ID, topic, knownDeviceSubTopics)
 }
 
 type SNPair struct {
 	wildcardTopic string
 	snLocation    int
+}
+
+func (pair SNPair) isValid() bool {
+	return pair.snLocation < len(strings.Split(pair.wildcardTopic, "/"))
 }
 
 // returns true if the request topic parts matches the wildcarded topic
@@ -57,7 +109,7 @@ func (pair SNPair) matchesTopic(requestedParts []string) (bool, string) {
 	var knownParts = strings.Split(pair.wildcardTopic, "/")
 
 	// ignore invalid
-	if pair.snLocation > len(knownParts)-1 {
+	if !pair.isValid() {
 		slog.Warn("Invalid topic matcher for mqtt auth", "topic", pair.wildcardTopic, "location", pair.snLocation)
 		return false, ""
 	}
@@ -93,28 +145,4 @@ func doesTopicMatchAllowed(ID string, topic string, allowed []SNPair) bool {
 	}
 	// is not a known topic
 	return false
-}
-func isDeviceAllowedToPublish(ID string, topic string) bool {
-	var knownDevicePubTopics []SNPair = []SNPair{
-		SNPair{"makerspace/device/+/status", 2},
-		SNPair{"makerspace/device/+/stateChange", 2},
-		SNPair{"makerspace/device/+/log", 2},
-		SNPair{"makerspace/device/+/authTo/request", 2},
-		SNPair{"makerspace/device/+/config/report", 2},
-		SNPair{"makerspace/device/+/info/request", 2},
-		SNPair{"makerspace/device/+/welcome/request", 2},
-	}
-	return doesTopicMatchAllowed(ID, topic, knownDevicePubTopics)
-}
-func isDeviceAllowedToSubscribe(ID string, topic string) bool {
-	var knownDeviceSubTopics []SNPair = []SNPair{
-		SNPair{"makerspace/device/+/status", 2},
-		SNPair{"makerspace/device/+/stateChange", 2},
-		SNPair{"makerspace/device/+/log", 2},
-		SNPair{"makerspace/device/+/authTo/request", 2},
-		SNPair{"makerspace/device/+/config/report", 2},
-		SNPair{"makerspace/device/+/info/request", 2},
-		SNPair{"makerspace/device/+/welcome/request", 2},
-	}
-	return doesTopicMatchAllowed(ID, topic, knownDeviceSubTopics)
 }

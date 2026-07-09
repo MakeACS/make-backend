@@ -35,3 +35,28 @@ func TestKnownTopicTableDriven(t *testing.T) {
 		})
 	}
 }
+
+func TestValidDevicePubTopics(t *testing.T) {
+	// Defining the columns of the table
+
+	// Check All
+	for _, pair := range knownDevicePubTopics {
+		t.Run(pair.wildcardTopic, func(t *testing.T) {
+			if !pair.isValid() {
+				t.Errorf("pub topic matcher for %s has sn location %d that exceeds its number of parts", pair.wildcardTopic, pair.snLocation)
+			}
+		})
+	}
+}
+func TestValidDeviceSubTopics(t *testing.T) {
+	// Defining the columns of the table
+
+	// Check All
+	for _, pair := range knownDeviceSubTopics {
+		t.Run(pair.wildcardTopic, func(t *testing.T) {
+			if !pair.isValid() {
+				t.Errorf("pub topic matcher for %s has sn location %d that exceeds its number of parts", pair.wildcardTopic, pair.snLocation)
+			}
+		})
+	}
+}
