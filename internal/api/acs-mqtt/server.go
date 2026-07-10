@@ -1,10 +1,12 @@
 package acsmqtt
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"log/slog"
+	"make-backend/internal/api/acs"
 	"make-backend/internal/database"
 	"os"
 
@@ -17,14 +19,15 @@ var (
 	serverPassword = os.Getenv("SERVER_MQTT_PASSWORD")
 )
 
-func StartMqtt(port int, store *database.Store) io.Closer {
+func StartMqtt(port int, store *database.Store) (io.Closer, acs.ACSController) {
 	wsCfg := listeners.Config{
 		Type:    listeners.TypeWS,
 		ID:      "std-listener",
 		Address: fmt.Sprintf(":%v", port)}
 
 	server := mqtt.New(&mqtt.Options{
-		Logger: slog.Default().With("server", "mqtt"),
+		Logger:       slog.Default().With("server", "mqtt"),
+		InlineClient: true,
 	})
 
 	if serverUsername == "" {
@@ -44,5 +47,5 @@ func StartMqtt(port int, store *database.Store) io.Closer {
 	}
 
 	go server.Serve()
-	return server
+	return server, NewMQTTController(context.TODO(), slog.Default(), store, server)
 }

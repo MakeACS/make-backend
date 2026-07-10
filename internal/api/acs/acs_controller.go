@@ -3,10 +3,10 @@ package acs
 import "make-backend/internal/database/models"
 
 type ACSController interface {
-	sendCoreAuthToResponse(core models.AccessDevice, response ServerAuthToResponse) bool
-	sendCoreConfigUpdate(core models.AccessDevice, update ServerConfigUpdateRequest) bool
-	sendCoreInfoResponse(core models.AccessDevice, response ServerInfoResponse) bool
-	sendCoreCommand(core models.AccessDevice, command ServerCommand) bool
-	sendWelcomeResponse(device models.Device, response WelcomeResponse) bool
-	getName() string
+	SendAccessDeviceAuthToResponse(adev models.AccessDevice, response ServerAuthToResponse) bool
+	SendAccessDeviceConfigUpdate(adev models.AccessDevice, update ServerConfigUpdateRequest) bool
+	SendAccessDeviceInfoResponse(adev models.AccessDevice, response ServerInfoResponse) bool
+	SendAccessDeviceCommand(adev models.AccessDevice, command ServerCommand) bool
+	SendWelcomeResponse(device models.Device, response WelcomeResponse) bool
+	GetName() string
 }

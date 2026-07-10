@@ -1,7 +1,7 @@
 package acs
 
 type ACSDeployment struct {
-	SN         string // Core Serial Number
+	SN         string // Access Device Serial Number
 	components []ACSComponent
 }
 

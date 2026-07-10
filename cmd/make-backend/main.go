@@ -67,7 +67,7 @@ func main() {
 	store := database.NewStore(db)
 
 	httpServer := startHttp(db, store, httpPort)
-	mqttServer := acsmqtt.StartMqtt(mqttPort, store)
+	mqttServer, _ := acsmqtt.StartMqtt(mqttPort, store)
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
 
 	<-done

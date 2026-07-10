@@ -153,13 +153,13 @@ func (d AccessDeployment) Value() (driver.Value, error) {
 	return json.Marshal(d)
 }
 
-type CoreInputMode string
+type AccessDeviceInputMode string
 
 var (
-	CoreInputMode_Insert      = "INSERT"
-	CoreInputMode_TempPresent = "TEMP_PRESENT"
-	CoreInputMode_TempRemove  = "TEMP_REMOVE"
-	CoreInputMode_Toggle      = "TOGGLE"
+	AccessDeviceInputMode_Insert      = "INSERT"
+	AccessDeviceInputMode_TempPresent = "TEMP_PRESENT"
+	AccessDeviceInputMode_TempRemove  = "TEMP_REMOVE"
+	AccessDeviceInputMode_Toggle      = "TOGGLE"
 )
 
 type AccessDevice struct {

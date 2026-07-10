@@ -17,75 +17,75 @@ type ChannelState struct {
 	ChannelID int64                 `json:"channelID"`
 	State     AccessControllerState `json:"state"`
 }
-type CoreStatusReport struct {
+type AccessDeviceStatusReport struct {
 	Channels       []ChannelState `json:"channels"`
 	CurrentCardTag string         `json:"currentCardTag"`
 }
 
-type CoreStateChangeReason string
+type AccessDeviceStateChangeReason string
 
 var (
-	CoreStateChangeReason_Authed        = "AUTHED"
-	CoreStateChangeReason_OverTemp      = "OVER_TEMP"
-	CoreStateChangeReason_CardRemoved   = "CARD_REMOVED"
-	CoreStateChangeReason_Commanded     = "COMMANDED"
-	CoreStateChangeReason_Local         = "LOCAL"
-	CoreStateChangeReason_IntegrityFail = "INTEGRITY_FAIL"
-	CoreStateChangeReason_Fault         = "FAULT"
+	AccessDeviceStateChangeReason_Authed        = "AUTHED"
+	AccessDeviceStateChangeReason_OverTemp      = "OVER_TEMP"
+	AccessDeviceStateChangeReason_CardRemoved   = "CARD_REMOVED"
+	AccessDeviceStateChangeReason_Commanded     = "COMMANDED"
+	AccessDeviceStateChangeReason_Local         = "LOCAL"
+	AccessDeviceStateChangeReason_IntegrityFail = "INTEGRITY_FAIL"
+	AccessDeviceStateChangeReason_Fault         = "FAULT"
 )
 
-type CoreStateChangeReportChannel struct {
-	ChannelID int64                 `json:"channelID"`
-	FromState AccessControllerState `json:"fromState"`
-	ToState   AccessControllerState `json:"toState"`
-	Reason    CoreStateChangeReason `json:"reason"`
+type AccessDeviceStateChangeReportChannel struct {
+	ChannelID int64                         `json:"channelID"`
+	FromState AccessControllerState         `json:"fromState"`
+	ToState   AccessControllerState         `json:"toState"`
+	Reason    AccessDeviceStateChangeReason `json:"reason"`
 }
 
-type CoreStateChangeReport struct {
-	Channels       []CoreStateChangeReportChannel
+type AccessDeviceStateChangeReport struct {
+	Channels       []AccessDeviceStateChangeReportChannel
 	CurrentCardTag string
 }
 
-type CoreLogRequest struct {
+type AccessDeviceLogRequest struct {
 	AuditLog bool   `json:"auditLog"`
 	Message  string `json:"message"`
 	Category string `json:"category,omitempty"`
 }
 
-type CoreAuthToRequest struct {
+type AccessDeviceAuthToRequest struct {
 	State     AccessControllerState `json:"state"`
 	CardTagId string                `json:"cardTagID"`
 }
-type CoreFlags struct {
+type AccessDeviceFlags struct {
 	LockWhenIdle      bool `json:"lockWhenIdle"`
 	RestartWhenUnused bool `json:"restartWhenUnused"`
 	Welcoming         bool `json:"welcoming"`
 }
 
-type CoreConfigReportChannel struct {
+type AccessDeviceConfigReportChannel struct {
 	ChannelID    int64 `json:"channelID"`
 	TempDuration int64 `json:"tempDurations"`
 }
 
-type CoreConfigReport struct {
-	Channels   []CoreConfigReport   `json:"channels,omitempty"`
-	InputMode  models.CoreInputMode `json:"inputMode,omitempty"`
-	Deployment *ACSDeployment       `json:"deployment"`
-	Flags      CoreFlags            `json:"flags"`
-	Firmware   string               `json:"firmware"`
+type AccessDeviceConfigReport struct {
+	Channels   []AccessDeviceConfigReport   `json:"channels,omitempty"`
+	InputMode  models.AccessDeviceInputMode `json:"inputMode,omitempty"`
+	Deployment *ACSDeployment               `json:"deployment"`
+	Flags      AccessDeviceFlags            `json:"flags"`
+	Firmware   string                       `json:"firmware"`
 }
 
-type CoreInfoOptions string
+type AccessDeviceInfoOptions string
 
 var (
-	CoreInfoOptions_Time  = "TIME"  // Current time
-	CoreInfoOptions_State = "STATE" // State the channels should be in
-	CoreInfoOptions_Hmi   = "HMI"   // Information intended for human consumption
-	CoreInfoOptions_Flags = "FLAGS"
+	AccessDeviceInfoOptions_Time  = "TIME"  // Current time
+	AccessDeviceInfoOptions_State = "STATE" // State the channels should be in
+	AccessDeviceInfoOptions_Hmi   = "HMI"   // Information intended for human consumption
+	AccessDeviceInfoOptions_Flags = "FLAGS"
 )
 
-type CoreInfoRequest struct {
-	Fields []CoreInfoOptions `json:"fields"`
+type AccessDeviceInfoRequest struct {
+	Fields []AccessDeviceInfoOptions `json:"fields"`
 }
 
 type ServerAuthToChannel struct {
@@ -95,65 +95,61 @@ type ServerAuthToChannel struct {
 	Reason    string                `json:"reason"`
 }
 
-/**
- * Shape of what the server will send to the core in response to
- * an authTo request
- */
+// Shape of what the server will send to the access device in response to an authTo request
 type ServerAuthToResponse struct {
 	Channels  []ServerAuthToChannel `json:"channels"`
 	CardTagID string                `json:"cardTagID"`
 }
 
-type CoreFile string
+type AccessDeviceFile string
 
 var (
-	CoreFile_Cert        = "CERT"
-	CoreFile_OfflineList = "OFFLINE_LIST"
-	CoreFile_Ota         = "OTA"
+	AccessDeviceFile_Cert        = "CERT"
+	AccessDeviceFile_OfflineList = "OFFLINE_LIST"
+	AccessDeviceFile_Ota         = "OTA"
 )
 
 type ServerConfigUpdateRequestChannel struct {
-	ID           int64      `json:"id"`
-	TempDuration int64      `json:"tempDuration"`
-	GetFiles     []CoreFile `json:"getFiles"`
+	ID           int64              `json:"id"`
+	TempDuration int64              `json:"tempDuration"`
+	GetFiles     []AccessDeviceFile `json:"getFiles"`
 }
 
 /**
- * Shape of what the server sends to the core when the server
- * wants the core to update its configuration
+ * Shape of what the server sends to the access device when the server
+ * wants the device to update its configuration
  */
 type ServerConfigUpdateRequest struct {
-	InputMode *models.CoreInputMode              `json:"inputMode"`
+	InputMode *models.AccessDeviceInputMode      `json:"inputMode"`
 	Channels  []ServerConfigUpdateRequestChannel `json:"channels"`
 }
 
-type CoreActions string
+type AccessDeviceActions string
 
 var (
-	CoreActions_Restart          = "RESTART"
-	CoreActions_Seal             = "SEAL"
-	CoreActions_Identify         = "IDENTIFY"
-	CoreActions_ScheduledRestart = "SCHEDULED_RESTART"
+	AccessDeviceActions_Restart          = "RESTART"
+	AccessDeviceActions_Seal             = "SEAL"
+	AccessDeviceActions_Identify         = "IDENTIFY"
+	AccessDeviceActions_ScheduledRestart = "SCHEDULED_RESTART"
 )
 
-// Shape of what the server sends to the core when the server
-// wants to command the core to take some action
+// Shape of what the server sends to the access device when the server wants to command the device to take some action
 
 type ServerCommand struct {
 	ToState []struct {
 		id    int64
 		state AccessControllerState
 	}
-	action          *CoreActions
+	action          *AccessDeviceActions
 	identifyChannel int64
-	flags           *CoreFlags
+	flags           *AccessDeviceFlags
 }
 
-type CoreRole string
+type AccessDeviceRole string
 
 var (
-	CoreRole_Welcome   = "WELCOME"
-	CoreRole_Equipment = "EQUIPMENT"
+	AccessDeviceRole_Welcome   = "WELCOME"
+	AccessDeviceRole_Equipment = "EQUIPMENT"
 )
 
 type ServerStateResponse struct {
@@ -161,21 +157,20 @@ type ServerStateResponse struct {
 	State AccessControllerState `json:"state"`
 }
 type ServerHMIResponse struct {
-	Role       CoreRole `json:"role"`
-	Makerspace string   `json:"makerspace"`
+	Role       AccessDeviceRole `json:"role"`
+	Makerspace string           `json:"makerspace"`
 	Channels   []struct {
 		channelID    int64
 		pairedEntity string
 	} `json:"channels"`
 }
 
-// Shape of what the server sends the core in response to
-// an info request
+// Shape of what the server sends the access device in response to an info request
 type ServerInfoResponse struct {
 	Time  int64                  `json:"time"` // milliseconds
 	State *[]ServerStateResponse `json:"state"`
 	Hmi   *[]ServerHMIResponse   `json:"hmi"`
-	Flags *CoreFlags             `json:"flags"`
+	Flags *AccessDeviceFlags     `json:"flags"`
 }
 
 type WelcomeRequest struct {
