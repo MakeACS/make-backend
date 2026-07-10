@@ -103,8 +103,8 @@ func (pair SNPair) isValid() bool {
 	return pair.snLocation < len(strings.Split(pair.wildcardTopic, "/"))
 }
 
-// returns true if the request topic parts matches the wildcarded topic
-// if so, return the part of the requested topic that needs to be checked against the ID of the cliend
+// returns true if the request topic parts matches the wildcard topic
+// if so, return the part of the requested topic that needs to be checked against the ID of the client
 func (pair SNPair) matchesTopic(requestedParts []string) (bool, string) {
 	var knownParts = strings.Split(pair.wildcardTopic, "/")
 
