@@ -32,6 +32,7 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	AccessComponent() AccessComponentResolver
+	AccessDevice() AccessDeviceResolver
 	Makerspace() MakerspaceResolver
 	Mutation() MutationResolver
 	OptionBlockOption() OptionBlockOptionResolver
@@ -74,7 +75,7 @@ type ComplexityRoot struct {
 	AccessDevice struct {
 		Channels           func(childComplexity int) int
 		CurrentCardTag     func(childComplexity int) int
-		DeviceId           func(childComplexity int) int
+		DeviceID           func(childComplexity int) int
 		Flags              func(childComplexity int) int
 		LastStatus         func(childComplexity int) int
 		ReportedDeployment func(childComplexity int) int
@@ -215,7 +216,7 @@ type ComplexityRoot struct {
 	Query struct {
 		CurrentUser         func(childComplexity int) int
 		Makerspace          func(childComplexity int, id int) int
-		User                func(childComplexity int, targetID int) int
+		User                func(childComplexity int, id int) int
 		Zone                func(childComplexity int, id int) int
 		ZonesByMakerspaceID func(childComplexity int, makerspaceID int) int
 	}
@@ -306,6 +307,9 @@ type ComplexityRoot struct {
 
 type AccessComponentResolver interface {
 	Type(ctx context.Context, obj *models.AccessComponent) (int, error)
+}
+type AccessDeviceResolver interface {
+	DeviceID(ctx context.Context, obj *models.AccessDevice) (int, error)
 }
 type MakerspaceResolver interface {
 	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
@@ -423,11 +427,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccessDevice.CurrentCardTag(childComplexity), true
 	case "AccessDevice.device_id":
-		if e.ComplexityRoot.AccessDevice.DeviceId == nil {
+		if e.ComplexityRoot.AccessDevice.DeviceID == nil {
 			break
 		}
 
-		return e.ComplexityRoot.AccessDevice.DeviceId(childComplexity), true
+		return e.ComplexityRoot.AccessDevice.DeviceID(childComplexity), true
 	case "AccessDevice.flags":
 		if e.ComplexityRoot.AccessDevice.Flags == nil {
 			break
@@ -1005,7 +1009,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.User(childComplexity, args["target_id"].(int)), true
+		return e.ComplexityRoot.Query.User(childComplexity, args["id"].(int)), true
 	case "Query.zone":
 		if e.ComplexityRoot.Query.Zone == nil {
 			break
@@ -1763,14 +1767,14 @@ func (ec *executionContext) field_Query_makerspace_args(ctx context.Context, raw
 func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "target_id",
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
 		func(ctx context.Context, v any) (int, error) {
 			return ec.unmarshalNID2int(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["target_id"] = arg0
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -2119,7 +2123,7 @@ func (ec *executionContext) _AccessDevice_device_id(ctx context.Context, field g
 			return ec.fieldContext_AccessDevice_device_id(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Device.Id, nil
+			return ec.Resolvers.AccessDevice().DeviceID(ctx, obj)
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
@@ -2130,7 +2134,7 @@ func (ec *executionContext) _AccessDevice_device_id(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_AccessDevice_device_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("AccessDevice", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("AccessDevice", field, true, true, errors.New("field of type ID does not have child fields"))
 }
 
 func (ec *executionContext) _AccessDevice_channels(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
@@ -4334,22 +4338,9 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().User(ctx, fc.Args["target_id"].(int))
+			return ec.Resolvers.Query().User(ctx, fc.Args["id"].(int))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.Directives.IsStaffOrSelf == nil {
-					var zeroVal *models.User
-					return zeroVal, errors.New("directive isStaffOrSelf is not implemented")
-				}
-				return ec.Directives.IsStaffOrSelf(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *models.User) graphql.Marshaler {
 			return ec.marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx, selections, v)
 		},
@@ -7108,49 +7099,82 @@ func (ec *executionContext) _AccessDevice(ctx context.Context, sel ast.Selection
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AccessDevice")
 		case "device_id":
-			out.Values[i] = ec._AccessDevice_device_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessDevice_device_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "channels":
 			out.Values[i] = ec._AccessDevice_channels(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "temp_duration":
 			out.Values[i] = ec._AccessDevice_temp_duration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "current_card_tag":
 			out.Values[i] = ec._AccessDevice_current_card_tag(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "last_status":
 			out.Values[i] = ec._AccessDevice_last_status(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "session_start":
 			out.Values[i] = ec._AccessDevice_session_start(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "flags":
 			out.Values[i] = ec._AccessDevice_flags(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sealed_deployment":
 			out.Values[i] = ec._AccessDevice_sealed_deployment(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "reported_deployment":
 			out.Values[i] = ec._AccessDevice_reported_deployment(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))

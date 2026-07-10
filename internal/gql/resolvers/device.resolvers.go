@@ -16,7 +16,19 @@ func (r *accessComponentResolver) Type(ctx context.Context, obj *models.AccessCo
 	return int(obj.Type), nil
 }
 
+// DeviceID is the resolver for the device_id field.
+func (r *accessDeviceResolver) DeviceID(ctx context.Context, obj *models.AccessDevice) (int, error) {
+	return obj.Id, nil
+
+}
+
 // AccessComponent returns gql.AccessComponentResolver implementation.
 func (r *Resolver) AccessComponent() gql.AccessComponentResolver { return &accessComponentResolver{r} }
 
-type accessComponentResolver struct{ *Resolver }
+// AccessDevice returns gql.AccessDeviceResolver implementation.
+func (r *Resolver) AccessDevice() gql.AccessDeviceResolver { return &accessDeviceResolver{r} }
+
+type (
+	accessComponentResolver struct{ *Resolver }
+	accessDeviceResolver    struct{ *Resolver }
+)

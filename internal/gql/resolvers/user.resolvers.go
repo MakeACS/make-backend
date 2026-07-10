@@ -13,7 +13,7 @@ import (
 )
 
 // User is the resolver for the user field.
-func (r *queryResolver) User(ctx context.Context, targetID int) (*models.User, error) {
+func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) {
 	panic(fmt.Errorf("not implemented: User - user"))
 }
 
