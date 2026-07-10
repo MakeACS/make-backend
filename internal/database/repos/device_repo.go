@@ -98,9 +98,9 @@ func (r *DeviceRepo) GetAccessDeviceById(ctx context.Context, id int) (*models.A
 		reported_deployment
 		FROM access_devices WHERE device_id = $1
 	`
-
+	var devId int64
 	err := r.DB.QueryRowContext(ctx, query, id).Scan(
-		&device_result.DeviceId,
+		&devId,
 		&device_result.Channels,
 		&device_result.TempDuration,
 		&device_result.CurrentCardTag,
@@ -113,6 +113,11 @@ func (r *DeviceRepo) GetAccessDeviceById(ctx context.Context, id int) (*models.A
 	if err != nil {
 		return nil, err
 	}
+	dev, err := r.GetDeviceById(ctx, int(devId)) // TODO standardize database id type
+	if err != nil {
+		return nil, err
+	}
+	device_result.Device = *dev
 
 	return &device_result, nil
 }
@@ -155,9 +160,9 @@ func (r *DeviceRepo) UpdateAccessDevice(ctx context.Context, acDevice models.Acc
 		acDevice.Flags,
 		acDevice.SealedDeployment,
 		acDevice.ReportedDeployment,
-		acDevice.DeviceId,
+		acDevice.Device.Id,
 	).Scan(
-		&access_device_result.DeviceId,
+		&access_device_result.Device.Id,
 		&access_device_result.Channels,
 		&access_device_result.TempDuration,
 		&access_device_result.CurrentCardTag,

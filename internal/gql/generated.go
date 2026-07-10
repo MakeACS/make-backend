@@ -2119,7 +2119,7 @@ func (ec *executionContext) _AccessDevice_device_id(ctx context.Context, field g
 			return ec.fieldContext_AccessDevice_device_id(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.DeviceId, nil
+			return obj.Device.Id, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {

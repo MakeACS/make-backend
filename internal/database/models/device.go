@@ -163,7 +163,7 @@ var (
 )
 
 type AccessDevice struct {
-	DeviceId           int
+	Device
 	Channels           int
 	TempDuration       int
 	CurrentCardTag     string

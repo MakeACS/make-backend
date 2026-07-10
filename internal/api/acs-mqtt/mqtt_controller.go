@@ -33,13 +33,8 @@ func (m *MQTTController) GetName() string {
 }
 
 func (m *MQTTController) SendAccessDeviceAuthToResponse(access models.AccessDevice, response acs.ServerAuthToResponse) bool {
-	dev, err := m.store.Devices.GetDeviceById(context.TODO(), access.DeviceId)
-	if err != nil {
-		m.log.Error("Could not query for device responsible for access device", "err", err)
-		return false
-	}
 
-	topic := fmt.Sprintf("makerspace/device/%s/authTo/response", dev.SN)
+	topic := fmt.Sprintf("makerspace/device/%s/authTo/response", access.SN)
 	bs, err := json.Marshal(response)
 	if err != nil {
 		m.log.Error("Failed to marshal AccessDeviceAuthToResponse", "err", err)
