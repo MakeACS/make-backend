@@ -2,20 +2,9 @@ package acs
 
 import "make-backend/internal/database/models"
 
-type AccessControllerState string
-
-var (
-	AccessControllerState_Idle      = "IDLE"
-	AccessControllerState_Unlocked  = "UNLOCKED"
-	AccessControllerState_AlwaysOn  = "ALWAYS_ON"
-	AccessControllerState_LockedOut = "LOCKED_OUT"
-	AccessControllerState_Fault     = "FAULT"
-	AccessControllerState_Welcoming = "WELCOMING"
-)
-
 type ChannelState struct {
-	ChannelID int64                 `json:"channelID"`
-	State     AccessControllerState `json:"state"`
+	ChannelID int64                     `json:"channelID"`
+	State     models.AccessChannelState `json:"state"`
 }
 type AccessDeviceStatusReport struct {
 	Channels       []ChannelState `json:"channels"`
@@ -36,8 +25,8 @@ var (
 
 type AccessDeviceStateChangeReportChannel struct {
 	ChannelID int64                         `json:"channelID"`
-	FromState AccessControllerState         `json:"fromState"`
-	ToState   AccessControllerState         `json:"toState"`
+	FromState models.AccessChannelState     `json:"fromState"`
+	ToState   models.AccessChannelState     `json:"toState"`
 	Reason    AccessDeviceStateChangeReason `json:"reason"`
 }
 
@@ -53,8 +42,8 @@ type AccessDeviceLogRequest struct {
 }
 
 type AccessDeviceAuthToRequest struct {
-	State     AccessControllerState `json:"state"`
-	CardTagId string                `json:"cardTagID"`
+	State     models.AccessChannelState `json:"state"`
+	CardTagId string                    `json:"cardTagID"`
 }
 type AccessDeviceFlags struct {
 	LockWhenIdle      bool `json:"lockWhenIdle"`
@@ -89,10 +78,10 @@ type AccessDeviceInfoRequest struct {
 }
 
 type ServerAuthToChannel struct {
-	ChannelID int64                 `json:"channelID"`
-	State     AccessControllerState `json:"state"`
-	Approved  bool                  `json:"approved"`
-	Reason    string                `json:"reason"`
+	ChannelID int64                     `json:"channelID"`
+	State     models.AccessChannelState `json:"state"`
+	Approved  bool                      `json:"approved"`
+	Reason    string                    `json:"reason"`
 }
 
 // Shape of what the server will send to the access device in response to an authTo request
@@ -138,7 +127,7 @@ var (
 type ServerCommand struct {
 	ToState []struct {
 		id    int64
-		state AccessControllerState
+		state models.AccessChannelState
 	}
 	action          *AccessDeviceActions
 	identifyChannel int64
@@ -153,8 +142,8 @@ var (
 )
 
 type ServerStateResponse struct {
-	ID    int64                 `json:"id"`
-	State AccessControllerState `json:"state"`
+	ID    int64                     `json:"id"`
+	State models.AccessChannelState `json:"state"`
 }
 type ServerHMIResponse struct {
 	Role       AccessDeviceRole `json:"role"`

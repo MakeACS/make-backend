@@ -9,6 +9,10 @@ import (
 type DeviceRepository interface {
 	GetDeviceById(ctx context.Context, id int) (*models.Device, error)
 	GetDeviceBySN(ctx context.Context, sn string) (*models.Device, error)
+	GetAccessDeviceById(ctx context.Context, id int) (*models.AccessDevice, error)
+	GetAccessChannelByDeviceAndChannelId(ctx context.Context, device_id int, channel_id int) (*models.AccessChannel, error)
+	UpdateAccessDevice(ctx context.Context, acDevice models.AccessDevice) (*models.AccessDevice, error)
+	UpdateControllerState(ctx context.Context, deviceID int, channelID int, state models.AccessChannelState) (models.AccessChannel, error)
 }
 
 type DeviceRepo struct {
@@ -177,4 +181,30 @@ func (r *DeviceRepo) UpdateAccessDevice(ctx context.Context, acDevice models.Acc
 	}
 
 	return &access_device_result, nil
+}
+
+func (r *DeviceRepo) UpdateControllerState(ctx context.Context, deviceID int, channelID int, state models.AccessChannelState) (models.AccessChannel, error) {
+	var channel_result models.AccessChannel
+
+	query := `UPDATE access_channels SET
+		(state)
+		= ($1)
+		WHERE id = $2 and device_id = $3
+		RETURNING id, device_id, channel_id, state, temp_duration
+	`
+
+	err := r.DB.QueryRowContext(ctx, query,
+		state, channelID, deviceID,
+	).Scan(
+		channel_result.Id,
+		channel_result.DeviceId,
+		channel_result.ChannelId,
+		channel_result.State,
+		channel_result.TempDuration,
+	)
+	if err != nil {
+		return models.AccessChannel{}, err
+	}
+
+	return channel_result, nil
 }

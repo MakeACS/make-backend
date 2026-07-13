@@ -3,11 +3,11 @@ package models
 type AccessChannelState string
 
 const (
-	Idle      AccessChannelState = "IDLE"
-	Unlocked  AccessChannelState = "UNLOCKED"
-	AlwaysOn  AccessChannelState = "ALWAYS_ON"
-	LockedOut AccessChannelState = "LOCKED_OUT"
-	Fault     AccessChannelState = "FAULT"
+	StateIdle      AccessChannelState = "IDLE"
+	StateUnlocked  AccessChannelState = "UNLOCKED"
+	StateAlwaysOn  AccessChannelState = "ALWAYS_ON"
+	StateLockedOut AccessChannelState = "LOCKED_OUT"
+	StateFault     AccessChannelState = "FAULT"
 )
 
 type AccessChannel struct {
