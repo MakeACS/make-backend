@@ -18,15 +18,16 @@ type DateRange struct {
 }
 
 type LogFilter struct {
-	Range                DateRange
-	Categories           []string
-	IncludeUncategorized bool
-	SearchText           string
+	Range         DateRange
+	Categories    []string
+	AllCategories bool
+	SearchText    string
 }
 
 type MultiMakerspaceLogFilter struct {
 	LogFilter
-	Makerspaces []int
+	Makerspaces         []int
+	IncludeUnassociated bool
 }
 
 type AuditLogRepository interface {
@@ -54,7 +55,7 @@ func (r *AuditLogRepo) CreateAuditLog(ctx context.Context, makerspaceId *int, pl
 
 	var id_result int
 
-	err = r.DB.QueryRowContext(ctx, query, makerspaceId, plainString, formatString, message_type, jsonData).Scan(&id_result)
+	err = r.DB.QueryRowContext(ctx, query, makerspaceId, plainString, formatString, message_type, json.RawMessage(jsonData)).Scan(&id_result)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert audit log: %w", err)
 	}
@@ -66,19 +67,36 @@ func CategoriesToTypes(cats []string) []string {
 	return cats
 }
 
-func (r *AuditLogRepo) AllLogs(ctx context.Context, page int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error) {
+func (r *AuditLogRepo) AllLogs(ctx context.Context, offset int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error) {
 	conditions := []string{}
 	args := []any{}
 	addArgGetId := func(arg any) int {
 		args = append(args, arg)
 		return len(args)
 	}
-	query := "SELECT id, timestamp, makerspace_id, plain_string, format_string, message_type, data"
-	if len(filter.Makerspaces) > 0 {
+	query := "SELECT id, timestamp, makerspace_id, plain_string, format_string, message_type, data FROM audit_logs"
+
+	// not empty & includeUnassociated -> ANY or NULL
+	// not empty & !includeUnassociated -> ANY and NOT NULL -> ANY filters out nulls
+	//  empty & includeUnassociated -> IS NULL
+	//  empty & !includeUnassociated -> always returns nothing
+	if len(filter.Makerspaces) == 0 && !filter.IncludeUnassociated {
+		// don't even bother querying
+		return []models.AuditLog{}, nil
+	} else if len(filter.Makerspaces) == 0 && filter.IncludeUnassociated {
+		makerspaceFilter := "makerspace_id IS NULL"
+		conditions = append(conditions, makerspaceFilter)
+	} else {
+		// have a list of makerspaces to check
 		id := addArgGetId(pq.Array(filter.Makerspaces))
-		makerspaceFilter := fmt.Sprintf("makerspace_id = ANY([$%d])", id)
+		var assocFilter string = ""
+		if filter.IncludeUnassociated {
+			assocFilter = "OR makerspace_id IS NULL"
+		}
+		makerspaceFilter := fmt.Sprintf("(makerspace_id = ANY($%d) %s)", id, assocFilter)
 		conditions = append(conditions, makerspaceFilter)
 	}
+
 	if filter.Range.StartDate != nil {
 		id := addArgGetId(filter.Range.StartDate)
 		startDateFilter := fmt.Sprintf("timestamp >= $%d", id)
@@ -92,23 +110,19 @@ func (r *AuditLogRepo) AllLogs(ctx context.Context, page int, limit int, filter 
 
 	types := CategoriesToTypes(filter.Categories)
 
-	// nonempty &  includeUncategorized -> ANY[types] or NULL
-	// nonempty & !includeUncategorized -> ANY[types]
-	// empty &  includeUncategorized -> filter nothing, all through
-	// empty & !includeUncategorized -> NOT NULL
-	//
-	if len(types) > 0 {
-		id := addArgGetId(pq.Array(types))
-		var uncategorizedFilter string = ""
-		if !filter.IncludeUncategorized {
-			uncategorizedFilter = "OR message_type IS NULL"
-		}
-		catFilter := fmt.Sprintf("message_type = ANY([$%d]) %s", id, uncategorizedFilter)
-		conditions = append(conditions, catFilter)
+	// AllCategories -> dont add this filter
+	// nonempty &  !AllCategories -> ANY[cats2types(cats)]
+	// empty & !AllCategories -> nothing ever returned
 
-	} else if !filter.IncludeUncategorized {
-		catFilter := "message_type IS NOT NULL"
-		conditions = append(conditions, catFilter)
+	if !filter.AllCategories {
+		if len(types) == 0 {
+			return []models.AuditLog{}, nil
+		} else if len(types) > 0 {
+			id := addArgGetId(pq.Array(types))
+
+			catFilter := fmt.Sprintf("message_type = ANY($%d)", id)
+			conditions = append(conditions, catFilter)
+		}
 	}
 
 	if filter.SearchText != "" {
@@ -118,17 +132,40 @@ func (r *AuditLogRepo) AllLogs(ctx context.Context, page int, limit int, filter 
 		conditions = append(conditions, textFilter)
 	}
 
-	fullQuery := query + " WHERE " + strings.Join(conditions, " AND")
+	pageInfo := fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
 
-	err := r.DB.QueryRowContext(ctx, fullQuery, args...)
+	fullQuery := query + " WHERE " + strings.Join(conditions, " AND ") + " " + pageInfo
+
+	rows, err := r.DB.QueryContext(ctx, fullQuery, args...)
 	if err != nil {
-		return []models.AuditLog{}, fmt.Errorf("failed to search audit logs: %w", err)
+		return nil, fmt.Errorf("failed to construct QueryContext: %w", err)
+	}
+	logs := []models.AuditLog{}
+	for rows.Next() {
+		var log models.AuditLog
+		err := rows.Scan(
+			&log.Id,
+			&log.Timestamp,
+			&log.MakerspaceID,
+			&log.PlainString,
+			&log.FormatString,
+			&log.MessageType,
+			&log.Data,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan for audit log row: %w", err)
+		}
+		logs = append(logs, log)
 
 	}
-	return []models.AuditLog{}, nil
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to search audit logs: %w", err)
+	}
+
+	return logs, nil
 
 }
 
-func (r *AuditLogRepo) MakerspaceLogs(ctx context.Context, makerspace_id int, page int, limit int, filter LogFilter) ([]models.AuditLog, error) {
-	return r.AllLogs(ctx, page, limit, MultiMakerspaceLogFilter{filter, []int{makerspace_id}})
+func (r *AuditLogRepo) MakerspaceLogs(ctx context.Context, makerspace_id int, offset int, limit int, filter LogFilter) ([]models.AuditLog, error) {
+	return r.AllLogs(ctx, offset, limit, MultiMakerspaceLogFilter{filter, []int{makerspace_id}, false})
 }

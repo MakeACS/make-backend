@@ -18,17 +18,43 @@ func (al *AuditLogger) Create(makerspaceId int, messageType string, fmtString st
 	format := CreateFormatString(fmtString, entities...)
 	data := DataForEntities(fmtString, entities)
 
-	fmt.Println("Create log ", plain, format, data)
 	_, err := al.store.AuditLogs.CreateAuditLog(context.TODO(), &makerspaceId, plain, format, messageType, data)
 	if err != nil {
 		slog.Warn("Failed to create audit log with auto data", "err", err)
 	}
 }
 
-func (al *AuditLogger) CreateUnassociated() {}
+func (al *AuditLogger) CreateUnassociated(messageType string, fmtString string, entities ...models.LogEntity) {
+	plain := CreatePlainString(fmtString, entities...)
+	format := CreateFormatString(fmtString, entities...)
+	data := DataForEntities(fmtString, entities)
 
-func (al *AuditLogger) CreateWithData()             {}
-func (al *AuditLogger) CreateUnassociatedWithData() {}
+	_, err := al.store.AuditLogs.CreateAuditLog(context.TODO(), nil, plain, format, messageType, data)
+	if err != nil {
+		slog.Warn("Failed to create unassociated audit log with auto data", "err", err)
+	}
+}
+
+func (al *AuditLogger) CreateWithData(makerspaceId int, messageType string, fmtString string, entities ...models.LogEntity) {
+	plain := CreatePlainString(fmtString, entities...)
+	format := CreateFormatString(fmtString, entities...)
+	data := DataForEntities(fmtString, entities)
+
+	_, err := al.store.AuditLogs.CreateAuditLog(context.TODO(), &makerspaceId, plain, format, messageType, data)
+	if err != nil {
+		slog.Warn("Failed to create audit log with manual data", "err", err)
+	}
+}
+func (al *AuditLogger) CreateUnassociatedWithData(messageType string, data map[string]any, fmtString string, entities ...models.LogEntity) {
+	plain := CreatePlainString(fmtString, entities...)
+	format := CreateFormatString(fmtString, entities...)
+
+	_, err := al.store.AuditLogs.CreateAuditLog(context.TODO(), nil, plain, format, messageType, data)
+	if err != nil {
+		slog.Warn("Failed to create unassociated audit log with manual data", "err", err)
+	}
+
+}
 
 var auditLogRegex = regexp.MustCompile(`{(\w+)}`)
 

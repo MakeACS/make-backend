@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -13,7 +14,7 @@ type AuditLog struct {
 	FormatString string
 
 	MessageType string
-	Data        map[string]any
+	Data        json.RawMessage
 }
 
 type LogEntity struct {

@@ -20,7 +20,7 @@ type User struct {
 }
 
 func (u User) FullName() string {
-	return u.Firstname + u.Lastname
+	return u.Firstname + " " + u.Lastname
 }
 func (u User) LogEntity() LogEntity {
 	return LogEntity{Id: u.Id, Label: u.FullName()}
