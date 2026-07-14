@@ -35,10 +35,9 @@ func (al *AuditLogger) CreateUnassociated(messageType string, fmtString string, 
 	}
 }
 
-func (al *AuditLogger) CreateWithData(makerspaceId int, messageType string, fmtString string, entities ...models.LogEntity) {
+func (al *AuditLogger) CreateWithData(makerspaceId int, messageType string, data map[string]any, fmtString string, entities ...models.LogEntity) {
 	plain := CreatePlainString(fmtString, entities...)
 	format := CreateFormatString(fmtString, entities...)
-	data := dataForEntities(fmtString, entities)
 
 	_, err := al.store.AuditLogs.CreateAuditLog(context.TODO(), &makerspaceId, plain, format, messageType, data)
 	if err != nil {
