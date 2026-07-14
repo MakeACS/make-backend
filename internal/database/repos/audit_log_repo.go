@@ -34,6 +34,7 @@ type AuditLogRepository interface {
 	AllLogs(ctx context.Context, page int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error)
 	MakerspaceLogs(ctx context.Context, makerspace_id int, page int, limit int, filter LogFilter) ([]models.AuditLog, error)
 
+	// possible future expansion for regex searching
 	// AllLogsRegex(ctx context.Context, page int, limit int, filter MultiMakerspaceLogFilter)
 	// MakerspaceLogsRegex(ctx context.Context, makerspace_id int, page int, limit int, filter LogFilter)
 

@@ -123,7 +123,7 @@ func CreateFormatString(fmtString string, entities ...models.LogEntity) string {
 			entity = entities[index]
 		}
 		index += 1
-		return fmt.Sprintf("<%s:%d:%s>", s, entity.Id, entity.Label)
+		return fmt.Sprintf("{%s:%d:%s}", s, entity.Id, entity.Label)
 	}
 	return auditLogRegex.ReplaceAllStringFunc(fmtString, replacer)
 
