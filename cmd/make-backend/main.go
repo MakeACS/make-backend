@@ -9,6 +9,7 @@ import (
 	"make-backend/internal/database"
 	"make-backend/internal/gql"
 	"make-backend/internal/logging"
+	"time"
 
 	acsmqtt "make-backend/internal/api/acs-mqtt"
 	acsrest "make-backend/internal/api/acs-rest"
@@ -72,7 +73,7 @@ func main() {
 	mqttServer := acsmqtt.StartMqtt(logger, mqttPort)
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
 
-	logger.AuditLog.CreateUnassociated("base.server.start.1", "Server started")
+	logger.AuditLog.CreateUnassociatedWithData("builtin.server.start.1", map[string]any{"time": time.Now()}, "Server started")
 
 	<-done
 	slog.Warn("caught signal, stopping...")
