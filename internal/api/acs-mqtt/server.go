@@ -48,5 +48,5 @@ func StartMqtt(logger *logging.Logger, store *database.Store, port int) (io.Clos
 	}
 
 	go server.Serve()
-	return server, NewMQTTController(context.TODO(), slog.Default(), store, server)
+	return server, NewMQTTController(context.TODO(), slog.Default(), store, logger, server)
 }

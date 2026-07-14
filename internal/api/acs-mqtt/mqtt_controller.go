@@ -8,21 +8,24 @@ import (
 	"make-backend/internal/api/acs"
 	"make-backend/internal/database"
 	"make-backend/internal/database/models"
+	"make-backend/internal/logging"
 
 	mqtt "github.com/mochi-mqtt/server/v2"
 )
 
 type MQTTController struct {
 	ctx          context.Context
-	log          *slog.Logger
+	slog         *slog.Logger
+	logger       *logging.Logger
 	store        *database.Store
 	serverClient *mqtt.Server
 }
 
-func NewMQTTController(ctx context.Context, log *slog.Logger, store *database.Store, server *mqtt.Server) *MQTTController {
+func NewMQTTController(ctx context.Context, log *slog.Logger, store *database.Store, logger *logging.Logger, server *mqtt.Server) *MQTTController {
 	return &MQTTController{
 		ctx:          ctx,
-		log:          log,
+		slog:         log,
+		logger:       logger,
 		store:        store,
 		serverClient: server,
 	}
@@ -37,12 +40,12 @@ func (m *MQTTController) SendAccessDeviceAuthToResponse(access models.AccessDevi
 	topic := fmt.Sprintf("makerspace/device/%s/authTo/response", access.SN)
 	bs, err := json.Marshal(response)
 	if err != nil {
-		m.log.Error("Failed to marshal AccessDeviceAuthToResponse", "err", err)
+		m.slog.Error("Failed to marshal AccessDeviceAuthToResponse", "err", err)
 		return false
 	}
 	err = m.serverClient.Publish(topic, bs, true, 2)
 	if err != nil {
-		m.log.Error("Failed to publish AccessDeviceAuthToResponse", "err", err)
+		m.slog.Error("Failed to publish AccessDeviceAuthToResponse", "err", err)
 		return false
 	}
 	return true
