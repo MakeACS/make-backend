@@ -7,7 +7,10 @@ import (
 	"log/slog"
 	"make-backend/internal/auth"
 	"make-backend/internal/database"
+	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
+	"make-backend/internal/logging"
+	"time"
 
 	acsmqtt "make-backend/internal/api/acs-mqtt"
 	acsrest "make-backend/internal/api/acs-rest"
@@ -65,9 +68,33 @@ func main() {
 	defer db.Close()
 
 	store := database.NewStore(db)
-
-	httpServer := startHttp(db, store, httpPort)
-	mqttServer := acsmqtt.StartMqtt(mqttPort)
+	user := models.User{
+		Id:            2,
+		Username:      "jehshed",
+		Firstname:     "Jim",
+		Lastname:      "Shed",
+		Pronouns:      "make/er",
+		JoinDate:      time.Time{},
+		SetupComplete: false,
+		Archived:      false,
+		Notes:         "",
+		Admin:         false,
+		ForceArchive:  new(bool),
+		CardTag:       "",
+	}
+	inst := models.EquipmentInstance{
+		Id:              1,
+		EquipmentId:     0,
+		Name:            "Left Bandsaw",
+		AccessChannelId: new(int),
+	}
+	logger := logging.NewLogger(store)
+	logger.AuditLog.Create(1, "activation_1", "{user} activated {instance}", user.LogEntity(), inst.LogEntity())
+	// fmt.Println(logging.CreatePlainString(
+	// fmt.Println(logging.CreateFormatString("{user} activated {instance}", user.LogEntity(), inst.LogEntity()))
+	return
+	httpServer := startHttp(db, store, logger, httpPort)
+	mqttServer := acsmqtt.StartMqtt(logger, mqttPort)
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
 
 	<-done
@@ -106,7 +133,7 @@ func StartReverseProxy(port string, httpPort, mqttPort int) *http.Server {
 
 }
 
-func startHttp(db *sql.DB, store *database.Store, port int) *http.Server {
+func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port int) *http.Server {
 	// Sessions
 	sessionManager := auth.SetupSessions(db)
 	// Auth

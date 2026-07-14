@@ -15,6 +15,7 @@ type Store struct {
 	Zones       repos.ZoneRepository
 	Equipment   repos.EquipmentRepository
 	Devices     repos.DeviceRepository
+	AuditLogs   repos.AuditLogRepository
 }
 
 func NewStore(db *sql.DB) *Store {
@@ -24,5 +25,6 @@ func NewStore(db *sql.DB) *Store {
 		Zones:       &repos.ZoneRepo{DB: db},
 		Equipment:   &repos.EquipmentRepo{DB: db},
 		Devices:     &repos.DeviceRepo{DB: db},
+		AuditLogs:   &repos.AuditLogRepo{DB: db},
 	}
 }
