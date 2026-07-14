@@ -30,6 +30,11 @@ type MultiMakerspaceLogFilter struct {
 	IncludeUnassociated bool
 }
 
+// mapping of log message category to the specific types of messages to look for
+func CategoriesToTypes(cats []string) []string {
+	return cats
+}
+
 type AuditLogRepository interface {
 	AllLogs(ctx context.Context, page int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error)
 	MakerspaceLogs(ctx context.Context, makerspace_id int, page int, limit int, filter LogFilter) ([]models.AuditLog, error)
@@ -43,7 +48,6 @@ type AuditLogRepository interface {
 
 type AuditLogRepo struct {
 	DB *sql.DB
-	// TypeToCategory map[string]models.Category
 }
 
 func (r *AuditLogRepo) CreateAuditLog(ctx context.Context, makerspaceId *int, plainString string, formatString string, message_type string, data map[string]any) (int, error) {
@@ -62,10 +66,6 @@ func (r *AuditLogRepo) CreateAuditLog(ctx context.Context, makerspaceId *int, pl
 	}
 
 	return id_result, nil
-}
-
-func CategoriesToTypes(cats []string) []string {
-	return cats
 }
 
 func (r *AuditLogRepo) AllLogs(ctx context.Context, offset int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error) {

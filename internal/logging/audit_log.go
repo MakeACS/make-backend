@@ -16,7 +16,7 @@ type AuditLogger struct {
 func (al *AuditLogger) Create(makerspaceId int, messageType string, fmtString string, entities ...models.LogEntity) {
 	plain := CreatePlainString(fmtString, entities...)
 	format := CreateFormatString(fmtString, entities...)
-	data := DataForEntities(fmtString, entities)
+	data := dataForEntities(fmtString, entities)
 
 	_, err := al.store.AuditLogs.CreateAuditLog(context.TODO(), &makerspaceId, plain, format, messageType, data)
 	if err != nil {
@@ -27,7 +27,7 @@ func (al *AuditLogger) Create(makerspaceId int, messageType string, fmtString st
 func (al *AuditLogger) CreateUnassociated(messageType string, fmtString string, entities ...models.LogEntity) {
 	plain := CreatePlainString(fmtString, entities...)
 	format := CreateFormatString(fmtString, entities...)
-	data := DataForEntities(fmtString, entities)
+	data := dataForEntities(fmtString, entities)
 
 	_, err := al.store.AuditLogs.CreateAuditLog(context.TODO(), nil, plain, format, messageType, data)
 	if err != nil {
@@ -38,7 +38,7 @@ func (al *AuditLogger) CreateUnassociated(messageType string, fmtString string, 
 func (al *AuditLogger) CreateWithData(makerspaceId int, messageType string, fmtString string, entities ...models.LogEntity) {
 	plain := CreatePlainString(fmtString, entities...)
 	format := CreateFormatString(fmtString, entities...)
-	data := DataForEntities(fmtString, entities)
+	data := dataForEntities(fmtString, entities)
 
 	_, err := al.store.AuditLogs.CreateAuditLog(context.TODO(), &makerspaceId, plain, format, messageType, data)
 	if err != nil {
@@ -70,7 +70,11 @@ func addMappingTypesToObject(eType string, entities []models.LogEntity, target m
 	}
 }
 
-func DataForEntities(fmtString string, entities []models.LogEntity) map[string]any {
+// transform a list of entities from a log line into an object that can be stored in the data column
+// if there is only one entity of a given type, it is stored as type_id and type_label
+// if there is multiple entities of a given type, they are stored as type_i_id and type_label_id where i is the index in the list of that entity type
+// for example, `{user} updated card tag to {conceal} for {user}` would list user_0_* and user_1_* rather than user_2_*
+func dataForEntities(fmtString string, entities []models.LogEntity) map[string]any {
 	var mapping map[string][]models.LogEntity = map[string][]models.LogEntity{}
 	locations := auditLogRegex.FindAllString(fmtString, -1)
 
@@ -93,6 +97,8 @@ func DataForEntities(fmtString string, entities []models.LogEntity) map[string]a
 	return data
 }
 
+// Create the stored plain string for the db/frontend. This is a simple text string without any {entity:id:name} parts that the front end renders specially
+// The frontend log message, while rendered interactively with links and colors, should have the same text as this
 func CreatePlainString(fmtString string, entities ...models.LogEntity) string {
 	index := 0
 	replacer := func(s string) string {
@@ -110,6 +116,8 @@ func CreatePlainString(fmtString string, entities ...models.LogEntity) string {
 	}
 	return auditLogRegex.ReplaceAllStringFunc(fmtString, replacer)
 }
+
+// Create the stored formatted string for the db/frontend from the code string and entities
 func CreateFormatString(fmtString string, entities ...models.LogEntity) string {
 	index := 0
 	replacer := func(s string) string {
