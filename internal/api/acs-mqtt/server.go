@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"make-backend/internal/api/acs"
 	"make-backend/internal/database"
+	"make-backend/internal/logging"
 	"os"
 
 	mqtt "github.com/mochi-mqtt/server/v2"
@@ -19,7 +20,7 @@ var (
 	serverPassword = os.Getenv("SERVER_MQTT_PASSWORD")
 )
 
-func StartMqtt(port int, store *database.Store) (io.Closer, acs.ACSController) {
+func StartMqtt(logger *logging.Logger, store *database.Store, port int) (io.Closer, acs.ACSController) {
 	wsCfg := listeners.Config{
 		Type:    listeners.TypeWS,
 		ID:      "std-listener",

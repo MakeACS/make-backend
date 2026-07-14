@@ -18,9 +18,23 @@ type Equipment struct {
 	RequiresTrainer         bool
 }
 
+func (e Equipment) LogEntity() LogEntity {
+	return LogEntity{
+		Id:    e.Id,
+		Label: e.Name,
+	}
+}
+
 type EquipmentInstance struct {
 	Id              int
 	EquipmentId     int
 	Name            string
 	AccessChannelId *int
+}
+
+func (e EquipmentInstance) LogEntity() LogEntity {
+	return LogEntity{
+		Id:    e.Id,
+		Label: e.Name,
+	}
 }

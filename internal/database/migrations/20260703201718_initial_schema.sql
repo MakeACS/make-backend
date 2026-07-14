@@ -1,4 +1,15 @@
 -- +goose Up
+
+CREATE TABLE audit_logs (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),  
+    makerspace_id INT NULL DEFAULT NULL,
+    plain_string TEXT NOT NULL ,
+    format_string TEXT NOT NULL,
+    message_type TEXT NOT NULL,
+    data JSONB NULL
+);
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     first_name TEXT NOT NULL DEFAULT '',

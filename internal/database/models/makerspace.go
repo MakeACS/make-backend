@@ -10,3 +10,10 @@ type Makerspace struct {
 	Hidden      bool
 	Timezone    string
 }
+
+func (m Makerspace) LogEntity() LogEntity {
+	return LogEntity{
+		Id:    m.Id,
+		Label: m.Name,
+	}
+}
