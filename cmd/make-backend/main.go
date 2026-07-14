@@ -72,6 +72,8 @@ func main() {
 	mqttServer := acsmqtt.StartMqtt(logger, mqttPort)
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
 
+	logger.AuditLog.CreateUnassociated("server_start_1", "Server started")
+
 	<-done
 	slog.Warn("caught signal, stopping...")
 	reverseProxy.Close()
