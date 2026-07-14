@@ -28,6 +28,13 @@ type Device struct {
 	MakerspaceId   int
 }
 
+func (d Device) LogEntity() LogEntity {
+	return LogEntity{
+		Id:    d.Id,
+		Label: d.Name,
+	}
+}
+
 func (dev Device) CredentialsMatch(SN string, key string) (bool, error) {
 	if SN != dev.SN {
 		return false, nil

@@ -93,13 +93,16 @@ func (orc *ACSOrchestrator) HandleAccessDeviceLogRequest(deviceID int64, logRequ
 		return
 	}
 	data := map[string]any{
-		"makerspace_id": dev.MakerspaceId,
-		"device_id":     dev.Id,
+		"makerspace_id":    dev.MakerspaceId,
+		"device_id":        dev.Id,
+		"device_label":     dev.Name,
+		"original_message": logRequest.Message,
 	}
 	if logRequest.AuditLog {
-
-		orc.logger.AuditLog.CreateWithData(dev.MakerspaceId, data, "base.access_device.log."+logRequest.Category, logRequest.Message)
-
+		fullMessage := "Message from {device}: " + logRequest.Message
+		orc.logger.AuditLog.CreateWithData(dev.MakerspaceId, "base.access_device.log."+logRequest.Category, data, fullMessage, dev.LogEntity())
+	} else {
+		// orc.logger.DeviceLog.
 	}
 
 	// try {
