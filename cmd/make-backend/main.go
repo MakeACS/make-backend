@@ -12,7 +12,7 @@ import (
 	"time"
 
 	acsmqtt "make-backend/internal/api/acs-mqtt"
-	acsrest "make-backend/internal/api/acs-rest"
+	acsrest "make-backend/internal/api/rest"
 	"make-backend/internal/gql/directives"
 	"make-backend/internal/gql/resolvers"
 	"net/http"

@@ -102,7 +102,7 @@ func (r *DeviceRepo) GetAccessDeviceById(ctx context.Context, id int) (*models.A
 		reported_deployment
 		FROM access_devices WHERE device_id = $1
 	`
-	var devId int64
+	var devId int
 	err := r.DB.QueryRowContext(ctx, query, id).Scan(
 		&devId,
 		&device_result.Channels,
@@ -189,7 +189,7 @@ func (r *DeviceRepo) UpdateControllerState(ctx context.Context, deviceID int, ch
 	query := `UPDATE access_channels SET
 		(state)
 		= ($1)
-		WHERE id = $2 and device_id = $3
+		WHERE device_id = $2 and channel_id = $3
 		RETURNING id, device_id, channel_id, state, temp_duration
 	`
 

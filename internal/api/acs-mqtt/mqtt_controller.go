@@ -48,8 +48,8 @@ func (m *MQTTController) sendResponseToTopic(topic string, data any) error {
 	return nil
 }
 
-func (m *MQTTController) SendAccessDeviceAuthToResponse(access models.AccessDevice, response acs.ServerAuthToResponse) bool {
-	topic := fmt.Sprintf("makerspace/device/%s/authTo/response", access.SN)
+func (m *MQTTController) SendAccessDeviceAuthToResponse(dev models.AccessDevice, response acs.ServerAuthToResponse) bool {
+	topic := fmt.Sprintf("makerspace/device/%s/authTo/response", dev.SN)
 	err := m.sendResponseToTopic(topic, response)
 	if err != nil {
 		m.slog.Error("Failed to publish AccessDeviceAuthToResponse", "err", err)

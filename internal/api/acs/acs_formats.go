@@ -3,7 +3,7 @@ package acs
 import "make-backend/internal/database/models"
 
 type ChannelState struct {
-	ChannelID int64                     `json:"channelID"`
+	ChannelID int                       `json:"channelID"`
 	State     models.AccessChannelState `json:"state"`
 }
 type AccessDeviceStatusReport struct {
@@ -14,25 +14,25 @@ type AccessDeviceStatusReport struct {
 type AccessDeviceStateChangeReason string
 
 var (
-	AccessDeviceStateChangeReason_Authed        = "AUTHED"
-	AccessDeviceStateChangeReason_OverTemp      = "OVER_TEMP"
-	AccessDeviceStateChangeReason_CardRemoved   = "CARD_REMOVED"
-	AccessDeviceStateChangeReason_Commanded     = "COMMANDED"
-	AccessDeviceStateChangeReason_Local         = "LOCAL"
-	AccessDeviceStateChangeReason_IntegrityFail = "INTEGRITY_FAIL"
-	AccessDeviceStateChangeReason_Fault         = "FAULT"
+	AccessDeviceStateChangeReason_Authed        AccessDeviceStateChangeReason = "AUTHED"
+	AccessDeviceStateChangeReason_OverTemp                                    = "OVER_TEMP"
+	AccessDeviceStateChangeReason_CardRemoved                                 = "CARD_REMOVED"
+	AccessDeviceStateChangeReason_Commanded                                   = "COMMANDED"
+	AccessDeviceStateChangeReason_Local                                       = "LOCAL"
+	AccessDeviceStateChangeReason_IntegrityFail                               = "INTEGRITY_FAIL"
+	AccessDeviceStateChangeReason_Fault                                       = "FAULT"
 )
 
-type AccessDeviceStateChangeReportChannel struct {
-	ChannelID int64                         `json:"channelID"`
+type AccessChannelStateChangeReport struct {
+	ChannelID int                           `json:"channelID"`
 	FromState models.AccessChannelState     `json:"fromState"`
 	ToState   models.AccessChannelState     `json:"toState"`
 	Reason    AccessDeviceStateChangeReason `json:"reason"`
 }
 
 type AccessDeviceStateChangeReport struct {
-	Channels       []AccessDeviceStateChangeReportChannel
-	CurrentCardTag string
+	Channels       []AccessChannelStateChangeReport `json:"channels"`
+	CurrentCardTag string                           `json:"currentCardTag"`
 }
 
 type AccessDeviceLogRequest struct {
@@ -52,8 +52,8 @@ type AccessDeviceFlags struct {
 }
 
 type AccessDeviceConfigReportChannel struct {
-	ChannelID    int64 `json:"channelID"`
-	TempDuration int64 `json:"tempDurations"`
+	ChannelID    int   `json:"channelID"`
+	TempDuration int64 `json:"tempDuration"`
 }
 
 type AccessDeviceConfigReport struct {
@@ -67,12 +67,12 @@ type AccessDeviceConfigReport struct {
 type AccessDeviceInfoOptions string
 
 var (
-	AccessDeviceInfoOptions_Time         = "TIME"  // Current time
-	AccessDeviceInfoOptions_State        = "STATE" // State the channels should be in
-	AccessDeviceInfoOptions_Hmi          = "HMI"   // Information intended for human consumption
-	AccessDeviceInfoOptions_Flags        = "FLAGS"
-	AccessDeviceInfoOptions_HobbsTime    = "HOBBS_TIME"
-	AccessDeviceInfoOptions_CustomConfig = "CUSTOM_CONFIG"
+	AccessDeviceInfoOptions_Time         AccessDeviceInfoOptions = "TIME"  // Current time
+	AccessDeviceInfoOptions_State                                = "STATE" // State the channels should be in
+	AccessDeviceInfoOptions_Hmi                                  = "HMI"   // Information intended for human consumption
+	AccessDeviceInfoOptions_Flags                                = "FLAGS"
+	AccessDeviceInfoOptions_HobbsTime                            = "HOBBS_TIME"
+	AccessDeviceInfoOptions_CustomConfig                         = "CUSTOM_CONFIG"
 )
 
 type AccessDeviceInfoRequest struct {
@@ -80,7 +80,7 @@ type AccessDeviceInfoRequest struct {
 }
 
 type ServerAuthToChannel struct {
-	ChannelID int64                     `json:"channelID"`
+	ChannelID int                       `json:"channelID"`
 	State     models.AccessChannelState `json:"state"`
 	Approved  bool                      `json:"approved"`
 	Reason    string                    `json:"reason"`
@@ -95,13 +95,13 @@ type ServerAuthToResponse struct {
 type AccessDeviceFile string
 
 var (
-	AccessDeviceFile_Cert        = "CERT"
-	AccessDeviceFile_OfflineList = "OFFLINE_LIST"
-	AccessDeviceFile_Ota         = "OTA"
+	AccessDeviceFile_Cert        AccessDeviceFile = "CERT"
+	AccessDeviceFile_OfflineList                  = "OFFLINE_LIST"
+	AccessDeviceFile_Ota                          = "OTA"
 )
 
 type ServerConfigUpdateRequestChannel struct {
-	ID           int64              `json:"id"`
+	ID           int                `json:"id"`
 	TempDuration int64              `json:"tempDuration"`
 	GetFiles     []AccessDeviceFile `json:"getFiles"`
 }
@@ -118,21 +118,21 @@ type ServerConfigUpdateRequest struct {
 type AccessDeviceActions string
 
 var (
-	AccessDeviceActions_Restart          = "RESTART"
-	AccessDeviceActions_Seal             = "SEAL"
-	AccessDeviceActions_Identify         = "IDENTIFY"
-	AccessDeviceActions_ScheduledRestart = "SCHEDULED_RESTART"
+	AccessDeviceActions_Restart          AccessDeviceActions = "RESTART"
+	AccessDeviceActions_Seal                                 = "SEAL"
+	AccessDeviceActions_Identify                             = "IDENTIFY"
+	AccessDeviceActions_ScheduledRestart                     = "SCHEDULED_RESTART"
 )
 
 // Shape of what the server sends to the access device when the server wants to command the device to take some action
 
 type ServerCommand struct {
 	ToState []struct {
-		id    int64
+		id    int
 		state models.AccessChannelState
 	}
 	action          *AccessDeviceActions
-	identifyChannel int64
+	identifyChannel int
 	flags           *AccessDeviceFlags
 }
 
@@ -144,14 +144,14 @@ var (
 )
 
 type ServerStateResponse struct {
-	ID    int64                     `json:"id"`
+	ID    int                       `json:"id"`
 	State models.AccessChannelState `json:"state"`
 }
 type ServerHMIResponse struct {
 	Role       AccessDeviceRole `json:"role"`
 	Makerspace string           `json:"makerspace"`
 	Channels   []struct {
-		channelID    int64
+		channelID    int
 		pairedEntity string
 	} `json:"channels"`
 }

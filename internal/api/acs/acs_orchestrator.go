@@ -10,16 +10,16 @@ import (
 
 type ACSOrchestrator struct {
 	store       *database.Store
-	controllers map[int64]ACSController
+	controllers map[int]ACSController
 	slog        *slog.Logger
 	logger      *logging.Logger
 }
 
-func (orc *ACSOrchestrator) RegisterDevice(deviceID int64, controller ACSController) {
+func (orc *ACSOrchestrator) RegisterDevice(deviceID int, controller ACSController) {
 	orc.controllers[deviceID] = controller
 }
 
-func (orc *ACSOrchestrator) GetDeviceController(deviceID int64) ACSController {
+func (orc *ACSOrchestrator) GetDeviceController(deviceID int) ACSController {
 	val, ok := orc.controllers[deviceID]
 	if !ok {
 		return nil
@@ -27,7 +27,7 @@ func (orc *ACSOrchestrator) GetDeviceController(deviceID int64) ACSController {
 	return val
 }
 
-func (orc *ACSOrchestrator) HandleAccessDeviceStatusReport(deviceID int64, statusReport AccessDeviceStatusReport) {
+func (orc *ACSOrchestrator) HandleAccessDeviceStatusReport(deviceID int, statusReport AccessDeviceStatusReport) {
 	panic("unimplemented")
 }
 
@@ -38,11 +38,11 @@ func (orc *ACSOrchestrator) startSession(dev *models.AccessDevice, cardTag strin
 	panic("unimplemented")
 }
 
-func (orc *ACSOrchestrator) HandleAccessDeviceStateChangeReport(deviceID int64, stateChangeReport AccessDeviceStateChangeReport) {
+func (orc *ACSOrchestrator) HandleAccessDeviceStateChangeReport(deviceID int, stateChangeReport AccessDeviceStateChangeReport) {
 	panic("unimplemented")
 }
 
-func (orc *ACSOrchestrator) HandleAccessDeviceLogRequest(deviceID int64, logRequest AccessDeviceLogRequest) {
+func (orc *ACSOrchestrator) HandleAccessDeviceLogRequest(deviceID int, logRequest AccessDeviceLogRequest) {
 	dev, err := orc.store.Devices.GetAccessDeviceById(context.TODO(), int(deviceID))
 	if err != nil {
 		orc.slog.Warn("Couldn't find device for id for log request report", "id", deviceID)
@@ -67,19 +67,19 @@ func HandleAccessDeviceConfigReport(deviceID int, configReport AccessDeviceConfi
 	panic("unimplemented")
 }
 
-func (orc *ACSOrchestrator) HandleAccessDeviceAuthToRequest(deviceID int64, authToRequest AccessDeviceAuthToRequest) {
+func (orc *ACSOrchestrator) HandleAccessDeviceAuthToRequest(deviceID int, authToRequest AccessDeviceAuthToRequest) {
 	panic("unimplemented")
 }
 
-func (orc *ACSOrchestrator) HandleAccessDeviceInfoRequest(deviceID int64, infoRequest AccessDeviceInfoRequest) {
+func (orc *ACSOrchestrator) HandleAccessDeviceInfoRequest(deviceID int, infoRequest AccessDeviceInfoRequest) {
 	panic("unimplemented")
 }
 
-func (orc *ACSOrchestrator) HandleSendAccessDeviceCommand(deviceID int64, command ServerCommand) {
+func (orc *ACSOrchestrator) HandleSendAccessDeviceCommand(deviceID int, command ServerCommand) {
 	panic("unimplemented")
 }
 
-func (orc *ACSOrchestrator) HandleWelcomeRequest(makerspaceID int64, deviceID int64, cardTagID string) {
+func (orc *ACSOrchestrator) HandleWelcomeRequest(makerspaceID int, deviceID int, cardTagID string) {
 	panic("unimplemented")
 }
 
@@ -87,7 +87,7 @@ func (orc *ACSOrchestrator) CommandAllAccessDevices(command ServerCommand) {
 	panic("unimplemented")
 }
 
-func (orc *ACSOrchestrator) CommandMakerspaceAccessDevices(makerspaceID int64, command ServerCommand) {
+func (orc *ACSOrchestrator) CommandMakerspaceAccessDevices(makerspaceID int, command ServerCommand) {
 	panic("unimplemented")
 
 }

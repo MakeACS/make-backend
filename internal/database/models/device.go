@@ -163,10 +163,10 @@ func (d AccessDeployment) Value() (driver.Value, error) {
 type AccessDeviceInputMode string
 
 var (
-	AccessDeviceInputMode_Insert      = "INSERT"
-	AccessDeviceInputMode_TempPresent = "TEMP_PRESENT"
-	AccessDeviceInputMode_TempRemove  = "TEMP_REMOVE"
-	AccessDeviceInputMode_Toggle      = "TOGGLE"
+	AccessDeviceInputMode_Insert      AccessDeviceInputMode = "INSERT"
+	AccessDeviceInputMode_TempPresent                       = "TEMP_PRESENT"
+	AccessDeviceInputMode_TempRemove                        = "TEMP_REMOVE"
+	AccessDeviceInputMode_Toggle                            = "TOGGLE"
 )
 
 type AccessDevice struct {
