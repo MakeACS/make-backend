@@ -7,6 +7,7 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
 )
@@ -64,6 +65,11 @@ func (r *queryResolver) Makerspace(ctx context.Context, id int) (*models.Makersp
 	}
 
 	return makerspace, nil
+}
+
+// Thing is the resolver for the thing field.
+func (r *queryResolver) Thing(ctx context.Context) (*string, error) {
+	panic(fmt.Errorf("not implemented: Thing - thing"))
 }
 
 // Makerspace returns gql.MakerspaceResolver implementation.
