@@ -91,7 +91,16 @@ func (r *DeviceRepo) GetAccessDeviceById(ctx context.Context, id int) (*models.A
 	var device_result models.AccessDevice
 
 	query := `SELECT
-		device_id,
+		d.id,
+		d.name,
+		d.sn,
+		d.paired,
+		d.hardware,
+		d.firmware,
+		d.target_firmware,
+		d.key_cycle,
+		d.makerspace_id,
+
 		channels,
 		temp_duration,
 		current_card_tag,
@@ -100,11 +109,21 @@ func (r *DeviceRepo) GetAccessDeviceById(ctx context.Context, id int) (*models.A
 		flags,
 		sealed_deployment,
 		reported_deployment
-		FROM access_devices WHERE device_id = $1
+		FROM access_devices 
+		LEFT JOIN devices d on d.id = device_id 
+		WHERE device_id = $1
 	`
-	var devId int
+
 	err := r.DB.QueryRowContext(ctx, query, id).Scan(
-		&devId,
+		&device_result.Id,
+		&device_result.Name,
+		&device_result.SN,
+		&device_result.Paired,
+		&device_result.Hardware,
+		&device_result.Firmware,
+		&device_result.TargetFirmware,
+		&device_result.KeyCycle,
+		&device_result.MakerspaceId,
 		&device_result.Channels,
 		&device_result.TempDuration,
 		&device_result.CurrentCardTag,
@@ -117,11 +136,6 @@ func (r *DeviceRepo) GetAccessDeviceById(ctx context.Context, id int) (*models.A
 	if err != nil {
 		return nil, err
 	}
-	dev, err := r.GetDeviceById(ctx, int(devId)) // TODO standardize database id type
-	if err != nil {
-		return nil, err
-	}
-	device_result.Device = *dev
 
 	return &device_result, nil
 }
