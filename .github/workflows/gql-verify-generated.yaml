@@ -14,7 +14,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-            go-version: ${{ matrix.go-version }}
+            go-version: 1.26
       
       - name: Run go generate
         run: go run github.com/99designs/gqlgen generate
