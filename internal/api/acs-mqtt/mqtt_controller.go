@@ -22,28 +22,35 @@ type MQTTController struct {
 }
 
 func NewMQTTController(ctx context.Context, log *slog.Logger, store *database.Store, logger *logging.Logger, server *mqtt.Server) *MQTTController {
-	return &MQTTController{
+	controller := &MQTTController{
 		ctx:          ctx,
 		slog:         log,
 		logger:       logger,
 		store:        store,
 		serverClient: server,
 	}
+	return controller
 }
 
 func (m *MQTTController) GetName() string {
 	return "MQTTACSController"
 }
 
-func (m *MQTTController) SendAccessDeviceAuthToResponse(access models.AccessDevice, response acs.ServerAuthToResponse) bool {
-
-	topic := fmt.Sprintf("makerspace/device/%s/authTo/response", access.SN)
-	bs, err := json.Marshal(response)
+func (m *MQTTController) sendResponseToTopic(topic string, data any) error {
+	bs, err := json.Marshal(data)
 	if err != nil {
-		m.slog.Error("Failed to marshal AccessDeviceAuthToResponse", "err", err)
-		return false
+		return fmt.Errorf("failed to marshal for send to topic '%s': %w", topic, err)
 	}
 	err = m.serverClient.Publish(topic, bs, true, 2)
+	if err != nil {
+		return fmt.Errorf("failed to send to topic '%s': %w", topic, err)
+	}
+	return nil
+}
+
+func (m *MQTTController) SendAccessDeviceAuthToResponse(access models.AccessDevice, response acs.ServerAuthToResponse) bool {
+	topic := fmt.Sprintf("makerspace/device/%s/authTo/response", access.SN)
+	err := m.sendResponseToTopic(topic, response)
 	if err != nil {
 		m.slog.Error("Failed to publish AccessDeviceAuthToResponse", "err", err)
 		return false
@@ -51,18 +58,45 @@ func (m *MQTTController) SendAccessDeviceAuthToResponse(access models.AccessDevi
 	return true
 }
 
-func (m *MQTTController) SendAccessDeviceCommand(adev models.AccessDevice, command acs.ServerCommand) bool {
-	panic("unimplemented")
+func (m *MQTTController) SendAccessDeviceCommand(dev models.AccessDevice, command acs.ServerCommand) bool {
+
+	topic := fmt.Sprintf("makerspace/device/%s/authTo/response", dev.SN)
+	err := m.sendResponseToTopic(topic, command)
+	if err != nil {
+		m.slog.Error("Failed to publish AccessDeviceCommand", "err", err)
+		return false
+	}
+	return true
 }
 
-func (m *MQTTController) SendAccessDeviceConfigUpdate(adev models.AccessDevice, update acs.ServerConfigUpdateRequest) bool {
-	panic("unimplemented")
+func (m *MQTTController) SendAccessDeviceConfigUpdate(dev models.AccessDevice, update acs.ServerConfigUpdateRequest) bool {
+	topic := fmt.Sprintf("makerspace/device/%s/config/update", dev.SN)
+	err := m.sendResponseToTopic(topic, update)
+	if err != nil {
+		m.slog.Error("Failed to publish AccessDeviceConfigUpdate", "err", err)
+		return false
+	}
+	return true
 }
 
-func (m *MQTTController) SendAccessDeviceInfoResponse(adev models.AccessDevice, response acs.ServerInfoResponse) bool {
-	panic("unimplemented")
+func (m *MQTTController) SendAccessDeviceInfoResponse(dev models.AccessDevice, response acs.ServerInfoResponse) bool {
+	topic := fmt.Sprintf("makerspace/device/%s/info/response", dev.SN)
+	err := m.sendResponseToTopic(topic, response)
+	if err != nil {
+		m.slog.Error("Failed to publish AccessDeviceInfoResponse", "err", err)
+		return false
+	}
+	return true
 }
 
-func (m *MQTTController) SendWelcomeResponse(device models.Device, response acs.WelcomeResponse) bool {
-	panic("unimplemented")
+func (m *MQTTController) SendWelcomeResponse(dev models.Device, response acs.WelcomeResponse) bool {
+
+	topic := fmt.Sprintf("makerspace/device/%s/welcome/response", dev.SN)
+	err := m.sendResponseToTopic(topic, response)
+	if err != nil {
+		m.slog.Error("Failed to publish WelcomeResponse", "err", err)
+		return false
+	}
+	return true
+
 }

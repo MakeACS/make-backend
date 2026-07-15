@@ -67,10 +67,12 @@ type AccessDeviceConfigReport struct {
 type AccessDeviceInfoOptions string
 
 var (
-	AccessDeviceInfoOptions_Time  = "TIME"  // Current time
-	AccessDeviceInfoOptions_State = "STATE" // State the channels should be in
-	AccessDeviceInfoOptions_Hmi   = "HMI"   // Information intended for human consumption
-	AccessDeviceInfoOptions_Flags = "FLAGS"
+	AccessDeviceInfoOptions_Time         = "TIME"  // Current time
+	AccessDeviceInfoOptions_State        = "STATE" // State the channels should be in
+	AccessDeviceInfoOptions_Hmi          = "HMI"   // Information intended for human consumption
+	AccessDeviceInfoOptions_Flags        = "FLAGS"
+	AccessDeviceInfoOptions_HobbsTime    = "HOBBS_TIME"
+	AccessDeviceInfoOptions_CustomConfig = "CUSTOM_CONFIG"
 )
 
 type AccessDeviceInfoRequest struct {
@@ -156,10 +158,11 @@ type ServerHMIResponse struct {
 
 // Shape of what the server sends the access device in response to an info request
 type ServerInfoResponse struct {
-	Time  int64                  `json:"time"` // milliseconds
-	State *[]ServerStateResponse `json:"state"`
-	Hmi   *[]ServerHMIResponse   `json:"hmi"`
-	Flags *AccessDeviceFlags     `json:"flags"`
+	Time      *int64                 `json:"time,omitempty"` // milliseconds
+	State     *[]ServerStateResponse `json:"state,omitempty"`
+	Hmi       *[]ServerHMIResponse   `json:"hmi,omitempty"`
+	Flags     *AccessDeviceFlags     `json:"flags,omitempty"`
+	HobbsTime *int64                 `json:"hobbs_time,omitempty"`
 }
 
 type WelcomeRequest struct {
