@@ -11,7 +11,7 @@ import (
 	"make-backend/internal/logging"
 	"time"
 
-	acsmqtt "make-backend/internal/api/acs-mqtt"
+	acsmqtt "make-backend/internal/api/acs/acs-mqtt"
 	acsrest "make-backend/internal/api/rest"
 	"make-backend/internal/gql/directives"
 	"make-backend/internal/gql/resolvers"

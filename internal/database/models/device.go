@@ -35,13 +35,10 @@ func (d Device) LogEntity() LogEntity {
 	}
 }
 
-func (dev Device) CredentialsMatch(SN string, key string) (bool, error) {
-	if SN != dev.SN {
-		return false, nil
-	}
+func (dev Device) CredentialsMatch(key string) (bool, error) {
 	keyToMatch, err := dev.GenerateKey()
 	if err != nil {
-		return false, fmt.Errorf("Failed to generate key: %w", err)
+		return false, fmt.Errorf("failed to generate key: %w", err)
 	}
 	return keyToMatch == key, nil
 }

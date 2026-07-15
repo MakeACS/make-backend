@@ -60,7 +60,7 @@ func (h *AuthHook) OnConnectAuthenticate(cl *mqtt.Client, pk packets.Packet) boo
 		slog.Warn("failed to authenticate device", "sn", sn, "err", err)
 		return false
 	}
-	ok, err := dev.CredentialsMatch(sn, string(pk.Connect.Password))
+	ok, err := dev.CredentialsMatch(string(pk.Connect.Password))
 	if err != nil {
 		slog.Warn("failed to check credentials on device", "sn", sn, "err", err)
 		return false
@@ -77,21 +77,14 @@ func (h *AuthHook) OnACLCheck(cl *mqtt.Client, topic string, write bool) bool {
 	}
 	// otherwise, assume you're a device
 	// only allow if it matches a channel we know and your SN aligns with
-	var ok bool = false
+	var ok bool
 	if write {
-		ok = isDeviceAllowedToPublish(username, topic)
+		ok = doesTopicMatchAllowed(username, topic, knownDevicePubTopics)
 	} else {
-		ok = isDeviceAllowedToSubscribe(username, topic)
+		ok = doesTopicMatchAllowed(username, topic, knownDeviceSubTopics)
 	}
 
 	return ok
-}
-
-func isDeviceAllowedToPublish(ID string, topic string) bool {
-	return doesTopicMatchAllowed(ID, topic, knownDevicePubTopics)
-}
-func isDeviceAllowedToSubscribe(ID string, topic string) bool {
-	return doesTopicMatchAllowed(ID, topic, knownDeviceSubTopics)
 }
 
 type SNPair struct {

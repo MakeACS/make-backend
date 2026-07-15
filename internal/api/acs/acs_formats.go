@@ -67,12 +67,11 @@ type AccessDeviceConfigReport struct {
 type AccessDeviceInfoOptions string
 
 var (
-	AccessDeviceInfoOptions_Time         AccessDeviceInfoOptions = "TIME"  // Current time
-	AccessDeviceInfoOptions_State        AccessDeviceInfoOptions = "STATE" // State the channels should be in
-	AccessDeviceInfoOptions_Hmi          AccessDeviceInfoOptions = "HMI"   // Information intended for human consumption
-	AccessDeviceInfoOptions_Flags        AccessDeviceInfoOptions = "FLAGS"
-	AccessDeviceInfoOptions_HobbsTime    AccessDeviceInfoOptions = "HOBBS_TIME"
-	AccessDeviceInfoOptions_CustomConfig AccessDeviceInfoOptions = "CUSTOM_CONFIG"
+	AccessDeviceInfoOptions_Time      AccessDeviceInfoOptions = "TIME"  // Current time
+	AccessDeviceInfoOptions_State     AccessDeviceInfoOptions = "STATE" // State the channels should be in
+	AccessDeviceInfoOptions_Hmi       AccessDeviceInfoOptions = "HMI"   // Information intended for human consumption
+	AccessDeviceInfoOptions_Flags     AccessDeviceInfoOptions = "FLAGS"
+	AccessDeviceInfoOptions_HobbsTime AccessDeviceInfoOptions = "HOBBS_TIME"
 )
 
 type AccessDeviceInfoRequest struct {
