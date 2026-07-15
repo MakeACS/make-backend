@@ -18,14 +18,10 @@ type DateRange struct {
 }
 
 type LogFilter struct {
-	Range         DateRange
-	Categories    []string
-	AllCategories bool
-	SearchText    string
-}
-
-type MultiMakerspaceLogFilter struct {
-	LogFilter
+	Range               DateRange
+	Categories          []string
+	AllCategories       bool
+	SearchText          string
 	Makerspaces         []int
 	IncludeUnassociated bool
 }
@@ -36,8 +32,7 @@ func CategoriesToTypes(cats []string) []string {
 }
 
 type AuditLogRepository interface {
-	GetLogs(ctx context.Context, page int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error)
-	MakerspaceLogs(ctx context.Context, makerspace_id int, page int, limit int, filter LogFilter) ([]models.AuditLog, error)
+	GetLogs(ctx context.Context, page int, limit int, filter LogFilter) ([]models.AuditLog, error)
 
 	CreateAuditLog(ctx context.Context, makerspaceId *int, plainText string, formatText string, message_type string, data map[string]any) (int, error)
 }
@@ -64,7 +59,7 @@ func (r *AuditLogRepo) CreateAuditLog(ctx context.Context, makerspaceId *int, pl
 	return id_result, nil
 }
 
-func (r *AuditLogRepo) GetLogs(ctx context.Context, offset int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error) {
+func (r *AuditLogRepo) GetLogs(ctx context.Context, offset int, limit int, filter LogFilter) ([]models.AuditLog, error) {
 	conditions := []string{}
 	args := []any{}
 	addArgGetIndex := func(arg any) int {
@@ -161,8 +156,4 @@ func (r *AuditLogRepo) GetLogs(ctx context.Context, offset int, limit int, filte
 
 	return logs, nil
 
-}
-
-func (r *AuditLogRepo) MakerspaceLogs(ctx context.Context, makerspace_id int, offset int, limit int, filter LogFilter) ([]models.AuditLog, error) {
-	return r.GetLogs(ctx, offset, limit, MultiMakerspaceLogFilter{filter, []int{makerspace_id}, false})
 }
