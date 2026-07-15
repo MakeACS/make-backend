@@ -5,13 +5,14 @@ import (
 	"io"
 	"log"
 	"log/slog"
+	"make-backend/internal/logging"
 
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/hooks/auth"
 	"github.com/mochi-mqtt/server/v2/listeners"
 )
 
-func StartMqtt(port int) io.Closer {
+func StartMqtt(logger *logging.Logger, port int) io.Closer {
 	wsCfg := listeners.Config{
 		Type:    listeners.TypeWS,
 		ID:      "std-listener",

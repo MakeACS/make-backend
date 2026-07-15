@@ -8,6 +8,8 @@ import (
 	"make-backend/internal/auth"
 	"make-backend/internal/database"
 	"make-backend/internal/gql"
+	"make-backend/internal/logging"
+	"time"
 
 	acsmqtt "make-backend/internal/api/acs-mqtt"
 	acsrest "make-backend/internal/api/acs-rest"
@@ -65,10 +67,13 @@ func main() {
 	defer db.Close()
 
 	store := database.NewStore(db)
+	logger := logging.NewLogger(store)
 
-	httpServer := startHttp(db, store, httpPort)
-	mqttServer := acsmqtt.StartMqtt(mqttPort)
+	httpServer := startHttp(db, store, logger, httpPort)
+	mqttServer := acsmqtt.StartMqtt(logger, mqttPort)
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
+
+	logger.AuditLog.CreateUnassociatedWithData("builtin.server.start.1", map[string]any{"time": time.Now()}, "Server started")
 
 	<-done
 	slog.Warn("caught signal, stopping...")
@@ -106,7 +111,7 @@ func StartReverseProxy(port string, httpPort, mqttPort int) *http.Server {
 
 }
 
-func startHttp(db *sql.DB, store *database.Store, port int) *http.Server {
+func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port int) *http.Server {
 	// Sessions
 	sessionManager := auth.SetupSessions(db)
 	// Auth
