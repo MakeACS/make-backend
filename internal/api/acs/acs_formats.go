@@ -15,12 +15,12 @@ type AccessDeviceStateChangeReason string
 
 var (
 	AccessDeviceStateChangeReason_Authed        AccessDeviceStateChangeReason = "AUTHED"
-	AccessDeviceStateChangeReason_OverTemp                                    = "OVER_TEMP"
-	AccessDeviceStateChangeReason_CardRemoved                                 = "CARD_REMOVED"
-	AccessDeviceStateChangeReason_Commanded                                   = "COMMANDED"
-	AccessDeviceStateChangeReason_Local                                       = "LOCAL"
-	AccessDeviceStateChangeReason_IntegrityFail                               = "INTEGRITY_FAIL"
-	AccessDeviceStateChangeReason_Fault                                       = "FAULT"
+	AccessDeviceStateChangeReason_OverTemp      AccessDeviceStateChangeReason = "OVER_TEMP"
+	AccessDeviceStateChangeReason_CardRemoved   AccessDeviceStateChangeReason = "CARD_REMOVED"
+	AccessDeviceStateChangeReason_Commanded     AccessDeviceStateChangeReason = "COMMANDED"
+	AccessDeviceStateChangeReason_Local         AccessDeviceStateChangeReason = "LOCAL"
+	AccessDeviceStateChangeReason_IntegrityFail AccessDeviceStateChangeReason = "INTEGRITY_FAIL"
+	AccessDeviceStateChangeReason_Fault         AccessDeviceStateChangeReason = "FAULT"
 )
 
 type AccessChannelStateChangeReport struct {
@@ -68,11 +68,11 @@ type AccessDeviceInfoOptions string
 
 var (
 	AccessDeviceInfoOptions_Time         AccessDeviceInfoOptions = "TIME"  // Current time
-	AccessDeviceInfoOptions_State                                = "STATE" // State the channels should be in
-	AccessDeviceInfoOptions_Hmi                                  = "HMI"   // Information intended for human consumption
-	AccessDeviceInfoOptions_Flags                                = "FLAGS"
-	AccessDeviceInfoOptions_HobbsTime                            = "HOBBS_TIME"
-	AccessDeviceInfoOptions_CustomConfig                         = "CUSTOM_CONFIG"
+	AccessDeviceInfoOptions_State        AccessDeviceInfoOptions = "STATE" // State the channels should be in
+	AccessDeviceInfoOptions_Hmi          AccessDeviceInfoOptions = "HMI"   // Information intended for human consumption
+	AccessDeviceInfoOptions_Flags        AccessDeviceInfoOptions = "FLAGS"
+	AccessDeviceInfoOptions_HobbsTime    AccessDeviceInfoOptions = "HOBBS_TIME"
+	AccessDeviceInfoOptions_CustomConfig AccessDeviceInfoOptions = "CUSTOM_CONFIG"
 )
 
 type AccessDeviceInfoRequest struct {
@@ -96,14 +96,13 @@ type AccessDeviceFile string
 
 var (
 	AccessDeviceFile_Cert        AccessDeviceFile = "CERT"
-	AccessDeviceFile_OfflineList                  = "OFFLINE_LIST"
-	AccessDeviceFile_Ota                          = "OTA"
+	AccessDeviceFile_OfflineList AccessDeviceFile = "OFFLINE_LIST"
+	AccessDeviceFile_Ota         AccessDeviceFile = "OTA"
 )
 
 type ServerConfigUpdateRequestChannel struct {
-	ID           int                `json:"id"`
-	TempDuration int64              `json:"tempDuration"`
-	GetFiles     []AccessDeviceFile `json:"getFiles"`
+	ID           int   `json:"id"`
+	TempDuration int64 `json:"tempDuration"`
 }
 
 /**
@@ -113,34 +112,35 @@ type ServerConfigUpdateRequestChannel struct {
 type ServerConfigUpdateRequest struct {
 	InputMode *models.AccessDeviceInputMode      `json:"inputMode"`
 	Channels  []ServerConfigUpdateRequestChannel `json:"channels"`
+	GetFiles  []AccessDeviceFile                 `json:"getFiles"`
 }
 
 type AccessDeviceActions string
 
 var (
 	AccessDeviceActions_Restart          AccessDeviceActions = "RESTART"
-	AccessDeviceActions_Seal                                 = "SEAL"
-	AccessDeviceActions_Identify                             = "IDENTIFY"
-	AccessDeviceActions_ScheduledRestart                     = "SCHEDULED_RESTART"
+	AccessDeviceActions_Seal             AccessDeviceActions = "SEAL"
+	AccessDeviceActions_Identify         AccessDeviceActions = "IDENTIFY"
+	AccessDeviceActions_ScheduledRestart AccessDeviceActions = "SCHEDULED_RESTART"
 )
 
 // Shape of what the server sends to the access device when the server wants to command the device to take some action
 
 type ServerCommand struct {
 	ToState []struct {
-		id    int
-		state models.AccessChannelState
-	}
-	action          *AccessDeviceActions
-	identifyChannel int
-	flags           *AccessDeviceFlags
+		Id    int                       `json:"id"`
+		State models.AccessChannelState `json:"state"`
+	} `json:"toState"`
+	Action          *AccessDeviceActions `json:"action"`
+	IdentifyChannel int                  `json:"identifyChannel"`
+	Flags           *AccessDeviceFlags   `json:"flags"`
 }
 
 type AccessDeviceRole string
 
 var (
-	AccessDeviceRole_Welcome   = "WELCOME"
-	AccessDeviceRole_Equipment = "EQUIPMENT"
+	AccessDeviceRole_Welcome   AccessDeviceRole = "WELCOME"
+	AccessDeviceRole_Equipment AccessDeviceRole = "EQUIPMENT"
 )
 
 type ServerStateResponse struct {

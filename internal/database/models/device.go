@@ -164,9 +164,9 @@ type AccessDeviceInputMode string
 
 var (
 	AccessDeviceInputMode_Insert      AccessDeviceInputMode = "INSERT"
-	AccessDeviceInputMode_TempPresent                       = "TEMP_PRESENT"
-	AccessDeviceInputMode_TempRemove                        = "TEMP_REMOVE"
-	AccessDeviceInputMode_Toggle                            = "TOGGLE"
+	AccessDeviceInputMode_TempPresent AccessDeviceInputMode = "TEMP_PRESENT"
+	AccessDeviceInputMode_TempRemove  AccessDeviceInputMode = "TEMP_REMOVE"
+	AccessDeviceInputMode_Toggle      AccessDeviceInputMode = "TOGGLE"
 )
 
 type AccessDevice struct {
