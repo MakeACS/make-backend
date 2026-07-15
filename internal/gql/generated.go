@@ -215,7 +215,7 @@ type ComplexityRoot struct {
 	Query struct {
 		CurrentUser         func(childComplexity int) int
 		Makerspace          func(childComplexity int, id int) int
-		User                func(childComplexity int, targetID int) int
+		User                func(childComplexity int, id int) int
 		Zone                func(childComplexity int, id int) int
 		ZonesByMakerspaceID func(childComplexity int, makerspaceID int) int
 	}
@@ -1005,7 +1005,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.User(childComplexity, args["target_id"].(int)), true
+		return e.ComplexityRoot.Query.User(childComplexity, args["id"].(int)), true
 	case "Query.zone":
 		if e.ComplexityRoot.Query.Zone == nil {
 			break
@@ -1763,14 +1763,14 @@ func (ec *executionContext) field_Query_makerspace_args(ctx context.Context, raw
 func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "target_id",
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
 		func(ctx context.Context, v any) (int, error) {
 			return ec.unmarshalNID2int(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["target_id"] = arg0
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -4334,22 +4334,9 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().User(ctx, fc.Args["target_id"].(int))
+			return ec.Resolvers.Query().User(ctx, fc.Args["id"].(int))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.Directives.IsStaffOrSelf == nil {
-					var zeroVal *models.User
-					return zeroVal, errors.New("directive isStaffOrSelf is not implemented")
-				}
-				return ec.Directives.IsStaffOrSelf(ctx, nil, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *models.User) graphql.Marshaler {
 			return ec.marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx, selections, v)
 		},

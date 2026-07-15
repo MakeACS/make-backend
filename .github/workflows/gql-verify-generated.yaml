@@ -23,6 +23,6 @@ jobs:
         run: |
           git diff --exit-code || (
             echo "::error::Found differences between the gqlgen-generated files and the committed code."
-            echo "::error::Please run `go run github.com/99designs/gqlgen generate` locally to verify the schema changes are accounted for"
+            echo "::error::Please run 'go run github.com/99designs/gqlgen generate' locally to verify the schema changes are accounted for"
             exit 1
           )
