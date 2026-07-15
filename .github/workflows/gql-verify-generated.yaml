@@ -1,0 +1,28 @@
+name: gqlgen Check
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+jobs:
+  gqlgen_check:
+    name: Check committed code against freshly generated and if they differ, warn the developer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+            go-version: ${{ matrix.go-version }}
+      
+      - name: Run go generate
+        run: go run github.com/99designs/gqlgen generate
+
+      - name: Check for Differences
+        run: |
+          git diff --exit-code || (
+            echo "::error::Found differences between the gqlgen-generated files and the committed code."
+            echo "::error::Please run `go run github.com/99designs/gqlgen generate` locally to verify the schema changes are accounted for"
+            exit 1
+          )
