@@ -16,12 +16,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Install dependencies
-        run: go get .
+        run: go get ./...
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
