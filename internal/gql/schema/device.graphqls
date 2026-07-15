@@ -49,3 +49,8 @@ type Dispenser {
     cards_left: Int!
     error: DispenserError
 }
+
+extend type Query{
+    device(id: ID!): Device
+    accessDevice(id: ID!): AccessDevice
+}
