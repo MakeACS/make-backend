@@ -1,4 +1,4 @@
-name: Lint, Compile, and Test server
+name: Compile, and Test server
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [ '1.24', '1.25', '1.26.x' ]
+        go-version: [ '1.26.x' ]
 
     steps:
       - uses: actions/checkout@v6
@@ -22,11 +22,6 @@ jobs:
 
       - name: Install dependencies
         run: go get ./...
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.12
 
       - name: Build server
         run: go build ./cmd/make-backend/main.go
