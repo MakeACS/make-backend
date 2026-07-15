@@ -215,7 +215,6 @@ type ComplexityRoot struct {
 	Query struct {
 		CurrentUser         func(childComplexity int) int
 		Makerspace          func(childComplexity int, id int) int
-		Thing               func(childComplexity int) int
 		User                func(childComplexity int, id int) int
 		Zone                func(childComplexity int, id int) int
 		ZonesByMakerspaceID func(childComplexity int, makerspaceID int) int
@@ -321,7 +320,6 @@ type OptionBlockOptionResolver interface {
 }
 type QueryResolver interface {
 	Makerspace(ctx context.Context, id int) (*models.Makerspace, error)
-	Thing(ctx context.Context) (*string, error)
 	User(ctx context.Context, id int) (*models.User, error)
 	CurrentUser(ctx context.Context) (*models.User, error)
 	Zone(ctx context.Context, id int) (*models.Zone, error)
@@ -997,12 +995,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Makerspace(childComplexity, args["id"].(int)), true
-	case "Query.thing":
-		if e.ComplexityRoot.Query.Thing == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Query.Thing(childComplexity), true
 	case "Query.user":
 		if e.ComplexityRoot.Query.User == nil {
 			break
@@ -4330,29 +4322,6 @@ func (ec *executionContext) fieldContext_Query_makerspace(ctx context.Context, f
 		return fc, err
 	}
 	return fc, nil
-}
-
-func (ec *executionContext) _Query_thing(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Query_thing(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.Query().Thing(ctx)
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
-			return ec.marshalOString2ᚖstring(ctx, selections, v)
-		},
-		true,
-		false,
-	)
-}
-func (ec *executionContext) fieldContext_Query_thing(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Query", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8265,28 +8234,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_makerspace(ctx, field)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "thing":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_thing(ctx, field)
 				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
