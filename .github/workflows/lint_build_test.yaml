@@ -21,7 +21,7 @@ jobs:
           go-version: ${{ matrix.go-version }}
 
       - name: Install dependencies
-        run: go get .
+        run: go get ./...
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
