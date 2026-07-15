@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -24,7 +24,7 @@ jobs:
         run: go get ./...
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12
 
@@ -35,7 +35,6 @@ jobs:
         run: go test -cover -json ./... > TestResults-${{ matrix.go-version }}.json
 
       - name: Upload Go test results
-      
         uses: actions/upload-artifact@v4
         with:
           name: Go-results-${{ matrix.go-version }}
