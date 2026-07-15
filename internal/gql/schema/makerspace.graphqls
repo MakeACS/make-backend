@@ -16,7 +16,6 @@ type Makerspace {
 
 type Query {
     makerspace(id: ID!): Makerspace
-    thing: String
 }
 
 type Mutation {
