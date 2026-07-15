@@ -12,7 +12,7 @@ import (
 	"time"
 
 	acsmqtt "make-backend/internal/api/acs/acs-mqtt"
-	acsrest "make-backend/internal/api/rest"
+	rest "make-backend/internal/api/rest"
 	"make-backend/internal/gql/directives"
 	"make-backend/internal/gql/resolvers"
 	"net/http"
@@ -148,7 +148,7 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 
 	log.Printf("connect to http://localhost:%d/ for GraphQL playground", port)
 
-	acsrest.RegisterHandlers(mux)
+	rest.RegisterHandlers(mux)
 
 	server := &http.Server{
 		Addr:     fmt.Sprintf(":%d", port),
