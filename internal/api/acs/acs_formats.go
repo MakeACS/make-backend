@@ -52,8 +52,8 @@ type AccessDeviceFlags struct {
 }
 
 type AccessDeviceConfigReportChannel struct {
-	ChannelID    int   `json:"channelID"`
-	TempDuration int64 `json:"tempDuration"`
+	ChannelID    int `json:"channelID"`
+	TempDuration int `json:"tempDuration"`
 }
 
 type AccessDeviceConfigReport struct {
@@ -100,8 +100,8 @@ var (
 )
 
 type ServerConfigUpdateRequestChannel struct {
-	ID           int   `json:"id"`
-	TempDuration int64 `json:"tempDuration"`
+	ID           int `json:"id"`
+	TempDuration int `json:"tempDuration"`
 }
 
 /**

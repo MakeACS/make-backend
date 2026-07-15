@@ -28,7 +28,7 @@ type AccessDeployment {
 }
 
 type AccessDevice {
-    device_id: ID!
+    device: Device!
     channels: Int!
     temp_duration: Int!
     current_card_tag: String!

@@ -32,7 +32,6 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	AccessComponent() AccessComponentResolver
-	AccessDevice() AccessDeviceResolver
 	Makerspace() MakerspaceResolver
 	Mutation() MutationResolver
 	OptionBlockOption() OptionBlockOptionResolver
@@ -75,7 +74,6 @@ type ComplexityRoot struct {
 	AccessDevice struct {
 		Channels           func(childComplexity int) int
 		CurrentCardTag     func(childComplexity int) int
-		DeviceID           func(childComplexity int) int
 		Flags              func(childComplexity int) int
 		LastStatus         func(childComplexity int) int
 		ReportedDeployment func(childComplexity int) int
@@ -308,9 +306,6 @@ type ComplexityRoot struct {
 type AccessComponentResolver interface {
 	Type(ctx context.Context, obj *models.AccessComponent) (int, error)
 }
-type AccessDeviceResolver interface {
-	DeviceID(ctx context.Context, obj *models.AccessDevice) (int, error)
-}
 type MakerspaceResolver interface {
 	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
 	Hours(ctx context.Context, obj *models.Makerspace) ([]models.MakerspaceHours, error)
@@ -426,12 +421,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccessDevice.CurrentCardTag(childComplexity), true
-	case "AccessDevice.device_id":
-		if e.ComplexityRoot.AccessDevice.DeviceID == nil {
-			break
-		}
-
-		return e.ComplexityRoot.AccessDevice.DeviceID(childComplexity), true
 	case "AccessDevice.flags":
 		if e.ComplexityRoot.AccessDevice.Flags == nil {
 			break
@@ -2112,29 +2101,6 @@ func (ec *executionContext) fieldContext_AccessDeployment_components(_ context.C
 		},
 	}
 	return fc, nil
-}
-
-func (ec *executionContext) _AccessDevice_device_id(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_AccessDevice_device_id(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.AccessDevice().DeviceID(ctx, obj)
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNID2int(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_AccessDevice_device_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("AccessDevice", field, true, true, errors.New("field of type ID does not have child fields"))
 }
 
 func (ec *executionContext) _AccessDevice_channels(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
@@ -7098,83 +7064,45 @@ func (ec *executionContext) _AccessDevice(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AccessDevice")
-		case "device_id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._AccessDevice_device_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "channels":
 			out.Values[i] = ec._AccessDevice_channels(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "temp_duration":
 			out.Values[i] = ec._AccessDevice_temp_duration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "current_card_tag":
 			out.Values[i] = ec._AccessDevice_current_card_tag(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "last_status":
 			out.Values[i] = ec._AccessDevice_last_status(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "session_start":
 			out.Values[i] = ec._AccessDevice_session_start(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "flags":
 			out.Values[i] = ec._AccessDevice_flags(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "sealed_deployment":
 			out.Values[i] = ec._AccessDevice_sealed_deployment(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "reported_deployment":
 			out.Values[i] = ec._AccessDevice_reported_deployment(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
