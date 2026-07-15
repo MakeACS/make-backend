@@ -12,22 +12,22 @@ import (
 )
 
 var knownDevicePubTopics []SNPair = []SNPair{
-	SNPair{"makerspace/device/+/status", 2},
-	SNPair{"makerspace/device/+/stateChange", 2},
-	SNPair{"makerspace/device/+/log", 2},
-	SNPair{"makerspace/device/+/authTo/request", 2},
-	SNPair{"makerspace/device/+/config/report", 2},
-	SNPair{"makerspace/device/+/info/request", 2},
-	SNPair{"makerspace/device/+/welcome/request", 2},
+	{"makerspace/device/+/status", 2},
+	{"makerspace/device/+/stateChange", 2},
+	{"makerspace/device/+/log", 2},
+	{"makerspace/device/+/authTo/request", 2},
+	{"makerspace/device/+/config/report", 2},
+	{"makerspace/device/+/info/request", 2},
+	{"makerspace/device/+/welcome/request", 2},
 }
 
 var knownDeviceSubTopics []SNPair = []SNPair{
 	// topics server gives
-	SNPair{"makerspace/device/+/welcome/response", 2},
-	SNPair{"makerspace/device/+/command", 2},
-	SNPair{"makerspace/device/+/info/response", 2},
-	SNPair{"makerspace/device/+/config/update", 2},
-	SNPair{"makerspace/device/+/authTo/response", 2},
+	{"makerspace/device/+/welcome/response", 2},
+	{"makerspace/device/+/command", 2},
+	{"makerspace/device/+/info/response", 2},
+	{"makerspace/device/+/config/update", 2},
+	{"makerspace/device/+/authTo/response", 2},
 }
 
 type AuthHook struct {

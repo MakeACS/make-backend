@@ -21,8 +21,8 @@ func TestKnownTopicTableDriven(t *testing.T) {
 	}
 
 	var knownTopics []SNPair = []SNPair{
-		SNPair{"a/b/+/f", 6}, // invalid topic
-		SNPair{"a/b/+/d", 2}, // valid topic
+		{"a/b/+/f", 6}, // invalid topic
+		{"a/b/+/d", 2}, // valid topic
 	}
 
 	// Check All
