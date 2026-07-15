@@ -81,7 +81,7 @@ func (r *AuditLogRepo) GetLogs(ctx context.Context, offset int, limit int, filte
 	} else {
 		// have a list of makerspaces to check
 		index := addArgGetIndex(pq.Array(filter.Makerspaces))
-		var assocFilter string = ""
+		var assocFilter = ""
 		if filter.IncludeUnassociated {
 			assocFilter = "OR makerspace_id IS NULL"
 		}

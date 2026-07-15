@@ -82,7 +82,7 @@ func (r *MakerspaceRepo) AddManager(ctx context.Context, makerspace_id int, user
 
 	_, err := r.DB.ExecContext(ctx, query, makerspace_id, user_id)
 	if err != nil {
-		return fmt.Errorf("Failed to insert manager (makerspace: %d, user: %d): %w", makerspace_id, user_id, err)
+		return fmt.Errorf("failed to insert manager (makerspace: %d, user: %d): %w", makerspace_id, user_id, err)
 	}
 
 	return nil
@@ -93,7 +93,7 @@ func (r *MakerspaceRepo) AddStaff(ctx context.Context, makerspace_id int, user_i
 
 	_, err := r.DB.ExecContext(ctx, query, makerspace_id, user_id)
 	if err != nil {
-		return fmt.Errorf("Failed to insert staff (makerspace: %d, user: %d): %w", makerspace_id, user_id, err)
+		return fmt.Errorf("failed to insert staff (makerspace: %d, user: %d): %w", makerspace_id, user_id, err)
 	}
 
 	return nil
