@@ -63,7 +63,7 @@ func (orc *ACSOrchestrator) HandleAccessDeviceLogRequest(deviceID int64, logRequ
 
 }
 
-func HandleCoreConfigReport(deviceID int, configReport AccessDeviceConfigReport) {
+func HandleAccessDeviceConfigReport(deviceID int, configReport AccessDeviceConfigReport) {
 	panic("unimplemented")
 }
 
