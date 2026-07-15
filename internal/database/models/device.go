@@ -122,14 +122,14 @@ func (f AccessDeviceFlags) Value() (driver.Value, error) {
 type AccessComponentType int
 
 const (
-	Legacy         AccessComponentType = 0b000
-	Switch1Channel AccessComponentType = 0b001
-	Switch2Channel AccessComponentType = 0b010
-	Switch3Channel AccessComponentType = 0b011
-	Switch4Channel AccessComponentType = 0b100
-	NonSwitching   AccessComponentType = 0b101
-	InternalHMI    AccessComponentType = 0b110
-	Communicative  AccessComponentType = 0b111
+	AccessComponentType_Legacy         AccessComponentType = 0b000
+	AccessComponentType_Switch1Channel AccessComponentType = 0b001
+	AccessComponentType_Switch2Channel AccessComponentType = 0b010
+	AccessComponentType_Switch3Channel AccessComponentType = 0b011
+	AccessComponentType_Switch4Channel AccessComponentType = 0b100
+	AccessComponentType_NonSwitching   AccessComponentType = 0b101
+	AccessComponentType_InternalHMI    AccessComponentType = 0b110
+	AccessComponentType_Communicative  AccessComponentType = 0b111
 )
 
 type AccessComponent struct {

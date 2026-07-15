@@ -59,7 +59,7 @@ type AccessDeviceConfigReportChannel struct {
 type AccessDeviceConfigReport struct {
 	Channels   []AccessDeviceConfigReport   `json:"channels,omitempty"`
 	InputMode  models.AccessDeviceInputMode `json:"inputMode,omitempty"`
-	Deployment *ACSDeployment               `json:"deployment"`
+	Deployment *models.AccessDeployment     `json:"deployment"`
 	Flags      AccessDeviceFlags            `json:"flags"`
 	Firmware   string                       `json:"firmware"`
 }
@@ -143,7 +143,7 @@ var (
 	AccessDeviceRole_Equipment AccessDeviceRole = "EQUIPMENT"
 )
 
-type ServerStateResponse struct {
+type ServerChannelStateResponse struct {
 	ID    int                       `json:"id"`
 	State models.AccessChannelState `json:"state"`
 }
@@ -158,11 +158,11 @@ type ServerHMIResponse struct {
 
 // Shape of what the server sends the access device in response to an info request
 type ServerInfoResponse struct {
-	Time      *int64                 `json:"time,omitempty"` // milliseconds
-	State     *[]ServerStateResponse `json:"state,omitempty"`
-	Hmi       *[]ServerHMIResponse   `json:"hmi,omitempty"`
-	Flags     *AccessDeviceFlags     `json:"flags,omitempty"`
-	HobbsTime *int64                 `json:"hobbs_time,omitempty"`
+	Time      *int64                        `json:"time,omitempty"` // milliseconds
+	State     *[]ServerChannelStateResponse `json:"state,omitempty"`
+	Hmi       *[]ServerHMIResponse          `json:"hmi,omitempty"`
+	Flags     *AccessDeviceFlags            `json:"flags,omitempty"`
+	HobbsTime *int64                        `json:"hobbs_time,omitempty"`
 }
 
 type WelcomeRequest struct {
