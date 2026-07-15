@@ -50,8 +50,8 @@ func (h *AuthHook) Provides(b byte) bool {
 
 // OnConnectAuthenticate returns true/allowed if server or a registered device.
 func (h *AuthHook) OnConnectAuthenticate(cl *mqtt.Client, pk packets.Packet) bool {
-	if string(cl.Properties.Username) == serverUsername {
-		return string(pk.Connect.Password) == serverPassword
+	if mqttAdminAccountEnabled() && string(cl.Properties.Username) == maybeMqttAdminUsername {
+		return string(pk.Connect.Password) == maybeMqttAdminPassword
 	}
 
 	sn := string(cl.Properties.Username)
@@ -71,9 +71,13 @@ func (h *AuthHook) OnConnectAuthenticate(cl *mqtt.Client, pk packets.Packet) boo
 // OnACLCheck returns true/allowed for all checks.
 func (h *AuthHook) OnACLCheck(cl *mqtt.Client, topic string, write bool) bool {
 	username := string(cl.Properties.Username)
-	if username == serverUsername {
+	if mqttAdminAccountEnabled() && username == maybeMqttAdminUsername {
 		// allow server access to all channels
-		return true
+		if write {
+			return runtimeContext == "development"
+		} else {
+			return true
+		}
 	}
 	// otherwise, assume you're a device
 	// only allow if it matches a channel we know and your SN aligns with

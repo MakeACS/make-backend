@@ -16,9 +16,14 @@ import (
 )
 
 var (
-	serverUsername = os.Getenv("SERVER_MQTT_USERNAME")
-	serverPassword = os.Getenv("SERVER_MQTT_PASSWORD")
+	maybeMqttAdminUsername = os.Getenv("MQTT_ADMIN_USERNAME")
+	maybeMqttAdminPassword = os.Getenv("MQTT_ADMIN_PASSWORD")
+	runtimeContext         = os.Getenv("RUNTIME_CONTEXT") // development/staging/production
 )
+
+func mqttAdminAccountEnabled() bool {
+	return maybeMqttAdminUsername != "" && maybeMqttAdminPassword != ""
+}
 
 func StartMqtt(logger *logging.Logger, store *database.Store, port int) (io.Closer, acs.ACSController) {
 	wsCfg := listeners.Config{
@@ -31,11 +36,13 @@ func StartMqtt(logger *logging.Logger, store *database.Store, port int) (io.Clos
 		InlineClient: true,
 	})
 
-	if serverUsername == "" {
-		log.Fatalf("Can not start MQTT Server without server username")
+	if !mqttAdminAccountEnabled() {
+		log.Printf("Not enabling admin user for MQTT bc no username or password")
+	} else {
+		log.Printf("Enabling MQTT admin access")
 	}
-	if serverPassword == "" {
-		log.Fatalf("Can not start MQTT Server without server password")
+	if runtimeContext == "" {
+		log.Fatalf("Can not start MQTT Server without RUNTIME_CONTEXT to determine write access")
 	}
 
 	_ = server.AddHook(&AuthHook{store: store}, nil)
