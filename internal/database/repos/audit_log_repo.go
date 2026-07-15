@@ -36,12 +36,8 @@ func CategoriesToTypes(cats []string) []string {
 }
 
 type AuditLogRepository interface {
-	AllLogs(ctx context.Context, page int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error)
+	GetLogs(ctx context.Context, page int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error)
 	MakerspaceLogs(ctx context.Context, makerspace_id int, page int, limit int, filter LogFilter) ([]models.AuditLog, error)
-
-	// possible future expansion for regex searching
-	// AllLogsRegex(ctx context.Context, page int, limit int, filter MultiMakerspaceLogFilter)
-	// MakerspaceLogsRegex(ctx context.Context, makerspace_id int, page int, limit int, filter LogFilter)
 
 	CreateAuditLog(ctx context.Context, makerspaceId *int, plainText string, formatText string, message_type string, data map[string]any) (int, error)
 }
@@ -68,10 +64,10 @@ func (r *AuditLogRepo) CreateAuditLog(ctx context.Context, makerspaceId *int, pl
 	return id_result, nil
 }
 
-func (r *AuditLogRepo) AllLogs(ctx context.Context, offset int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error) {
+func (r *AuditLogRepo) GetLogs(ctx context.Context, offset int, limit int, filter MultiMakerspaceLogFilter) ([]models.AuditLog, error) {
 	conditions := []string{}
 	args := []any{}
-	addArgGetId := func(arg any) int {
+	addArgGetIndex := func(arg any) int {
 		args = append(args, arg)
 		return len(args)
 	}
@@ -89,23 +85,23 @@ func (r *AuditLogRepo) AllLogs(ctx context.Context, offset int, limit int, filte
 		conditions = append(conditions, makerspaceFilter)
 	} else {
 		// have a list of makerspaces to check
-		id := addArgGetId(pq.Array(filter.Makerspaces))
+		index := addArgGetIndex(pq.Array(filter.Makerspaces))
 		var assocFilter string = ""
 		if filter.IncludeUnassociated {
 			assocFilter = "OR makerspace_id IS NULL"
 		}
-		makerspaceFilter := fmt.Sprintf("(makerspace_id = ANY($%d) %s)", id, assocFilter)
+		makerspaceFilter := fmt.Sprintf("(makerspace_id = ANY($%d) %s)", index, assocFilter)
 		conditions = append(conditions, makerspaceFilter)
 	}
 
 	if filter.Range.StartDate != nil {
-		id := addArgGetId(filter.Range.StartDate)
-		startDateFilter := fmt.Sprintf("timestamp >= $%d", id)
+		index := addArgGetIndex(filter.Range.StartDate)
+		startDateFilter := fmt.Sprintf("timestamp >= $%d", index)
 		conditions = append(conditions, startDateFilter)
 	}
 	if filter.Range.EndDate != nil {
-		id := addArgGetId(filter.Range.EndDate)
-		endDateFilter := fmt.Sprintf("timestamp <= $%d", id)
+		index := addArgGetIndex(filter.Range.EndDate)
+		endDateFilter := fmt.Sprintf("timestamp <= $%d", index)
 		conditions = append(conditions, endDateFilter)
 	}
 
@@ -119,17 +115,17 @@ func (r *AuditLogRepo) AllLogs(ctx context.Context, offset int, limit int, filte
 		if len(types) == 0 {
 			return []models.AuditLog{}, nil
 		} else if len(types) > 0 {
-			id := addArgGetId(pq.Array(types))
+			index := addArgGetIndex(pq.Array(types))
 
-			catFilter := fmt.Sprintf("message_type = ANY($%d)", id)
+			catFilter := fmt.Sprintf("message_type = ANY($%d)", index)
 			conditions = append(conditions, catFilter)
 		}
 	}
 
 	if filter.SearchText != "" {
 		searchText := "%" + filter.SearchText + "%"
-		id := addArgGetId(searchText)
-		textFilter := fmt.Sprintf("plain_text ILIKE $%d", id)
+		index := addArgGetIndex(searchText)
+		textFilter := fmt.Sprintf("plain_text ILIKE $%d", index)
 		conditions = append(conditions, textFilter)
 	}
 
@@ -168,5 +164,5 @@ func (r *AuditLogRepo) AllLogs(ctx context.Context, offset int, limit int, filte
 }
 
 func (r *AuditLogRepo) MakerspaceLogs(ctx context.Context, makerspace_id int, offset int, limit int, filter LogFilter) ([]models.AuditLog, error) {
-	return r.AllLogs(ctx, offset, limit, MultiMakerspaceLogFilter{filter, []int{makerspace_id}, false})
+	return r.GetLogs(ctx, offset, limit, MultiMakerspaceLogFilter{filter, []int{makerspace_id}, false})
 }

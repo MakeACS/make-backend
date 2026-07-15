@@ -6,7 +6,7 @@ import (
 )
 
 type AuditLog struct {
-	Id           string
+	Id           int
 	Timestamp    time.Time
 	MakerspaceID *int
 
@@ -14,7 +14,7 @@ type AuditLog struct {
 	FormatString string
 
 	MessageType string
-	Data        json.RawMessage
+	Data        *json.RawMessage
 }
 
 type LogEntity struct {
