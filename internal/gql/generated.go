@@ -74,7 +74,7 @@ type ComplexityRoot struct {
 	AccessDevice struct {
 		Channels           func(childComplexity int) int
 		CurrentCardTag     func(childComplexity int) int
-		DeviceId           func(childComplexity int) int
+		Device             func(childComplexity int) int
 		Flags              func(childComplexity int) int
 		LastStatus         func(childComplexity int) int
 		ReportedDeployment func(childComplexity int) int
@@ -213,7 +213,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		AccessDevice        func(childComplexity int, id int) int
 		CurrentUser         func(childComplexity int) int
+		Device              func(childComplexity int, id int) int
 		Makerspace          func(childComplexity int, id int) int
 		User                func(childComplexity int, id int) int
 		Zone                func(childComplexity int, id int) int
@@ -320,6 +322,8 @@ type OptionBlockOptionResolver interface {
 }
 type QueryResolver interface {
 	Makerspace(ctx context.Context, id int) (*models.Makerspace, error)
+	Device(ctx context.Context, id int) (*models.Device, error)
+	AccessDevice(ctx context.Context, id int) (*models.AccessDevice, error)
 	User(ctx context.Context, id int) (*models.User, error)
 	CurrentUser(ctx context.Context) (*models.User, error)
 	Zone(ctx context.Context, id int) (*models.Zone, error)
@@ -422,12 +426,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccessDevice.CurrentCardTag(childComplexity), true
-	case "AccessDevice.device_id":
-		if e.ComplexityRoot.AccessDevice.DeviceId == nil {
+	case "AccessDevice.device":
+		if e.ComplexityRoot.AccessDevice.Device == nil {
 			break
 		}
 
-		return e.ComplexityRoot.AccessDevice.DeviceId(childComplexity), true
+		return e.ComplexityRoot.AccessDevice.Device(childComplexity), true
 	case "AccessDevice.flags":
 		if e.ComplexityRoot.AccessDevice.Flags == nil {
 			break
@@ -977,12 +981,34 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Organization.Notes(childComplexity), true
 
+	case "Query.accessDevice":
+		if e.ComplexityRoot.Query.AccessDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accessDevice_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccessDevice(childComplexity, args["id"].(int)), true
 	case "Query.currentUser":
 		if e.ComplexityRoot.Query.CurrentUser == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Query.CurrentUser(childComplexity), true
+	case "Query.device":
+		if e.ComplexityRoot.Query.Device == nil {
+			break
+		}
+
+		args, err := ec.field_Query_device_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Device(childComplexity, args["id"].(int)), true
 
 	case "Query.makerspace":
 		if e.ComplexityRoot.Query.Makerspace == nil {
@@ -1488,6 +1514,30 @@ func (ec *executionContext) childFields_AccessDeployment(ctx context.Context, fi
 	return nil, fmt.Errorf("no field named %q was found under type AccessDeployment", field.Name)
 }
 
+func (ec *executionContext) childFields_AccessDevice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "device":
+		return ec.fieldContext_AccessDevice_device(ctx, field)
+	case "channels":
+		return ec.fieldContext_AccessDevice_channels(ctx, field)
+	case "temp_duration":
+		return ec.fieldContext_AccessDevice_temp_duration(ctx, field)
+	case "current_card_tag":
+		return ec.fieldContext_AccessDevice_current_card_tag(ctx, field)
+	case "last_status":
+		return ec.fieldContext_AccessDevice_last_status(ctx, field)
+	case "session_start":
+		return ec.fieldContext_AccessDevice_session_start(ctx, field)
+	case "flags":
+		return ec.fieldContext_AccessDevice_flags(ctx, field)
+	case "sealed_deployment":
+		return ec.fieldContext_AccessDevice_sealed_deployment(ctx, field)
+	case "reported_deployment":
+		return ec.fieldContext_AccessDevice_reported_deployment(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccessDevice", field.Name)
+}
+
 func (ec *executionContext) childFields_AccessDeviceFlags(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "lock_when_idle":
@@ -1498,6 +1548,30 @@ func (ec *executionContext) childFields_AccessDeviceFlags(ctx context.Context, f
 		return ec.fieldContext_AccessDeviceFlags_welcoming(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AccessDeviceFlags", field.Name)
+}
+
+func (ec *executionContext) childFields_Device(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Device_id(ctx, field)
+	case "name":
+		return ec.fieldContext_Device_name(ctx, field)
+	case "sn":
+		return ec.fieldContext_Device_sn(ctx, field)
+	case "paired":
+		return ec.fieldContext_Device_paired(ctx, field)
+	case "hardware":
+		return ec.fieldContext_Device_hardware(ctx, field)
+	case "firmware":
+		return ec.fieldContext_Device_firmware(ctx, field)
+	case "target_firmware":
+		return ec.fieldContext_Device_target_firmware(ctx, field)
+	case "key_cycle":
+		return ec.fieldContext_Device_key_cycle(ctx, field)
+	case "makerspace_id":
+		return ec.fieldContext_Device_makerspace_id(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Device", field.Name)
 }
 
 func (ec *executionContext) childFields_Makerspace(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1743,6 +1817,34 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_accessDevice_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_device_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -2110,27 +2212,36 @@ func (ec *executionContext) fieldContext_AccessDeployment_components(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _AccessDevice_device_id(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _AccessDevice_device(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_AccessDevice_device_id(ctx, field)
+			return ec.fieldContext_AccessDevice_device(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.DeviceId, nil
+			return obj.Device, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNID2int(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v models.Device) graphql.Marshaler {
+			return ec.marshalNDevice2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐDevice(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_AccessDevice_device_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("AccessDevice", field, false, false, errors.New("field of type ID does not have child fields"))
+func (ec *executionContext) fieldContext_AccessDevice_device(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Device(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _AccessDevice_channels(ctx context.Context, field graphql.CollectedField, obj *models.AccessDevice) (ret graphql.Marshaler) {
@@ -4318,6 +4429,94 @@ func (ec *executionContext) fieldContext_Query_makerspace(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_makerspace_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_device(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_device(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Device(ctx, fc.Args["id"].(int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.Device) graphql.Marshaler {
+			return ec.marshalODevice2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐDevice(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_device(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Device(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_device_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_accessDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_accessDevice(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().AccessDevice(ctx, fc.Args["id"].(int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.AccessDevice) graphql.Marshaler {
+			return ec.marshalOAccessDevice2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessDevice(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_accessDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccessDevice(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_accessDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7094,8 +7293,8 @@ func (ec *executionContext) _AccessDevice(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AccessDevice")
-		case "device_id":
-			out.Values[i] = ec._AccessDevice_device_id(ctx, field, obj)
+		case "device":
+			out.Values[i] = ec._AccessDevice_device(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -8234,6 +8433,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_makerspace(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "device":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_device(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "accessDevice":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_accessDevice(ctx, field)
 				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -9407,6 +9650,10 @@ func (ec *executionContext) marshalNDate2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
+func (ec *executionContext) marshalNDevice2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐDevice(ctx context.Context, sel ast.SelectionSet, v models.Device) graphql.Marshaler {
+	return ec._Device(ctx, sel, &v)
+}
+
 func (ec *executionContext) unmarshalNID2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9754,6 +10001,13 @@ func (ec *executionContext) marshalOAccessDeployment2ᚖmakeᚑbackendᚋinterna
 	return ec._AccessDeployment(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOAccessDevice2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessDevice(ctx context.Context, sel ast.SelectionSet, v *models.AccessDevice) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AccessDevice(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9800,6 +10054,13 @@ func (ec *executionContext) marshalOClockTime2ᚖtimeᚐTime(ctx context.Context
 	_ = ctx
 	res := scalars.MarshalClockTime(*v)
 	return res
+}
+
+func (ec *executionContext) marshalODevice2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐDevice(ctx context.Context, sel ast.SelectionSet, v *models.Device) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Device(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalODispenserError2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐDispenserError(ctx context.Context, v any) (*models.DispenserError, error) {

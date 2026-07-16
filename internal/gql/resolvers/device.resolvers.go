@@ -16,6 +16,24 @@ func (r *accessComponentResolver) Type(ctx context.Context, obj *models.AccessCo
 	return int(obj.Type), nil
 }
 
+// Device is the resolver for the device field.
+func (r *queryResolver) Device(ctx context.Context, id int) (*models.Device, error) {
+	dev, err := r.Store.Devices.GetDeviceById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return dev, nil
+}
+
+// AccessDevice is the resolver for the accessDevice field.
+func (r *queryResolver) AccessDevice(ctx context.Context, id int) (*models.AccessDevice, error) {
+	dev, err := r.Store.Devices.GetAccessDeviceById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return dev, nil
+}
+
 // AccessComponent returns gql.AccessComponentResolver implementation.
 func (r *Resolver) AccessComponent() gql.AccessComponentResolver { return &accessComponentResolver{r} }
 
