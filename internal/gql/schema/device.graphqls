@@ -28,7 +28,7 @@ type AccessDeployment {
 }
 
 type AccessDevice {
-    device_id: ID!
+    device: Device!
     channels: Int!
     temp_duration: Int!
     current_card_tag: String!
@@ -48,4 +48,9 @@ type Dispenser {
     device_id: ID!
     cards_left: Int!
     error: DispenserError
+}
+
+extend type Query{
+    device(id: ID!): Device
+    accessDevice(id: ID!): AccessDevice
 }

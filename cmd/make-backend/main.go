@@ -11,8 +11,8 @@ import (
 	"make-backend/internal/logging"
 	"time"
 
-	acsmqtt "make-backend/internal/api/acs-mqtt"
-	acsrest "make-backend/internal/api/acs-rest"
+	acsmqtt "make-backend/internal/api/acs/acs-mqtt"
+	rest "make-backend/internal/api/rest"
 	"make-backend/internal/gql/directives"
 	"make-backend/internal/gql/resolvers"
 	"net/http"
@@ -70,7 +70,7 @@ func main() {
 	logger := logging.NewLogger(store)
 
 	httpServer := startHttp(db, store, logger, httpPort)
-	mqttServer := acsmqtt.StartMqtt(logger, mqttPort)
+	mqttServer, _ := acsmqtt.StartMqtt(logger, store, mqttPort)
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
 
 	logger.AuditLog.CreateUnassociatedWithData("builtin.server.start.1", map[string]any{"time": time.Now()}, "Server started")
@@ -148,7 +148,7 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 
 	log.Printf("connect to http://localhost:%d/ for GraphQL playground", port)
 
-	acsrest.RegisterHandlers(mux)
+	rest.RegisterHandlers(mux)
 
 	server := &http.Server{
 		Addr:     fmt.Sprintf(":%d", port),

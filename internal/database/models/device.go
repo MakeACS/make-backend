@@ -28,6 +28,21 @@ type Device struct {
 	MakerspaceId   int
 }
 
+func (d Device) LogEntity() LogEntity {
+	return LogEntity{
+		Id:    d.Id,
+		Label: d.Name,
+	}
+}
+
+func (dev Device) CredentialsMatch(key string) (bool, error) {
+	keyToMatch, err := dev.GenerateKey()
+	if err != nil {
+		return false, fmt.Errorf("failed to generate key: %w", err)
+	}
+	return keyToMatch == key, nil
+}
+
 // PKCS7Padding adds padding to the plaintext so its length is a multiple of the block size
 // needed for compatibility with original implementation
 func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
@@ -104,14 +119,14 @@ func (f AccessDeviceFlags) Value() (driver.Value, error) {
 type AccessComponentType int
 
 const (
-	Legacy         AccessComponentType = 0b000
-	Switch1Channel AccessComponentType = 0b001
-	Switch2Channel AccessComponentType = 0b010
-	Switch3Channel AccessComponentType = 0b011
-	Switch4Channel AccessComponentType = 0b100
-	NonSwitching   AccessComponentType = 0b101
-	InternalHMI    AccessComponentType = 0b110
-	Communicative  AccessComponentType = 0b111
+	AccessComponentType_Legacy         AccessComponentType = 0b000
+	AccessComponentType_Switch1Channel AccessComponentType = 0b001
+	AccessComponentType_Switch2Channel AccessComponentType = 0b010
+	AccessComponentType_Switch3Channel AccessComponentType = 0b011
+	AccessComponentType_Switch4Channel AccessComponentType = 0b100
+	AccessComponentType_NonSwitching   AccessComponentType = 0b101
+	AccessComponentType_InternalHMI    AccessComponentType = 0b110
+	AccessComponentType_Communicative  AccessComponentType = 0b111
 )
 
 type AccessComponent struct {
@@ -142,8 +157,17 @@ func (d AccessDeployment) Value() (driver.Value, error) {
 	return json.Marshal(d)
 }
 
+type AccessDeviceInputMode string
+
+var (
+	AccessDeviceInputMode_Insert      AccessDeviceInputMode = "INSERT"
+	AccessDeviceInputMode_TempPresent AccessDeviceInputMode = "TEMP_PRESENT"
+	AccessDeviceInputMode_TempRemove  AccessDeviceInputMode = "TEMP_REMOVE"
+	AccessDeviceInputMode_Toggle      AccessDeviceInputMode = "TOGGLE"
+)
+
 type AccessDevice struct {
-	DeviceId           int
+	Device
 	Channels           int
 	TempDuration       int
 	CurrentCardTag     string
