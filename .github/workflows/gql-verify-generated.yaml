@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 jobs:
   gqlgen_check:
-    name: Check committed code against freshly generated and if they differ, warn the developer
+    name: gqlgen generated code check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
