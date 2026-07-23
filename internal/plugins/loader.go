@@ -124,6 +124,7 @@ func StartPlugins(store *database.Store) (func(), error) {
 			Cmd:             exec.Command(path.Join(plugin_dir, plugin_desc.Name)),
 			Managed:         true, // Allow parent process (us) to kill clients when we leave
 			SkipHostEnv:     true, // Dont leak secrets to plugins
+			Logger:          &PluginLogAdapter{},
 		})
 
 		// Connect via RPC

@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
+var pluginName = "notification.core.mock"
+
 // Here is a real implementation of Greeter
 type MockNotifier struct {
 }
@@ -33,7 +35,7 @@ func (m *MockNotifier) Info() plugins.PluginInfoResponse {
 	// log.Println("info called")
 	return plugins.PluginInfoResponse{
 		Info: plugins.PluginInfo{
-			Id:    "asdfg",
+			Id:    pluginName,
 			About: "plugin for not sending notifications but pretending to",
 		},
 		Err: nil,
@@ -58,7 +60,7 @@ func main() {
 	notifier := &MockNotifier{}
 	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
-		"notification.core.mock": &plugins.NotificationPlugin{Impl: notifier},
+		pluginName: &plugins.NotificationPlugin{Impl: notifier},
 	}
 	log.Println("Mock notification plugin started")
 
