@@ -11,6 +11,7 @@ var EmbedMigrations embed.FS
 
 type Store struct {
 	Users       repos.UserRepository
+	Groups      repos.GroupRepository
 	Makerspaces repos.MakerspaceRepository
 	Zones       repos.ZoneRepository
 	Equipment   repos.EquipmentRepository
@@ -21,6 +22,7 @@ type Store struct {
 func NewStore(db *sql.DB) *Store {
 	return &Store{
 		Users:       &repos.UserRepo{DB: db},
+		Groups:      &repos.GroupRepo{DB: db},
 		Makerspaces: &repos.MakerspaceRepo{DB: db},
 		Zones:       &repos.ZoneRepo{DB: db},
 		Equipment:   &repos.EquipmentRepo{DB: db},

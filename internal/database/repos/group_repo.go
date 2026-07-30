@@ -16,9 +16,9 @@ type GroupRepository interface {
 	GetGroupById(ctx context.Context, id int) (*models.Group, error)
 
 	// list the combination of all level subgroups
-	GetSubgroups(ctx context.Context, groupId int) ([]int, error)
+	GetSubgroups(ctx context.Context, groupId int) ([]models.SubgroupLink, error)
 	// list the first level subgroups of a given group
-	GetDirectSubgroups(ctx context.Context, groupId int) ([]int, error)
+	GetDirectSubgroups(ctx context.Context, groupId int) ([]models.SubgroupLink, error)
 
 	GetGroupMembers(ctx context.Context, groupId int) ([]models.MembershipToGroup, error)
 	GetDirectGroupMembers(ctx context.Context, groupId int) ([]models.MembershipToGroup, error)
@@ -43,6 +43,68 @@ type GroupRepository interface {
 
 type GroupRepo struct {
 	DB *sql.DB
+}
+
+func (g *GroupRepo) GetDirectSubgroups(ctx context.Context, groupId int) ([]models.SubgroupLink, error) {
+	query := `select subgroup_id, view_permission from group_direct_subgroups where supergroup_id = ?`
+
+	rows, err := g.DB.QueryContext(ctx, query, groupId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct QueryContext: %w", err)
+	}
+
+	links := []models.SubgroupLink{}
+	for rows.Next() {
+		var link models.SubgroupLink
+		link.GroupId = groupId
+		err := rows.Scan(
+			&link.SubgroupId,
+			&link.ViewPermission,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan direct subgroups: %w", err)
+		}
+		links = append(links, link)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to get direct subgroups: %w", err)
+	}
+
+	return links, nil
+
+}
+
+// GetSubgroups implements [GroupRepository].
+func (g *GroupRepo) GetSubgroups(ctx context.Context, groupId int) ([]models.SubgroupLink, error) {
+
+	query := `select subgroup_id, view_permission from group_subgroups where supergroup_id = ?`
+
+	rows, err := g.DB.QueryContext(ctx, query, groupId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct QueryContext: %w", err)
+	}
+
+	links := []models.SubgroupLink{}
+	for rows.Next() {
+		var link models.SubgroupLink
+		link.GroupId = groupId
+		err := rows.Scan(
+			&link.SubgroupId,
+			&link.ViewPermission,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan direct subgroups: %w", err)
+		}
+		links = append(links, link)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to get direct subgroups: %w", err)
+	}
+
+	return links, nil
+
 }
 
 // AllGroupsGroupCanManage implements [GroupRepository].
@@ -110,6 +172,7 @@ func (g *GroupRepo) AllGroupsUserIsMemberOf(ctx context.Context, userId int) ([]
 	if err != nil {
 		return nil, fmt.Errorf("failed to construct QueryContext: %w", err)
 	}
+	defer rows.Close()
 
 	groups := []models.MembershipToUser{}
 	for rows.Next() {
@@ -144,28 +207,50 @@ func (g *GroupRepo) AllGroupsVisibleToGroup(ctx context.Context, groupId int) ([
 
 // CanGroupManageGroup implements [GroupRepository].
 func (g *GroupRepo) CanGroupManageGroup(ctx context.Context, managerGroup int, managedGroup int) (bool, error) {
-	panic("unimplemented")
+	var exists bool
+
+	query := "SELECT EXISTS(SELECT 1 FROM group_management WHERE manager_group_id = $1 and group_id = $2)"
+	err := g.DB.QueryRow(query, managerGroup, managedGroup).Scan(&exists)
+
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
-// IsUserInGroup implements [GroupRepository].
 func (g *GroupRepo) IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, error) {
-	panic("unimplemented")
+	var exists bool
+
+	query := "SELECT EXISTS(SELECT 1 FROM group_membership WHERE user_id = $1 and group_id = $2)"
+
+	err := g.DB.QueryRow(query, userId, groupId).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
-// IsUserInGroupDirectly implements [GroupRepository].
 func (g *GroupRepo) IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, error) {
-	panic("unimplemented")
+	var exists bool
+
+	query := "SELECT EXISTS(SELECT 1 FROM group_direct_membership WHERE user_id = $1 and group_id = $2)"
+
+	err := g.DB.QueryRow(query, userId, groupId).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
 func (g *GroupRepo) GetAdminGroupId(ctx context.Context) (int, error) {
 	var id_result int
 
-	query := `select id from groups where manager_id = null`
+	query := `select id from groups where manager_id is null`
 
 	err := g.DB.QueryRowContext(ctx, query).Scan(&id_result)
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to create group: %w", err)
+		return 0, fmt.Errorf("failed to get admin group: %w", err)
 	}
 
 	return id_result, nil
@@ -228,8 +313,6 @@ func (g *GroupRepo) GetGroupById(ctx context.Context, id int) (*models.Group, er
 	return &result, nil
 
 }
-
-var _ GroupRepository = &GroupRepo{}
 
 func (g *GroupRepo) AddUserToGroup(ctx context.Context, userId int, groupId int, permissions models.GroupViewPermission) error {
 

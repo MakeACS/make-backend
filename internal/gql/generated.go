@@ -283,6 +283,7 @@ type ComplexityRoot struct {
 		Admin         func(childComplexity int) int
 		Archived      func(childComplexity int) int
 		CardTag       func(childComplexity int) int
+		Email         func(childComplexity int) int
 		Firstname     func(childComplexity int) int
 		ForceArchive  func(childComplexity int) int
 		Id            func(childComplexity int) int
@@ -291,7 +292,6 @@ type ComplexityRoot struct {
 		Notes         func(childComplexity int) int
 		Pronouns      func(childComplexity int) int
 		SetupComplete func(childComplexity int) int
-		Username      func(childComplexity int) int
 	}
 
 	Zone struct {
@@ -1296,6 +1296,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.CardTag(childComplexity), true
+	case "User.email":
+		if e.ComplexityRoot.User.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.Email(childComplexity), true
 	case "User.firstname":
 		if e.ComplexityRoot.User.Firstname == nil {
 			break
@@ -1344,12 +1350,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.SetupComplete(childComplexity), true
-	case "User.username":
-		if e.ComplexityRoot.User.Username == nil {
-			break
-		}
-
-		return e.ComplexityRoot.User.Username(childComplexity), true
 
 	case "Zone.hidden":
 		if e.ComplexityRoot.Zone.Hidden == nil {
@@ -1614,8 +1614,8 @@ func (ec *executionContext) childFields_User(ctx context.Context, field graphql.
 	switch field.Name {
 	case "id":
 		return ec.fieldContext_User_id(ctx, field)
-	case "username":
-		return ec.fieldContext_User_username(ctx, field)
+	case "email":
+		return ec.fieldContext_User_email(ctx, field)
 	case "firstname":
 		return ec.fieldContext_User_firstname(ctx, field)
 	case "lastname":
@@ -5614,16 +5614,16 @@ func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphq
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
-func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_User_username(ctx, field)
+			return ec.fieldContext_User_email(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Username, nil
+			return obj.Email, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
@@ -5633,7 +5633,7 @@ func (ec *executionContext) _User_username(ctx context.Context, field graphql.Co
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_User_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -9073,8 +9073,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "username":
-			out.Values[i] = ec._User_username(ctx, field, obj)
+		case "email":
+			out.Values[i] = ec._User_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -84,9 +84,9 @@ type SCSSessionProvider struct {
 }
 
 func (p SCSSessionProvider) CreateSession(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion) error {
-	username := "placeholder" // TODO get username from assertion
+	email := "placeholder" // TODO get email from assertion
 
-	user, err := p.Store.Users.GetUserByUsername(r.Context(), username)
+	user, err := p.Store.Users.GetUserByEmail(r.Context(), email)
 	if err != nil {
 		return err
 	}
