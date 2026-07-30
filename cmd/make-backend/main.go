@@ -60,10 +60,11 @@ func main() {
 	}
 
 	// Database
-	db, err := database.SetupDB()
+	db, df, err := database.SetupTestDB()
 	if err != nil {
 		log.Fatalf("Failed to setup DB: %s", err)
 	}
+	defer df()
 	defer db.Close()
 
 	store := database.NewStore(db)
