@@ -19,6 +19,10 @@ func SetupDB() (*sql.DB, error) {
 	if err != nil {
 		return db, err
 	}
+
+	// store := NewStore(db)
+	// fillTestData(context.TODO(), log.Default(), store)
+
 	return db, nil
 }
 
