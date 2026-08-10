@@ -1,0 +1,37 @@
+
+
+
+type Group {
+    id: ID!
+    manager_id: ID!
+    name: String!
+    description: String!
+}
+
+
+enum GroupViewPermission {
+  SEE_NONE
+  SEE_SELF
+  SEE_ALL
+}
+
+
+type MembershipToGroup {
+ 	UserId:         ID!
+	ViewPermission: GroupViewPermission!   
+}
+
+
+
+
+extend type Query {
+    
+    groupById(id: ID!): Group!
+    
+    membersOfGroup(groupID: ID!): [MembershipToGroup!]!
+    isUserInGroup(userID: ID!, groupID: ID!): Boolean!
+    isUserInGroupDirectly(userID: ID!, groupID: ID!): Boolean!
+    
+    canGroupManageGroup(managerID: ID!, groupID: ID!): Boolean!
+    canUserManageGroup(managerID: ID!, groupID: ID!): Boolean!
+}

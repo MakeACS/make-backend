@@ -26,6 +26,8 @@ type GroupRepository interface {
 	GetDirectGroupMembers(ctx context.Context, groupId int) ([]models.MembershipToGroup, error)
 
 	IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, error)
+
+	AllGroupsUserIsMemberOf(ctx context.Context, userId int) ([]models.MembershipToUser, error)
 	IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, error)
 	// add a user to a group
 	AddUserToGroup(ctx context.Context, userId int, groupId int, perms models.GroupViewPermission) error
@@ -33,18 +35,38 @@ type GroupRepository interface {
 	// return true if removed, false if the user was not removed from that group
 	RemoveUserFromGroup(ctx context.Context, userId int, groupId int) (bool, error)
 
+	CanUserManageGroup(ctx context.Context, managerUser, managedGroup int) (bool, error)
 	CanGroupManageGroup(ctx context.Context, managerGroup, managedGroup int) (bool, error)
 
 	AllGroupsGroupCanManage(ctx context.Context, userId int) ([]int, error)
 	AllGroupsVisibleToGroup(ctx context.Context, groupId int) ([]int, error)
 
-	AllGroupsUserIsMemberOf(ctx context.Context, userId int) ([]models.MembershipToUser, error)
 	AllGroupsUserCanManage(ctx context.Context, userId int) ([]int, error)
 	AllGroupsUserVisibleToUser(ctx context.Context, userId int) ([]int, error)
+	IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error)
 }
 
 type GroupRepo struct {
 	DB *sql.DB
+}
+
+func (g *GroupRepo) IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error) {
+	// if can manage -> see all
+	canManage, err := g.CanUserManageGroup(ctx, userId, groupId)
+	if err != nil {
+		return false, models.GroupViewPermission_SeeNone, fmt.Errorf("failed to check if group is visible to user: %w", err)
+
+	}
+	if canManage {
+		return true, models.GroupViewPermission_SeeAll, nil
+	}
+	// if inside
+
+	//  if see none -> false, see none
+	// if see some -> true, see self
+	// if see all -> true, see all
+	panic("unimplemented")
+
 }
 
 func (g *GroupRepo) AddSubgroupToGroup(ctx context.Context, subgroupID, supergroupID int, permissions models.GroupViewPermission) error {
@@ -222,6 +244,23 @@ func (g *GroupRepo) CanGroupManageGroup(ctx context.Context, managerGroup int, m
 
 	query := "SELECT EXISTS(SELECT 1 FROM group_management WHERE manager_group_id = $1 and group_id = $2)"
 	err := g.DB.QueryRow(query, managerGroup, managedGroup).Scan(&exists)
+
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (g *GroupRepo) CanUserManageGroup(ctx context.Context, managerUser int, managedGroup int) (bool, error) {
+	var exists bool
+
+	query := `
+	SELECT EXISTS(SELECT 1 
+			from group_management gm 
+			left join group_membership m on m.group_id = gm.manager_group_id
+			where m.user_id = $1 and gm.group_id = $2)
+	`
+	err := g.DB.QueryRow(query, managerUser, managedGroup).Scan(&exists)
 
 	if err != nil {
 		return false, err
