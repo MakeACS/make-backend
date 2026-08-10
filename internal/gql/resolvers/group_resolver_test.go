@@ -208,7 +208,7 @@ func TestFindingGroupsById(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			ctx := ContextWithUser(t.Context(), tC.askingUser)
-			g, err := resolver.Query().GroupByID(ctx, tC.group)
+			g, err := resolver.Query().Group(ctx, tC.group)
 			if !tC.shouldError && err != nil {
 				t.Fatalf("should not error when user %v gets group %v but got %v", tC.askingUser, tC.group, err)
 				return

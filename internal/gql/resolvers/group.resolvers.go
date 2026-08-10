@@ -8,15 +8,68 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
+	"make-backend/internal/gql"
 )
 
-// GroupByID is the resolver for the groupById field.
-func (r *queryResolver) GroupByID(ctx context.Context, groupId int) (*models.Group, error) {
-	userID := ctx.Value(auth.UserContextKey{}).(int)
+// DirectMembers is the resolver for the directMembers field.
+func (r *groupResolver) DirectMembers(ctx context.Context, obj *models.Group) ([]*models.MembershipToGroup, error) {
+	panic(fmt.Errorf("not implemented: DirectMembers - directMembers"))
+}
 
-	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, userID, groupId)
+// Members is the resolver for the members field.
+func (r *groupResolver) Members(ctx context.Context, obj *models.Group) ([]*models.MembershipToGroup, error) {
+	members, err := r.Store.Groups.GetGroupMembers(ctx, obj.Id)
+	slog.Info("get members", "members", members)
+	if err != nil {
+		return nil, err
+	}
+	members2 := make([]*models.MembershipToGroup, 0, len(members))
+	for _, m := range members {
+		members2 = append(members2, &m)
+	}
+	return members2, nil
+}
+
+// DirectManagedGroups is the resolver for the directManagedGroups field.
+func (r *groupResolver) DirectManagedGroups(ctx context.Context, obj *models.Group) ([]*models.Group, error) {
+	groupIds, err := r.Store.Groups.AllGroupsGroupCanManageDirectly(ctx, obj.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	groups := make([]*models.Group, len(groupIds))
+	for i, id := range groupIds {
+		g, err := r.Store.Groups.GetGroupById(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		groups[i] = g
+
+	}
+	return groups, nil
+}
+
+// DirectSubGroups is the resolver for the directSubGroups field.
+func (r *groupResolver) DirectSubGroups(ctx context.Context, obj *models.Group) ([]*models.Group, error) {
+	panic(fmt.Errorf("not implemented: DirectSubGroups - directSubGroups"))
+}
+
+// User is the resolver for the User field.
+func (r *membershipToGroupResolver) User(ctx context.Context, obj *models.MembershipToGroup) (*models.User, error) {
+	return r.Store.Users.GetUserById(ctx, obj.UserId)
+}
+
+// Group is the resolver for the group field.
+func (r *queryResolver) Group(ctx context.Context, id int) (*models.Group, error) {
+	userId := auth.UserIDFromContext(ctx)
+	if userId == nil {
+		return nil, auth.ErrNotAuthenticated
+	}
+
+	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *userId, id)
 	if err != nil {
 		return nil, err
 	}
@@ -24,66 +77,21 @@ func (r *queryResolver) GroupByID(ctx context.Context, groupId int) (*models.Gro
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
 	}
 
-	group, err := r.Store.Groups.GetGroupById(ctx, groupId)
+	group, err := r.Store.Groups.GetGroupById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	return group, nil
 }
 
-// MembersOfGroup is the resolver for the membersOfGroup field.
-func (r *queryResolver) MembersOfGroup(ctx context.Context, groupID int) ([]*models.MembershipToGroup, error) {
-	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
-	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
-	if err != nil {
-		return nil, err
-	}
-	if !visible {
-		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
-	}
-
-	_, how, err := r.Store.Groups.IsUserInGroup(ctx, askingUserID, groupID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check if users in group: %w", err)
-	}
-
-	canManage, err := r.Store.Groups.CanUserManageGroup(ctx, askingUserID, groupID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check if users in group: %w", err)
-	}
-
-	if how == models.GroupViewPermission_SeeNone && !canManage {
-		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
-	}
-	if how == models.GroupViewPermission_SeeSelf && !canManage {
-		user, err := r.Store.Users.GetUserById(ctx, askingUserID)
-		if err != nil {
-			return nil, fmt.Errorf("could not find querying user %w", err)
-		}
-		return []*models.MembershipToGroup{{
-			UserId:         user.Id,
-			ViewPermission: how,
-		}}, nil
-	}
-
-	// otherwise can see everything
-	members, err := r.Store.Groups.GetGroupMembers(ctx, groupID)
-	if err != nil {
-		return nil, fmt.Errorf("error finding group members: %w", err)
-	}
-
-	members2 := []*models.MembershipToGroup{}
-	for _, member := range members {
-		members2 = append(members2, &member)
-	}
-	return members2, nil
-}
-
 // IsUserInGroup is the resolver for the isUserInGroup field.
 func (r *queryResolver) IsUserInGroup(ctx context.Context, userID int, groupID int) (bool, error) {
-	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
+	askingUserID := auth.UserIDFromContext(ctx)
+	if askingUserID == nil {
+		return false, auth.ErrNotAuthenticated
+	}
 
-	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
+	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *askingUserID, groupID)
 	if err != nil {
 		return false, err
 	}
@@ -97,9 +105,12 @@ func (r *queryResolver) IsUserInGroup(ctx context.Context, userID int, groupID i
 
 // IsUserInGroupDirectly is the resolver for the isUserInGroupDirectly field.
 func (r *queryResolver) IsUserInGroupDirectly(ctx context.Context, userID int, groupID int) (bool, error) {
-	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
+	askingUserID := auth.UserIDFromContext(ctx)
+	if askingUserID == nil {
+		return false, auth.ErrNotAuthenticated
+	}
 
-	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
+	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *askingUserID, groupID)
 	if err != nil {
 		return false, err
 	}
@@ -153,3 +164,16 @@ func (r *queryResolver) CanUserManageGroup(ctx context.Context, managerID int, g
 	}
 	return r.Store.Groups.CanUserManageGroup(ctx, managerID, groupID)
 }
+
+// Group returns gql.GroupResolver implementation.
+func (r *Resolver) Group() gql.GroupResolver { return &groupResolver{r} }
+
+// MembershipToGroup returns gql.MembershipToGroupResolver implementation.
+func (r *Resolver) MembershipToGroup() gql.MembershipToGroupResolver {
+	return &membershipToGroupResolver{r}
+}
+
+type (
+	groupResolver             struct{ *Resolver }
+	membershipToGroupResolver struct{ *Resolver }
+)

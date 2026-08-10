@@ -40,7 +40,8 @@ type GroupRepository interface {
 	CanUserManageGroup(ctx context.Context, managerUser, managedGroup int) (bool, error)
 	CanGroupManageGroup(ctx context.Context, managerGroup, managedGroup int) (bool, error)
 
-	AllGroupsGroupCanManage(ctx context.Context, userId int) ([]int, error)
+	AllGroupsGroupCanManage(ctx context.Context, groupId int) ([]int, error)
+	AllGroupsGroupCanManageDirectly(ctx context.Context, groupId int) ([]int, error)
 	AllGroupsVisibleToGroup(ctx context.Context, groupId int) ([]int, error)
 	IsGroupVisibleToGroup(ctx context.Context, lookingGroupId int, groupId int) (bool, error)
 
@@ -209,6 +210,33 @@ func (g *GroupRepo) GetSubgroups(ctx context.Context, groupId int) ([]models.Sub
 // AllGroupsGroupCanManage implements [GroupRepository].
 func (g *GroupRepo) AllGroupsGroupCanManage(ctx context.Context, managerId int) ([]int, error) {
 	query := `select group_id from group_management where manager_group_id = $1`
+
+	rows, err := g.DB.QueryContext(ctx, query, managerId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct QueryContext: %w", err)
+	}
+	defer rows.Close()
+
+	groups := []int{}
+	for rows.Next() {
+		var group int
+		err := rows.Scan(&group)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan for groups group can manage: %w", err)
+		}
+		groups = append(groups, group)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to get for groups group can manage: %w", err)
+	}
+	return groups, nil
+
+}
+
+// AllGroupsGroupCanManage implements [GroupRepository].
+func (g *GroupRepo) AllGroupsGroupCanManageDirectly(ctx context.Context, managerId int) ([]int, error) {
+	query := `select id from groups where manager_id = $1`
 
 	rows, err := g.DB.QueryContext(ctx, query, managerId)
 	if err != nil {

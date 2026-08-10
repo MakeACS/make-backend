@@ -1,12 +1,6 @@
 
 
 
-type Group {
-    id: ID!
-    manager_id: ID!
-    name: String!
-    description: String!
-}
 
 
 enum GroupViewPermission {
@@ -18,20 +12,32 @@ enum GroupViewPermission {
 
 type MembershipToGroup {
  	UserId:         ID!
-	ViewPermission: GroupViewPermission!   
+	User: User!
+    ViewPermission: GroupViewPermission!   
 }
 
+type Group {
+    id: ID!
+    manager_id: ID!
+    name: String!
+    description: String!
+
+    directMembers: [MembershipToGroup!]!
+    members: [MembershipToGroup!]!
+
+    directManagedGroups: [Group!]!
+    directSubGroups: [Group!]!
+}
 
 
 
 extend type Query {
     
-    groupById(id: ID!): Group!
+    group(id: ID!): Group!
     
-    membersOfGroup(groupID: ID!): [MembershipToGroup!]!
     isUserInGroup(userID: ID!, groupID: ID!): Boolean!
-    isUserInGroupDirectly(userID: ID!, groupID: ID!): Boolean!
-    
+
+    isUserInGroupDirectly(userID: ID!, groupID: ID!): Boolean!    
     canGroupManageGroup(managerID: ID!, groupID: ID!): Boolean!
     canUserManageGroup(managerID: ID!, groupID: ID!): Boolean!
 }
