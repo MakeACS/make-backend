@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"make-backend/internal/database/models"
 )
@@ -55,7 +56,7 @@ func (g *GroupRepo) IsGroupVisibleToUser(ctx context.Context, userId int, groupI
 	// if can manage -> see all
 	canManage, err := g.CanUserManageGroup(ctx, userId, groupId)
 	if err != nil {
-		return false, fmt.Errorf("failed to check if group is visible to user: %w", err)
+		return false, fmt.Errorf("failed to check if group is visible to user check 1: %w", err)
 	}
 	if canManage {
 		return true, nil
@@ -64,7 +65,7 @@ func (g *GroupRepo) IsGroupVisibleToUser(ctx context.Context, userId int, groupI
 
 	isInGroup, how, err := g.IsUserInGroup(ctx, userId, groupId)
 	if err != nil {
-		return false, fmt.Errorf("failed to check if group is visible to user: %w", err)
+		return false, fmt.Errorf("failed to check if group is visible to user check 2: %w", err)
 	}
 
 	if isInGroup {
@@ -79,13 +80,7 @@ func (g *GroupRepo) IsGroupVisibleToUser(ctx context.Context, userId int, groupI
 			return false, fmt.Errorf("invalid view permission: %v", how)
 		}
 	}
-	// if inside
-
-	//  if see none -> false, see none
-	// if see some -> true, see self
-	// if see all -> true, see all
-	panic("unimplemented")
-
+	return false, nil
 }
 func (g *GroupRepo) IsGroupVisibleToGroup(ctx context.Context, lookingGroupId int, groupId int) (bool, error) {
 	// if can manage -> see all
@@ -308,7 +303,13 @@ func (g *GroupRepo) IsUserInGroup(ctx context.Context, userId int, groupId int) 
 
 	query := "SELECT view_permission FROM group_membership WHERE user_id = $1 and group_id = $2"
 
-	err := g.DB.QueryRow(query, userId, groupId).Scan(&perms)
+	row := g.DB.QueryRow(query, userId, groupId)
+
+	err := row.Scan(&perms)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, models.GroupViewPermission_SeeNone, nil
+	}
+
 	if err != nil {
 		return false, models.GroupViewPermission_SeeNone, err
 	}
@@ -376,7 +377,7 @@ func (g *GroupRepo) GetGroupById(ctx context.Context, id int) (*models.Group, er
 		id,
 		manager_id,
 		name,
-		description,
+		description
 		FROM groups WHERE id = $1`
 
 	err := g.DB.QueryRowContext(ctx, query, id).Scan(

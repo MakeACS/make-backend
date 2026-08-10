@@ -15,37 +15,38 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-type testContext struct {
-	users []struct {
-		id    int
-		email string
+type TestMockData struct {
+	Users []struct {
+		Id    int
+		Email string
 	}
-	beatlesMusicians models.Group
-	beatlesManagers  models.Group
-	brits            models.Group
+	BeatlesMusicians models.Group
+	OtherMusicians   models.Group
+	BeatlesManagers  models.Group
+	Brits            models.Group
 }
 
-var localContext testContext = testContext{
-	users: []struct {
-		id    int
-		email string
+var localContext TestMockData = TestMockData{
+	Users: []struct {
+		Id    int
+		Email string
 	}{
-		{email: "brian@beatles.com"},
-		{email: "john@beatles.com"},
-		{email: "paul@beatles.com"},
-		{email: "george@beatles.com"},
-		{email: "ringo@beatles.com"},
+		{Email: "brian@beatles.com"},
+		{Email: "john@beatles.com"},
+		{Email: "paul@beatles.com"},
+		{Email: "george@beatles.com"},
+		{Email: "ringo@beatles.com"},
 	},
 }
 
 func fillTestUsers(ctx context.Context, l *slog.Logger, store *Store) bool {
-	for i, u := range localContext.users {
-		id, err := store.Users.CreateUser(ctx, u.email)
+	for i, u := range localContext.Users {
+		id, err := store.Users.CreateUser(ctx, u.Email)
 		if err != nil {
 			l.Error("failed to add test user", "err", err)
 			return false
 		}
-		localContext.users[i].id = id
+		localContext.Users[i].Id = id
 	}
 	return true
 }
@@ -56,7 +57,7 @@ func makeTestGroups(ctx context.Context, l *slog.Logger, store *Store) bool {
 		l.Error("Failed to find root group", "err", err)
 		return false
 	}
-	localContext.beatlesManagers, err = store.Groups.CreateGroup(ctx, models.Group{
+	localContext.BeatlesManagers, err = store.Groups.CreateGroup(ctx, models.Group{
 		ManagerId:   managerGroupID,
 		Name:        "The Beatles Managers",
 		Description: "",
@@ -65,8 +66,8 @@ func makeTestGroups(ctx context.Context, l *slog.Logger, store *Store) bool {
 		l.Error("failed to create manager group", "err", err)
 		return false
 	}
-	localContext.beatlesMusicians, err = store.Groups.CreateGroup(ctx, models.Group{
-		ManagerId:   localContext.beatlesManagers.Id,
+	localContext.BeatlesMusicians, err = store.Groups.CreateGroup(ctx, models.Group{
+		ManagerId:   localContext.BeatlesManagers.Id,
 		Name:        "The beatles musicians",
 		Description: "the members of the beatles",
 	})
@@ -74,8 +75,17 @@ func makeTestGroups(ctx context.Context, l *slog.Logger, store *Store) bool {
 		l.Error("failed to create musician group", "err", err)
 		return false
 	}
+	localContext.OtherMusicians, err = store.Groups.CreateGroup(ctx, models.Group{
+		ManagerId:   localContext.BeatlesManagers.Id,
+		Name:        "Other musicians",
+		Description: "Other members the beatles don't know about",
+	})
+	if err != nil {
+		l.Error("failed to create other musician group", "err", err)
+		return false
+	}
 
-	localContext.brits, err = store.Groups.CreateGroup(ctx, models.Group{
+	localContext.Brits, err = store.Groups.CreateGroup(ctx, models.Group{
 		ManagerId:   managerGroupID,
 		Name:        "British People",
 		Description: "",
@@ -85,13 +95,13 @@ func makeTestGroups(ctx context.Context, l *slog.Logger, store *Store) bool {
 		return false
 	}
 
-	err = store.Groups.AddSubgroupToGroup(ctx, localContext.beatlesMusicians.Id, localContext.brits.Id, models.GroupViewPermission_SeeSelf)
+	err = store.Groups.AddSubgroupToGroup(ctx, localContext.BeatlesMusicians.Id, localContext.Brits.Id, models.GroupViewPermission_SeeSelf)
 	if err != nil {
 		l.Error("Failed to add beatles subgroup to british super group")
 		return false
 	}
 
-	err = store.Groups.AddSubgroupToGroup(ctx, localContext.beatlesManagers.Id, localContext.brits.Id, models.GroupViewPermission_SeeSelf)
+	err = store.Groups.AddSubgroupToGroup(ctx, localContext.BeatlesManagers.Id, localContext.Brits.Id, models.GroupViewPermission_SeeSelf)
 	if err != nil {
 		l.Error("Failed to add beatles managers subgroup to british super group")
 		return false
@@ -111,9 +121,9 @@ func addUsersToTestGroups(ctx context.Context, t *slog.Logger, store *Store) boo
 			t.Error("couldn't find user", "email", email, "err", err)
 			return false
 		}
-		err = store.Groups.AddUserToGroup(ctx, user.Id, localContext.beatlesMusicians.Id, models.GroupViewPermission_SeeAll)
+		err = store.Groups.AddUserToGroup(ctx, user.Id, localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll)
 		if err != nil {
-			t.Error("Failed to add ", "user", user, "group", localContext.beatlesMusicians)
+			t.Error("Failed to add ", "user", user, "group", localContext.BeatlesMusicians)
 			return false
 		}
 	}
@@ -123,9 +133,9 @@ func addUsersToTestGroups(ctx context.Context, t *slog.Logger, store *Store) boo
 		t.Error("couldn't find user", "email", "brian@beatles.com", "err", err)
 		return false
 	}
-	err = store.Groups.AddUserToGroup(ctx, user.Id, localContext.beatlesManagers.Id, models.GroupViewPermission_SeeAll)
+	err = store.Groups.AddUserToGroup(ctx, user.Id, localContext.BeatlesManagers.Id, models.GroupViewPermission_SeeAll)
 	if err != nil {
-		t.Error("Failed to add to group", "user", user, "group", localContext.beatlesManagers, "err", err)
+		t.Error("Failed to add to group", "user", user, "group", localContext.BeatlesManagers, "err", err)
 		return false
 	}
 	return true
@@ -209,11 +219,11 @@ var localDB *sql.DB = nil
 var localStore *Store = nil
 var localCleanup func() = func() {}
 
-func VerifyDb(logger *slog.Logger) (*sql.DB, *Store) {
+func VerifyTestDb(logger *slog.Logger) (*sql.DB, *Store, *TestMockData) {
 	localLock.Lock()
 	defer localLock.Unlock()
 	if localDB != nil {
-		return localDB, localStore
+		return localDB, localStore, &localContext
 	}
 	var err error
 	localDB, localCleanup, err = setupTestDB(logger)
@@ -221,5 +231,5 @@ func VerifyDb(logger *slog.Logger) (*sql.DB, *Store) {
 		logger.Error("failed to setup test DB", "err", err)
 	}
 	localStore = NewStore(localDB)
-	return localDB, localStore
+	return localDB, localStore, &localContext
 }

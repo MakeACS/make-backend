@@ -13,19 +13,20 @@ import (
 )
 
 // GroupByID is the resolver for the groupById field.
-func (r *queryResolver) GroupByID(ctx context.Context, id int) (*models.Group, error) {
+func (r *queryResolver) GroupByID(ctx context.Context, groupId int) (*models.Group, error) {
 	userID := ctx.Value(auth.UserContextKey{}).(int)
 
-	group, err := r.Store.Groups.GetGroupById(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, userID, group.Id)
+	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, userID, groupId)
 	if err != nil {
 		return nil, err
 	}
 	if !visible {
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
+	}
+
+	group, err := r.Store.Groups.GetGroupById(ctx, groupId)
+	if err != nil {
+		return nil, err
 	}
 	return group, nil
 }
@@ -42,6 +43,10 @@ func (r *queryResolver) MembersOfGroup(ctx context.Context, groupID int) ([]*mod
 	}
 
 	_, how, err := r.Store.Groups.IsUserInGroup(ctx, askingUserID, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check if users in group: %w", err)
+	}
+
 	if how == models.GroupViewPermission_SeeNone {
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
 	}
@@ -96,7 +101,6 @@ func (r *queryResolver) IsUserInGroupDirectly(ctx context.Context, userID int, g
 
 	in, _, err := r.Store.Groups.IsUserInGroupDirectly(ctx, userID, groupID)
 	return in, err
-
 }
 
 // CanGroupManageGroup is the resolver for the canGroupManageGroup field.
