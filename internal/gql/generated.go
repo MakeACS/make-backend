@@ -10568,12 +10568,13 @@ func (ec *executionContext) marshalNGroup2ᚖmakeᚑbackendᚋinternalᚋdatabas
 }
 
 func (ec *executionContext) unmarshalNGroupViewPermission2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupViewPermission(ctx context.Context, v any) (models.GroupViewPermission, error) {
-	res, err := ec.unmarshalInputGroupViewPermission(ctx, v)
+	var res models.GroupViewPermission
+	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNGroupViewPermission2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupViewPermission(ctx context.Context, sel ast.SelectionSet, v models.GroupViewPermission) graphql.Marshaler {
-	return ec._GroupViewPermission(ctx, sel, &v)
+	return v
 }
 
 func (ec *executionContext) unmarshalNID2int(ctx context.Context, v any) (int, error) {

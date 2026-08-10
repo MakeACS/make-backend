@@ -37,11 +37,13 @@ func (r *queryResolver) MembersOfGroup(ctx context.Context, groupID int) ([]*mod
 	if err != nil {
 		return nil, err
 	}
-	if !visible || how != models.GroupViewPermission_SeeAll {
+	if !visible || how == models.GroupViewPermission_SeeNone {
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
 	}
-
-	// return
+	if how == models.GroupViewPermission_SeeSelf {
+		// user := getU
+	}
+	panic("agh")
 }
 
 // IsUserInGroup is the resolver for the isUserInGroup field.

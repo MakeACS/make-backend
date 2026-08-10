@@ -1,5 +1,11 @@
 package models
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 // Determines how users see the group theyre a part of
 type GroupViewPermission int
 
@@ -45,4 +51,37 @@ type SubgroupLink struct {
 	GroupId        int
 	SubgroupId     int
 	ViewPermission GroupViewPermission
+}
+
+func (e GroupViewPermission) MarshalGQL(w io.Writer) {
+	var s string
+	switch e {
+	case GroupViewPermission_SeeAll:
+		s = "SEE_ALL"
+	case GroupViewPermission_SeeSelf:
+		s = "SEE_SELF"
+	case GroupViewPermission_SeeNone:
+		s = "SEE_NONE"
+	default:
+		s = ""
+	}
+	w.Write([]byte(strconv.Quote(s)))
+}
+
+func (e *GroupViewPermission) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enum must be a string")
+	}
+	switch str {
+	case "SEE_ALL":
+		*e = GroupViewPermission_SeeAll
+	case "SEE_SELF":
+		*e = GroupViewPermission_SeeSelf
+	case "SEE_NONE":
+		*e = GroupViewPermission_SeeNone
+	default:
+		return fmt.Errorf("invalid GroupViewPermission value: %s", str)
+	}
+	return nil
 }
