@@ -47,10 +47,15 @@ func (r *queryResolver) MembersOfGroup(ctx context.Context, groupID int) ([]*mod
 		return nil, fmt.Errorf("failed to check if users in group: %w", err)
 	}
 
-	if how == models.GroupViewPermission_SeeNone {
+	canManage, err := r.Store.Groups.CanUserManageGroup(ctx, askingUserID, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check if users in group: %w", err)
+	}
+
+	if how == models.GroupViewPermission_SeeNone && !canManage {
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
 	}
-	if how == models.GroupViewPermission_SeeSelf {
+	if how == models.GroupViewPermission_SeeSelf && !canManage {
 		user, err := r.Store.Users.GetUserById(ctx, askingUserID)
 		if err != nil {
 			return nil, fmt.Errorf("could not find querying user %w", err)
@@ -60,10 +65,13 @@ func (r *queryResolver) MembersOfGroup(ctx context.Context, groupID int) ([]*mod
 			ViewPermission: how,
 		}}, nil
 	}
+
+	// otherwise can see everything
 	members, err := r.Store.Groups.GetGroupMembers(ctx, groupID)
-	if !visible || how == models.GroupViewPermission_SeeNone {
+	if err != nil {
 		return nil, fmt.Errorf("error finding group members: %w", err)
 	}
+
 	members2 := []*models.MembershipToGroup{}
 	for _, member := range members {
 		members2 = append(members2, &member)
@@ -120,6 +128,14 @@ func (r *queryResolver) CanGroupManageGroup(ctx context.Context, managerID int, 
 	}
 	if !managedVisibleToAsker {
 		return false, fmt.Errorf("managed group does not exist or user has invalid permissions to query it")
+	}
+
+	managedVisibleToManager, err := r.Store.Groups.IsGroupVisibleToGroup(ctx, managerID, groupID)
+	if err != nil {
+		return false, err
+	}
+	if !managedVisibleToManager {
+		return false, fmt.Errorf("managed group is not visible to manager group")
 	}
 	return r.Store.Groups.CanGroupManageGroup(ctx, managerID, groupID)
 }

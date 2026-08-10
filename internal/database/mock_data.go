@@ -22,6 +22,7 @@ type TestMockData struct {
 	}
 	BeatlesMusicians models.Group
 	OtherMusicians   models.Group
+	ExMusicians      models.Group
 	BeatlesManagers  models.Group
 	Brits            models.Group
 }
@@ -36,6 +37,7 @@ var localContext TestMockData = TestMockData{
 		{Email: "paul@beatles.com"},
 		{Email: "george@beatles.com"},
 		{Email: "ringo@beatles.com"},
+		{Email: "pete@beatles.com"},
 	},
 }
 
@@ -85,6 +87,16 @@ func makeTestGroups(ctx context.Context, l *slog.Logger, store *Store) bool {
 		return false
 	}
 
+	localContext.ExMusicians, err = store.Groups.CreateGroup(ctx, models.Group{
+		ManagerId:   localContext.BeatlesManagers.Id,
+		Name:        "The ex musicians for the beatles",
+		Description: "ex members of the beatles",
+	})
+	if err != nil {
+		l.Error("failed to create ex musician group", "err", err)
+		return false
+	}
+
 	localContext.Brits, err = store.Groups.CreateGroup(ctx, models.Group{
 		ManagerId:   managerGroupID,
 		Name:        "British People",
@@ -106,38 +118,34 @@ func makeTestGroups(ctx context.Context, l *slog.Logger, store *Store) bool {
 		l.Error("Failed to add beatles managers subgroup to british super group")
 		return false
 	}
+
 	return true
 }
 
 func addUsersToTestGroups(ctx context.Context, t *slog.Logger, store *Store) bool {
-	for _, email := range []string{
-		"john@beatles.com",
-		"paul@beatles.com",
-		"george@beatles.com",
-		"ringo@beatles.com",
+	for _, member := range []struct {
+		email   string
+		groupId int
+	}{
+		{"brian@beatles.com", localContext.BeatlesManagers.Id},
+		{"john@beatles.com", localContext.BeatlesMusicians.Id},
+		{"paul@beatles.com", localContext.BeatlesMusicians.Id},
+		{"george@beatles.com", localContext.BeatlesMusicians.Id},
+		{"ringo@beatles.com", localContext.BeatlesMusicians.Id},
+		{"pete@beatles.com", localContext.ExMusicians.Id},
 	} {
-		user, err := store.Users.GetUserByEmail(ctx, email)
+		user, err := store.Users.GetUserByEmail(ctx, member.email)
 		if err != nil {
-			t.Error("couldn't find user", "email", email, "err", err)
+			t.Error("couldn't find user", "email", member.email, "err", err)
 			return false
 		}
-		err = store.Groups.AddUserToGroup(ctx, user.Id, localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll)
+		err = store.Groups.AddUserToGroup(ctx, user.Id, member.groupId, models.GroupViewPermission_SeeAll)
 		if err != nil {
-			t.Error("Failed to add ", "user", user, "group", localContext.BeatlesMusicians)
+			t.Error("Failed to add ", "user", user, "group", member.groupId)
 			return false
 		}
 	}
 
-	user, err := store.Users.GetUserByEmail(ctx, "brian@beatles.com")
-	if err != nil {
-		t.Error("couldn't find user", "email", "brian@beatles.com", "err", err)
-		return false
-	}
-	err = store.Groups.AddUserToGroup(ctx, user.Id, localContext.BeatlesManagers.Id, models.GroupViewPermission_SeeAll)
-	if err != nil {
-		t.Error("Failed to add to group", "user", user, "group", localContext.BeatlesManagers, "err", err)
-		return false
-	}
 	return true
 
 }

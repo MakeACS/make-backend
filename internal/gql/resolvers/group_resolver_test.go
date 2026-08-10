@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"make-backend/internal/auth"
 	"make-backend/internal/database"
+	"slices"
 	"testing"
 )
 
@@ -78,6 +79,49 @@ func TestUserManagingGroup(t *testing.T) {
 	}
 }
 
+func TestGroupManagingGroup(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+
+	trials := []struct {
+		desc      string
+		askerUser int
+		manager   int
+		group     int
+
+		shouldError  bool
+		shouldManage bool
+	}{
+		{"managers managing beatles", data.Users[0].Id, data.BeatlesManagers.Id, data.BeatlesMusicians.Id, false, true},
+		{"subgroup managing supergroup owner", data.Users[0].Id, data.BeatlesMusicians.Id, data.Brits.Id, false, false},
+		{"beatles managing managers", data.Users[1].Id, data.BeatlesMusicians.Id, data.BeatlesManagers.Id, true, false},
+		{"subgroup managing supergroup member", data.Users[1].Id, data.BeatlesMusicians.Id, data.Brits.Id, false, false},
+		{"sibling group managing each other", data.Users[0].Id, data.BeatlesMusicians.Id, data.OtherMusicians.Id, true, false},
+		{"manager group not visible to user", data.Users[1].Id, data.BeatlesManagers.Id, data.OtherMusicians.Id, true, false},
+		{"managed group not visible to user", data.Users[1].Id, data.BeatlesMusicians.Id, data.OtherMusicians.Id, true, false},
+		// TODO explicitly shared groups
+	}
+
+	for _, trial := range trials {
+		t.Run(trial.desc, func(t *testing.T) {
+
+			ctx := ContextWithUser(t.Context(), trial.askerUser)
+
+			can, err := resolver.Query().CanGroupManageGroup(ctx, trial.manager, trial.group)
+			if err != nil && !trial.shouldError {
+				t.Fatalf("got error when %v checks if %v can manage group %v: %v", trial.askerUser, trial.manager, trial.group, err)
+			} else if err == nil && trial.shouldError {
+				t.Fatalf("should get error when %v checks if %v can manage group %v we can't see", trial.askerUser, trial.manager, trial.group)
+				return
+			}
+			if trial.shouldManage && can != trial.shouldManage {
+				t.Fatalf("%v should be able to manage %v but wasn't able to for some reason", trial.manager, trial.group)
+			} else if !trial.shouldManage && can != trial.shouldManage {
+				t.Fatalf("%v should NOT be able to manage %v but wasn't able to for some reason", trial.manager, trial.group)
+			}
+		})
+	}
+}
+
 func TestGroupMembership(t *testing.T) {
 
 	_, data, resolver := helpersForResolverTest(t)
@@ -98,7 +142,7 @@ func TestGroupMembership(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			inGroup, err1 := resolver.Query().IsUserInGroup(ctx, tC.user, tC.group)
-			inGroupDirectly, err2 := resolver.Query().IsUserInGroup(ctx, tC.user, tC.group)
+			inGroupDirectly, err2 := resolver.Query().IsUserInGroupDirectly(ctx, tC.user, tC.group)
 			if err1 != nil {
 				t.Fatalf("failed to check if user %v in group %v: %v", tC.user, tC.group, err1)
 			}
@@ -190,5 +234,97 @@ func TestFindingGroupsById(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func areGroupsEqual(wantedIds, gotIds []int) bool {
+	for _, m := range wantedIds {
+		if !slices.Contains(gotIds, m) {
+			return false
+		}
+	}
+	return true
+}
+
+func TestMembersOfGroupAsManager(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+	groupId := data.BeatlesMusicians.Id
+	askerId := data.Users[0].Id
+
+	ctx := ContextWithUser(t.Context(), askerId)
+	members, err := resolver.Query().MembersOfGroup(ctx, groupId)
+	if err != nil {
+		t.Fatalf("failed to get members of group: %v", err)
+	}
+	memberIds := []int{}
+	for _, m := range members {
+		memberIds = append(memberIds, m.UserId)
+	}
+	wantedIds := []int{}
+
+	for _, user := range data.Users[1:5] {
+		wantedIds = append(wantedIds, user.Id)
+	}
+
+	if !areGroupsEqual(wantedIds, memberIds) {
+		t.Fatalf("groups were not equal. Wanted %v. got %v", wantedIds, memberIds)
+	}
+
+}
+
+func TestMembersOfGroupAsSeeSelf(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+	groupId := data.Brits.Id
+	askerId := data.Users[1].Id
+
+	ctx := ContextWithUser(t.Context(), askerId)
+	members, err := resolver.Query().MembersOfGroup(ctx, groupId)
+	if err != nil {
+		t.Fatalf("failed to get members of group: %v", err)
+	}
+	memberIds := []int{}
+	for _, m := range members {
+		memberIds = append(memberIds, m.UserId)
+	}
+	wantedIds := []int{askerId}
+
+	if !areGroupsEqual(wantedIds, memberIds) {
+		t.Fatalf("groups were not equal. Wanted %v. got %v", wantedIds, memberIds)
+	}
+}
+
+func TestMembersOfGroupAsSeeAll(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+	groupId := data.BeatlesMusicians.Id
+	askerId := data.Users[1].Id
+
+	ctx := ContextWithUser(t.Context(), askerId)
+	members, err := resolver.Query().MembersOfGroup(ctx, groupId)
+	if err != nil {
+		t.Fatalf("failed to get members of group: %v", err)
+	}
+	memberIds := []int{}
+	for _, m := range members {
+		memberIds = append(memberIds, m.UserId)
+	}
+	wantedIds := []int{}
+	for _, user := range data.Users[1:5] {
+		wantedIds = append(wantedIds, user.Id)
+	}
+
+	if !areGroupsEqual(wantedIds, memberIds) {
+		t.Fatalf("groups were not equal. Wanted %v. got %v", wantedIds, memberIds)
+	}
+}
+
+func TestMembersOfGroupAsSeeNone(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+	groupId := data.BeatlesMusicians.Id
+	askerId := data.Users[5].Id
+
+	ctx := ContextWithUser(t.Context(), askerId)
+	_, err := resolver.Query().MembersOfGroup(ctx, groupId)
+	if err == nil {
+		t.Fatalf("see none member should not be able to see themselves: %v", err)
 	}
 }
