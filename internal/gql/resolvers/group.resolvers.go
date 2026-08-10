@@ -20,11 +20,11 @@ func (r *queryResolver) GroupByID(ctx context.Context, id int) (*models.Group, e
 	if err != nil {
 		return nil, err
 	}
-	visible, how, err := r.Store.Groups.IsGroupVisibleToUser(ctx, userID, group.Id)
+	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, userID, group.Id)
 	if err != nil {
 		return nil, err
 	}
-	if !visible || how != models.GroupViewPermission_SeeAll {
+	if !visible {
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
 	}
 	return group, nil
@@ -32,17 +32,21 @@ func (r *queryResolver) GroupByID(ctx context.Context, id int) (*models.Group, e
 
 // MembersOfGroup is the resolver for the membersOfGroup field.
 func (r *queryResolver) MembersOfGroup(ctx context.Context, groupID int) ([]*models.MembershipToGroup, error) {
-	userID := ctx.Value(auth.UserContextKey{}).(int)
-	visible, how, err := r.Store.Groups.IsGroupVisibleToUser(ctx, userID, groupID)
+	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
+	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
 	if err != nil {
 		return nil, err
 	}
-	if !visible || how == models.GroupViewPermission_SeeNone {
+	if !visible {
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
 	}
 
+	_, how, err := r.Store.Groups.IsUserInGroup(ctx, askingUserID, groupID)
+	if how == models.GroupViewPermission_SeeNone {
+		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
+	}
 	if how == models.GroupViewPermission_SeeSelf {
-		user, err := r.Store.Users.GetUserById(ctx, userID)
+		user, err := r.Store.Users.GetUserById(ctx, askingUserID)
 		if err != nil {
 			return nil, fmt.Errorf("could not find querying user %w", err)
 		}
@@ -66,30 +70,32 @@ func (r *queryResolver) MembersOfGroup(ctx context.Context, groupID int) ([]*mod
 func (r *queryResolver) IsUserInGroup(ctx context.Context, userID int, groupID int) (bool, error) {
 	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
 
-	visibleToAsker, howToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
+	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
 	if err != nil {
 		return false, err
 	}
-	if !visibleToAsker || howToAsker == models.GroupViewPermission_SeeNone {
+	if !visibleToAsker {
 		return false, fmt.Errorf("group does not exist or user has invalid permissions to query it")
 	}
 
-	return r.Store.Groups.IsUserInGroup(ctx, userID, groupID)
+	in, _, err := r.Store.Groups.IsUserInGroup(ctx, userID, groupID)
+	return in, err
 }
 
 // IsUserInGroupDirectly is the resolver for the isUserInGroupDirectly field.
 func (r *queryResolver) IsUserInGroupDirectly(ctx context.Context, userID int, groupID int) (bool, error) {
 	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
 
-	visibleToAsker, howToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
+	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
 	if err != nil {
 		return false, err
 	}
-	if !visibleToAsker || howToAsker == models.GroupViewPermission_SeeNone {
+	if !visibleToAsker {
 		return false, fmt.Errorf("group does not exist or user has invalid permissions to query it")
 	}
 
-	return r.Store.Groups.IsUserInGroupDirectly(ctx, userID, groupID)
+	in, _, err := r.Store.Groups.IsUserInGroupDirectly(ctx, userID, groupID)
+	return in, err
 
 }
 
@@ -97,14 +103,14 @@ func (r *queryResolver) IsUserInGroupDirectly(ctx context.Context, userID int, g
 func (r *queryResolver) CanGroupManageGroup(ctx context.Context, managerID int, groupID int) (bool, error) {
 	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
 
-	managerVisibleToAsker, _, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, managerID)
+	managerVisibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, managerID)
 	if err != nil {
 		return false, err
 	}
 	if !managerVisibleToAsker {
 		return false, fmt.Errorf("manager group does not exist or user has invalid permissions to query it")
 	}
-	managedVisibleToAsker, _, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
+	managedVisibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
 	if err != nil {
 		return false, err
 	}
@@ -118,7 +124,7 @@ func (r *queryResolver) CanGroupManageGroup(ctx context.Context, managerID int, 
 func (r *queryResolver) CanUserManageGroup(ctx context.Context, managerID int, groupID int) (bool, error) {
 	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
 
-	visibleToAsker, _, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
+	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
 	if err != nil {
 		return false, err
 	}

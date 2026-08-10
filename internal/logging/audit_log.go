@@ -78,7 +78,7 @@ func dataForEntities(fmtString string, entities []models.LogEntity) map[string]a
 	locations := auditLogRegex.FindAllString(fmtString, -1)
 
 	for i, entityType := range locations {
-		if i > len(entities) {
+		if i >= len(entities) {
 			slog.Warn("Invalid audit log format string - too many specifiers without entities", "num_specifiers", len(locations), "num_entities", len(entities))
 			break
 		}
@@ -101,11 +101,8 @@ func dataForEntities(fmtString string, entities []models.LogEntity) map[string]a
 func CreatePlainString(fmtString string, entities ...models.LogEntity) string {
 	index := 0
 	replacer := func(s string) string {
-		if len(s) > 2 {
-			s = s[1 : len(s)-1]
-		}
 		var entity models.LogEntity
-		if index > len(entities) {
+		if index >= len(entities) {
 			entity = models.LogEntity{Id: -1, Label: "unknown"}
 		} else {
 			entity = entities[index]
@@ -124,7 +121,7 @@ func CreateFormatString(fmtString string, entities ...models.LogEntity) string {
 			s = s[1 : len(s)-1]
 		}
 		var entity models.LogEntity
-		if index > len(entities) {
+		if index >= len(entities) {
 			entity = models.LogEntity{Id: -1, Label: "unknown"}
 		} else {
 			entity = entities[index]

@@ -243,7 +243,7 @@ func TestGroupMembership(t *testing.T) {
 		if err != nil {
 			t.Fatalf("couldn't find user with email '%s': %v", email, err)
 		}
-		inGroup, err := store.Groups.IsUserInGroup(t.Context(), user.Id, localContext.beatlesMusicians.Id)
+		inGroup, _, err := store.Groups.IsUserInGroup(t.Context(), user.Id, localContext.beatlesMusicians.Id)
 		if err != nil {
 			t.Fatalf("couldn't check user in group for email '%s': %v", email, err)
 		}
@@ -269,7 +269,7 @@ func TestSubgroupMembership(t *testing.T) {
 		if err != nil {
 			t.Fatalf("couldn't find user with email '%s': %v", email, err)
 		}
-		inGroup, err := store.Groups.IsUserInGroup(t.Context(), user.Id, localContext.brits.Id)
+		inGroup, _, err := store.Groups.IsUserInGroup(t.Context(), user.Id, localContext.brits.Id)
 		if err != nil {
 			t.Fatalf("couldn't check user in group for email '%s': %v", email, err)
 		}

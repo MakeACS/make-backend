@@ -25,10 +25,10 @@ type GroupRepository interface {
 	GetGroupMembers(ctx context.Context, groupId int) ([]models.MembershipToGroup, error)
 	GetDirectGroupMembers(ctx context.Context, groupId int) ([]models.MembershipToGroup, error)
 
-	IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, error)
+	IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error)
 
 	AllGroupsUserIsMemberOf(ctx context.Context, userId int) ([]models.MembershipToUser, error)
-	IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, error)
+	IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error)
 	// add a user to a group
 	AddUserToGroup(ctx context.Context, userId int, groupId int, perms models.GroupViewPermission) error
 	// remove user from a group
@@ -40,27 +40,62 @@ type GroupRepository interface {
 
 	AllGroupsGroupCanManage(ctx context.Context, userId int) ([]int, error)
 	AllGroupsVisibleToGroup(ctx context.Context, groupId int) ([]int, error)
+	IsGroupVisibleToGroup(ctx context.Context, lookingGroupId int, groupId int) (bool, error)
 
 	AllGroupsUserCanManage(ctx context.Context, userId int) ([]int, error)
 	AllGroupsUserVisibleToUser(ctx context.Context, userId int) ([]int, error)
-	IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error)
+	IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, error)
 }
 
 type GroupRepo struct {
 	DB *sql.DB
 }
 
-func (g *GroupRepo) IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error) {
+func (g *GroupRepo) IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, error) {
 	// if can manage -> see all
 	canManage, err := g.CanUserManageGroup(ctx, userId, groupId)
 	if err != nil {
-		return false, models.GroupViewPermission_SeeNone, fmt.Errorf("failed to check if group is visible to user: %w", err)
-
+		return false, fmt.Errorf("failed to check if group is visible to user: %w", err)
 	}
 	if canManage {
-		return true, models.GroupViewPermission_SeeAll, nil
+		return true, nil
+	}
+	// TODO check if group is shared to group that user is in
+
+	isInGroup, how, err := g.IsUserInGroup(ctx, userId, groupId)
+	if err != nil {
+		return false, fmt.Errorf("failed to check if group is visible to user: %w", err)
+	}
+
+	if isInGroup {
+		switch how {
+		case models.GroupViewPermission_SeeAll:
+			return true, nil
+		case models.GroupViewPermission_SeeNone:
+			return false, nil
+		case models.GroupViewPermission_SeeSelf:
+			return true, nil
+		default:
+			return false, fmt.Errorf("invalid view permission: %v", how)
+		}
 	}
 	// if inside
+
+	//  if see none -> false, see none
+	// if see some -> true, see self
+	// if see all -> true, see all
+	panic("unimplemented")
+
+}
+func (g *GroupRepo) IsGroupVisibleToGroup(ctx context.Context, lookingGroupId int, groupId int) (bool, error) {
+	// if can manage -> see all
+	canManage, err := g.CanGroupManageGroup(ctx, lookingGroupId, groupId)
+	if err != nil {
+		return false, fmt.Errorf("failed to check if group is visible to group: %w", err)
+	}
+	if canManage {
+		return true, nil
+	}
 
 	//  if see none -> false, see none
 	// if see some -> true, see self
@@ -268,28 +303,29 @@ func (g *GroupRepo) CanUserManageGroup(ctx context.Context, managerUser int, man
 	return exists, nil
 }
 
-func (g *GroupRepo) IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, error) {
-	var exists bool
+func (g *GroupRepo) IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error) {
+	var perms models.GroupViewPermission
 
-	query := "SELECT EXISTS(SELECT 1 FROM group_membership WHERE user_id = $1 and group_id = $2)"
+	query := "SELECT view_permission FROM group_membership WHERE user_id = $1 and group_id = $2"
 
-	err := g.DB.QueryRow(query, userId, groupId).Scan(&exists)
+	err := g.DB.QueryRow(query, userId, groupId).Scan(&perms)
 	if err != nil {
-		return false, err
+		return false, models.GroupViewPermission_SeeNone, err
 	}
-	return exists, nil
+	return true, perms, nil
 }
 
-func (g *GroupRepo) IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, error) {
-	var exists bool
+func (g *GroupRepo) IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error) {
+	var perms models.GroupViewPermission
 
-	query := "SELECT EXISTS(SELECT 1 FROM group_direct_membership WHERE user_id = $1 and group_id = $2)"
+	query := "SELECT view_permission FROM group_membership WHERE user_id = $1 and group_id = $2"
 
-	err := g.DB.QueryRow(query, userId, groupId).Scan(&exists)
+	err := g.DB.QueryRow(query, userId, groupId).Scan(&perms)
 	if err != nil {
-		return false, err
+		return false, models.GroupViewPermission_SeeNone, err
 	}
-	return exists, nil
+	return true, perms, nil
+
 }
 
 func (g *GroupRepo) GetAdminGroupId(ctx context.Context) (int, error) {
