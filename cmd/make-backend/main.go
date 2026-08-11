@@ -33,6 +33,8 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
+//go:generate go run github.com/99designs/gqlgen generate
+
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -40,7 +42,6 @@ func init() {
 	opts := &slog.HandlerOptions{Level: programLevel}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, opts)))
 	programLevel.Set(slog.LevelDebug)
-
 }
 
 const httpPort = 23003

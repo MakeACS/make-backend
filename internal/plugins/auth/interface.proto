@@ -1,0 +1,68 @@
+syntax="proto3";
+
+package auth_plugin;
+
+option go_package = 'github.com/MakeACS/make-backend/internal/plugin/auth';
+
+message UserLoginCallback {
+    string email = 1;
+    string full_name = 2;
+    string preferred_name = 3;
+    string profile_picture_url = 4;
+
+    string passthrough_data = 5;
+}
+
+
+// user clicks login button
+// user selects login provider
+// forward to provider to do the actual auth
+// provider gets back to us and hands back passthrough data
+message UserLoginStartRequest {
+    string passthrough_data = 1;
+}
+
+enum UserLoginResponseType{
+    USER_CREATED = 0;  
+    USER_FOUND = 1; 
+    USER_ALREADY_EXISTS_OTHER_Provider = 2;
+    ERROR = 3;
+}
+
+message UserLoginResponse {
+    UserLoginResponseType response_type = 1;
+    bool user_created = 2;
+    int32 user_id = 3;
+    string error_message = 4;
+}
+
+message UserLogOffRequest {
+    oneof user {
+        int32 id = 1;
+        string email = 2; 
+    }
+    string signed_out_url = 3;
+}
+
+
+message Empty{}
+
+message LoginURL{
+    string url = 1;
+}
+message RedirectURL{
+    string url = 1;
+}
+
+service AuthPlugin {
+    // ask a provider to start the login process
+    rpc GetLoginURL(UserLoginStartRequest) returns (LoginURL);
+    // ask provider to log out a user
+    rpc Logout(UserLogOffRequest) returns (Empty);
+}
+service AuthCallbackService {
+    // told to the base server when a user finishes logging in 
+    rpc UserLoggedIn(UserLoginCallback) returns (RedirectURL);
+    // told to the base server when a user finishes logging out
+    rpc UserLoggedOut(UserLogOffRequest) returns (Empty);
+}

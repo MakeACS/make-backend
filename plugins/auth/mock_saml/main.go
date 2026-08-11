@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
-var pluginName = "notification.core.mock"
+var pluginName = "auth.core.mock_saml"
 
 // Here is a real implementation of Greeter
 type MockNotifier struct {
@@ -51,7 +51,7 @@ func (m *MockNotifier) Info() plugins.PluginInfoResponse {
 var handshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
 	MagicCookieKey:   plugins.MagicKey,
-	MagicCookieValue: "97bddc18-7cd3-4976-81cf-bcb5b756262a",
+	MagicCookieValue: "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
 }
 
 var _ plugins.NotificationProvider = &MockNotifier{}

@@ -1,4 +1,4 @@
-package plugins
+package common
 
 import (
 	"context"
@@ -19,26 +19,26 @@ type GRPCUserDataProvider struct {
 }
 
 type PluginLogAdapter struct {
-	underlying slog.Logger
-	name       string
+	Underlying slog.Logger
+	LoggerName string
 }
 
 // Debug implements [hclog.Logger].
 func (p *PluginLogAdapter) Debug(msg string, args ...interface{}) {
-	p.underlying.Debug(msg, args...)
+	p.Underlying.Debug(msg, args...)
 }
 
 // Error implements [hclog.Logger].
 func (p *PluginLogAdapter) Error(msg string, args ...interface{}) {
-	p.underlying.Error(msg, args...)
+	p.Underlying.Error(msg, args...)
 }
 
 func (p *PluginLogAdapter) GetSLevel() slog.Level {
-	if p.underlying.Enabled(context.TODO(), slog.LevelDebug) {
+	if p.Underlying.Enabled(context.TODO(), slog.LevelDebug) {
 		return slog.LevelDebug
-	} else if p.underlying.Enabled(context.TODO(), slog.LevelInfo) {
+	} else if p.Underlying.Enabled(context.TODO(), slog.LevelInfo) {
 		return slog.LevelInfo
-	} else if p.underlying.Enabled(context.TODO(), slog.LevelWarn) {
+	} else if p.Underlying.Enabled(context.TODO(), slog.LevelWarn) {
 		return slog.LevelWarn
 	} else {
 		return slog.LevelError
@@ -104,14 +104,14 @@ func (p *PluginLogAdapter) Log(level hclog.Level, msg string, args ...interface{
 
 // Name implements [hclog.Logger].
 func (p *PluginLogAdapter) Name() string {
-	return p.name
+	return p.LoggerName
 }
 
 // Named implements [hclog.Logger].
 func (p *PluginLogAdapter) Named(name string) hclog.Logger {
 	return &PluginLogAdapter{
-		underlying: p.underlying,
-		name:       name,
+		Underlying: p.Underlying,
+		LoggerName: name,
 	}
 }
 
@@ -143,7 +143,7 @@ func (p *PluginLogAdapter) StandardLogger(opts *hclog.StandardLoggerOptions) *lo
 	// },
 	// }
 
-	return slog.NewLogLogger(p.underlying.Handler(), sLevel)
+	return slog.NewLogLogger(p.Underlying.Handler(), sLevel)
 }
 
 // StandardWriter implements [hclog.Logger].
@@ -153,17 +153,17 @@ func (p *PluginLogAdapter) StandardWriter(opts *hclog.StandardLoggerOptions) io.
 
 // Trace implements [hclog.Logger].
 func (p *PluginLogAdapter) Trace(msg string, args ...interface{}) {
-	p.underlying.Debug(msg, args...)
+	p.Underlying.Debug(msg, args...)
 }
 
 // Warn implements [hclog.Logger].
 func (p *PluginLogAdapter) Warn(msg string, args ...interface{}) {
-	p.underlying.Warn(msg, args...)
+	p.Underlying.Warn(msg, args...)
 }
 
 // With implements [hclog.Logger].
 func (p *PluginLogAdapter) With(args ...interface{}) hclog.Logger {
-	return &PluginLogAdapter{*p.underlying.With(args...)}
+	return &PluginLogAdapter{*p.Underlying.With(args...), p.LoggerName}
 }
 
 var _ hclog.Logger = &PluginLogAdapter{}

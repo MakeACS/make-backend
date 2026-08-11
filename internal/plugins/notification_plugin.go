@@ -21,9 +21,9 @@ type PluginInfoResponse struct {
 }
 
 type NotifyUserArgs struct {
-	Provider UserDataProvider
-	UserID   int
-	Content  Notification
+	// Provider UserDataProvider
+	UserID  int
+	Content Notification
 }
 
 type NotificationProvider interface {

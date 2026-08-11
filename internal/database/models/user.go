@@ -6,9 +6,9 @@ import (
 
 type User struct {
 	Id            int
-	Username      string
-	Firstname     string
-	Lastname      string
+	Email         string
+	FullName      string
+	PreferredName string
 	Pronouns      string
 	JoinDate      time.Time
 	SetupComplete bool
@@ -19,9 +19,6 @@ type User struct {
 	CardTag       string
 }
 
-func (u User) FullName() string {
-	return u.Firstname + " " + u.Lastname
-}
 func (u User) LogEntity() LogEntity {
-	return LogEntity{Id: u.Id, Label: u.FullName()}
+	return LogEntity{Id: u.Id, Label: u.PreferredName}
 }

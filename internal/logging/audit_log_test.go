@@ -6,14 +6,14 @@ import (
 )
 
 var user1 = models.User{
-	Id:        0,
-	Firstname: "John",
-	Lastname:  "Doe",
+	Id:            0,
+	FullName:      "John",
+	PreferredName: "Doe",
 }
 var user2 = models.User{
-	Id:        2,
-	Firstname: "Jane",
-	Lastname:  "Doe",
+	Id:            2,
+	FullName:      "Jane",
+	PreferredName: "Doe",
 }
 var equipment1 = models.Equipment{
 	Id:   1,

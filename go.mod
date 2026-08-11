@@ -5,6 +5,7 @@ go 1.26.4
 require (
 	github.com/99designs/gqlgen v0.17.93
 	github.com/crewjam/saml v0.5.1
+	github.com/hashicorp/go-hclog v1.6.3
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.12.3
 	github.com/pressly/goose/v3 v3.27.2
@@ -14,7 +15,6 @@ require (
 require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect

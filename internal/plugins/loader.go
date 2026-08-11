@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"make-backend/internal/database"
+	"make-backend/internal/plugins/common"
 	"os/exec"
 	"path"
 
@@ -20,9 +21,10 @@ func PrimaryNotificationProvider() NotificationProvider {
 type PluginType string
 
 var (
-	PluginType_Auth         PluginType = "auth"
-	PluginType_Currency     PluginType = "currency"
-	PluginType_Notification PluginType = "notification"
+	PluginType_Auth             PluginType = "auth"
+	PluginType_CurrencyProvider PluginType = "currency_provider"
+	PluginType_CurrencyConsumer PluginType = "currency_consumer"
+	PluginType_Notification     PluginType = "notification"
 )
 
 type PluginInfo struct {
@@ -56,12 +58,28 @@ var wanted_plugins = []PluginDescription{
 		Url:        "",
 		PluginType: PluginType_Notification,
 	},
+	// {
+	// 	Name:       "auth.rit.shibboleth_sso",
+	// 	Version:    1,
+	// 	MagicValue: "904d74d0-24e7-49b8-a4f6-0914aa4edde8",
+	// 	Url:        "",
+	// 	PluginType: PluginType_Notification,
+	// },
+	{
+		Name:       "notification.base.mock_saml",
+		Version:    1,
+		MagicValue: "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
+		Url:        "",
+		PluginType: PluginType_Auth,
+	},
 }
 
 func InterfaceForPluginType(t PluginType) plugin.Plugin {
 	switch t {
 	case PluginType_Notification:
 		return &NotificationPlugin{}
+	// case PluginType_Auth:
+	// return &AuthPlugin{}
 	default:
 		slog.Warn("unknown PluginType value", "type", t)
 		return nil
@@ -81,29 +99,29 @@ func generatePluginMap(wanted []PluginDescription) map[string]plugin.Plugin {
 }
 
 type userProviderFromStore struct {
-	Store *database.Store
+	store *database.Store
 }
 
 // EmailForUser implements [UserDataProvider].
 func (u *userProviderFromStore) EmailForUser(userID int) (string, error) {
-	user, err := u.Store.Users.GetUserById(context.TODO(), userID)
+	user, err := u.store.Users.GetUserById(context.TODO(), userID)
 	if err != nil {
 		return "", err
 	}
-	return user.Username + "@rit.edu", nil
+	return user.Email, nil
 }
 
 // FullNameForUser implements [UserDataProvider].
 func (u *userProviderFromStore) FullNameForUser(userID int) (string, error) {
-	user, err := u.Store.Users.GetUserById(context.TODO(), userID)
+	user, err := u.store.Users.GetUserById(context.TODO(), userID)
 	if err != nil {
 		return "", err
 	}
-	return user.FullName(), nil
+	return user.FullName, nil
 
 }
 
-var _ UserDataProvider = &userProviderFromStore{}
+// var _ UserDataProvider = &userProviderFromStore{}
 
 func StartPlugins(store *database.Store) (func(), error) {
 	plugin_dir := path.Join("./plugins", "bin")
@@ -124,7 +142,7 @@ func StartPlugins(store *database.Store) (func(), error) {
 			Cmd:             exec.Command(path.Join(plugin_dir, plugin_desc.Name)),
 			Managed:         true, // Allow parent process (us) to kill clients when we leave
 			SkipHostEnv:     true, // Dont leak secrets to plugins
-			Logger:          &PluginLogAdapter{},
+			Logger:          &common.PluginLogAdapter{*slog.Default(), plugin_desc.Name},
 		})
 
 		// Connect via RPC
@@ -146,9 +164,9 @@ func StartPlugins(store *database.Store) (func(), error) {
 		fmt.Println("plugin info err", infoErr)
 
 		err = notifier.NotifyUser(NotifyUserArgs{
-			Provider: &userProviderFromStore{Store: store},
-			UserID:   1,
-			Content:  Notification{},
+			// Provider: &userProviderFromStore{store: store},
+			UserID:  1,
+			Content: Notification{},
 		})
 		fmt.Println("sent message", err)
 
