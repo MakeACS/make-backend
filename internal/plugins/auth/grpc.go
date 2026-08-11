@@ -41,8 +41,6 @@ func (g *GRPCClient) Logout(UserLogOffRequest) {
 	panic("unimplemented")
 }
 
-// func (g *GRPCClient)
-
 type GRPCServer struct {
 	UnimplementedAuthPluginServer
 	// This is the real implementation
@@ -76,10 +74,5 @@ func (g *GRPCServer) Initialize(context.Context, *PluginInitRequest) (*common.Em
 
 // Logout implements [AuthPluginServer].
 func (g *GRPCServer) Logout(context.Context, *UserLogOffRequest) (*common.Empty, error) {
-	panic("unimplemented")
-}
-
-// mustEmbedUnimplementedAuthPluginServer implements [AuthPluginServer].
-func (g *GRPCServer) mustEmbedUnimplementedAuthPluginServer() {
 	panic("unimplemented")
 }
