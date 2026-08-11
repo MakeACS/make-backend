@@ -12,7 +12,7 @@ var (
 type PluginInfo struct {
 	Id    string
 	About string
-	Port  int16 // 0 if the plugin does not require forwarding http requests
+	Port  uint16 // 0 if the plugin does not require forwarding http requests
 
 }
 

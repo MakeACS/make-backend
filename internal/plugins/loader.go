@@ -11,10 +11,6 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
-func init() {
-	// gob.Register(NotifyUserArgs{})
-}
-
 var primaryNotificationProvider NotificationProvider = &nothingNotificationProvider{}
 
 func PrimaryNotificationProvider() NotificationProvider {
@@ -77,8 +73,10 @@ func generatePluginMap(wanted []common.PluginDescription) map[string]plugin.Plug
 	return pluginMap
 }
 
-func StartPlugins(store *database.Store) (func(), error) {
+func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error) {
 	plugin_dir := path.Join("./plugins", "bin")
+
+	forwards := []PluginHTTPForwarding{}
 
 	var pluginMap = generatePluginMap(wanted_plugins)
 
@@ -113,22 +111,23 @@ func StartPlugins(store *database.Store) (func(), error) {
 			continue
 		}
 
-		notifier := raw.(NotificationProvider)
+		notifier := raw.(BasePlugin)
 		infoErr := notifier.Info()
-		fmt.Println("plugin info err", infoErr)
 
-		err = notifier.NotifyUser(NotifyUserArgs{
-			UserID:        1,
-			Email:         "test@example.com",
-			PreferredName: "test user",
-			Content:       Notification{},
-		})
-		fmt.Println("sent message err", err)
-
+		if infoErr.Err != nil {
+			slog.Error("Failed to start plugin", "plugin", plugin_desc.Name, "err", infoErr.Err)
+			continue
+		}
+		if infoErr.Info.Port != 0 {
+			forwards = append(forwards, PluginHTTPForwarding{
+				Path:   fmt.Sprintf("/plugin/%s", plugin_desc.Name),
+				ToPort: infoErr.Info.Port,
+			})
+		}
 	}
 
 	return func() {
 		plugin.CleanupClients()
-	}, nil
+	}, forwards, nil
 
 }

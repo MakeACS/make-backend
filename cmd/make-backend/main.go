@@ -73,8 +73,8 @@ func main() {
 
 	httpServer := startHttp(db, store, logger, httpPort)
 	mqttServer, _ := acsmqtt.StartMqtt(logger, store, mqttPort)
-	reverseProxy := StartReverseProxy(port, httpPort, mqttPort)
-	stopPlugins, err := plugins.StartPlugins(store)
+	stopPlugins, pluginForwards, err := plugins.StartPlugins(store)
+	reverseProxy := StartReverseProxy(port, httpPort, mqttPort, pluginForwards)
 	if err != nil {
 		slog.Error("failed to start plugins", "err", err)
 	}
@@ -91,7 +91,15 @@ func main() {
 
 }
 
-func StartReverseProxy(port string, httpPort, mqttPort int) *http.Server {
+func StartReverseProxy(port string, httpPort, mqttPort int, pluginForwards []plugins.PluginHTTPForwarding) *http.Server {
+	// 	targetHttp, _ := url.Parse(fmt.Sprintf("http://localhost:%d", httpPort))
+	pluginRProxies := []*httputil.ReverseProxy{}
+	for _, forward := range pluginForwards {
+		target, _ := url.Parse(fmt.Sprintf("http://localhost:%d", forward.ToPort))
+		pluginRProxies = append(pluginRProxies, httputil.NewSingleHostReverseProxy(target))
+		slog.Info("Setting up plugin HTTP forwarding", "path", forward.Path, "to", target)
+	}
+
 	targetHttp, _ := url.Parse(fmt.Sprintf("http://localhost:%d", httpPort))
 	targetMqtt, _ := url.Parse(fmt.Sprintf("http://localhost:%d", mqttPort))
 
@@ -102,10 +110,19 @@ func StartReverseProxy(port string, httpPort, mqttPort int) *http.Server {
 		if strings.HasPrefix(r.URL.Path, "/mqtt") {
 			r.Host = targetMqtt.Host
 			proxyMqtt.ServeHTTP(w, r)
-		} else {
-			r.Host = targetHttp.Host
-			proxyHttp.ServeHTTP(w, r)
+			return
 		}
+		for i, path := range pluginForwards {
+			if strings.HasPrefix(r.URL.Path, path.Path) {
+				pluginRProxies[i].ServeHTTP(w, r)
+				return
+			}
+		}
+
+		// default go to the http server
+		r.Host = targetHttp.Host
+		proxyHttp.ServeHTTP(w, r)
+
 	}
 	server := &http.Server{Addr: fmt.Sprintf(":%s", port), Handler: http.HandlerFunc(handler)}
 

@@ -28,8 +28,11 @@ type NotifyUserArgs struct {
 	Content       Notification
 }
 
-type NotificationProvider interface {
+type BasePlugin interface {
 	Info() PluginInfoResponse
+}
+type NotificationProvider interface {
+	BasePlugin
 	NotifyUser(NotifyUserArgs) error
 }
 
