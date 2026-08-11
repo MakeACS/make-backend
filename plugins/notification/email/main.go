@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"make-backend/internal/plugins"
+	"make-backend/internal/plugins/common"
 
 	"github.com/hashicorp/go-plugin"
 )
@@ -15,14 +16,8 @@ type EmailNotifier struct {
 
 // NotifyUser implements [plugins.NotificationProvider].
 func (m *EmailNotifier) NotifyUser(args plugins.NotifyUserArgs) error {
-	name, err := args.Provider.EmailForUser(args.UserID)
-	if err != nil {
-		return fmt.Errorf("failed to get name to write email: %w", name)
-	}
-	email, err := args.Provider.EmailForUser(args.UserID)
-	if err != nil {
-		return fmt.Errorf("failed to get email to write email: %w", name)
-	}
+	email := args.Email
+	name := args.PreferredName
 	s := fmt.Sprintf("To: %s\nDear %s,\n%s", email, name, args.Content.BodyHtml)
 	log.Println("Sending email to single user: ", args.UserID, s)
 	return nil
@@ -33,33 +28,13 @@ func (m *EmailNotifier) NotifyUser(args plugins.NotifyUserArgs) error {
 func (m *EmailNotifier) Info() plugins.PluginInfoResponse {
 	// log.Println("info called")
 	return plugins.PluginInfoResponse{
-		Info: plugins.PluginInfo{
+		Info: common.PluginInfo{
 			Id:    PluginId,
 			About: "plugin for sending notifications via email",
 		},
 		Err: nil,
 	}
 }
-
-// Init implements [plugins.NotificationProvider].
-// func (m *MockNotifier) Init() ([]plugins.NotificationPluginCapability, error) {
-// panic("unimplemented")
-// }
-
-// NotifyGroup implements [plugins.NotificationProvider].
-// func (m *MockNotifier) NotifyGroup(provider plugins.UserDataProvider, groupId string, notification plugins.Notification) error {
-// panic("unimplemented")
-// }
-
-// NotifyUser implements [plugins.NotificationProvider].
-// func (m *MockNotifier) NotifyUser(provider plugins.UserDataProvider, userID int, notification plugins.Notification) error {
-// panic("unimplemented")
-// }
-
-// NotifyUsersIndependently implements [plugins.NotificationProvider].
-// func (m *MockNotifier) NotifyUsersIndependently(provider plugins.UserDataProvider, userIds []int, notification plugins.Notification) error {
-// panic("unimplemented")
-// }
 
 // from example code:
 //
@@ -69,7 +44,7 @@ func (m *EmailNotifier) Info() plugins.PluginInfoResponse {
 //	directory. It is a UX feature, not a security feature.
 var handshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
-	MagicCookieKey:   plugins.MagicKey,
+	MagicCookieKey:   common.MagicKey,
 	MagicCookieValue: "904d74d0-24e7-49b8-a4f6-0914aa4edde8",
 }
 

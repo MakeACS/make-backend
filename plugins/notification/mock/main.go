@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"make-backend/internal/plugins"
+	"make-backend/internal/plugins/common"
 
 	"github.com/hashicorp/go-plugin"
 )
@@ -16,14 +17,8 @@ type MockNotifier struct {
 
 // NotifyUser implements [plugins.NotificationProvider].
 func (m *MockNotifier) NotifyUser(args plugins.NotifyUserArgs) error {
-	name, err := args.Provider.EmailForUser(args.UserID)
-	if err != nil {
-		return fmt.Errorf("failed to get name to mock send: %w", name)
-	}
-	email, err := args.Provider.EmailForUser(args.UserID)
-	if err != nil {
-		return fmt.Errorf("failed to get email to mock send: %w", name)
-	}
+	name := args.PreferredName
+	email := args.Email
 	s := fmt.Sprintf("To: %s\nDear %s,\n%s", email, name, args.Content.BodyHtml)
 	log.Println("mock sending to single user: ", args.UserID, s)
 	return nil
@@ -34,9 +29,10 @@ func (m *MockNotifier) NotifyUser(args plugins.NotifyUserArgs) error {
 func (m *MockNotifier) Info() plugins.PluginInfoResponse {
 	// log.Println("info called")
 	return plugins.PluginInfoResponse{
-		Info: plugins.PluginInfo{
+		Info: common.PluginInfo{
 			Id:    pluginName,
 			About: "plugin for not sending notifications but pretending to",
+			Port:  0, // dont need any HTTP passthrough
 		},
 		Err: nil,
 	}
@@ -50,7 +46,7 @@ func (m *MockNotifier) Info() plugins.PluginInfoResponse {
 //	directory. It is a UX feature, not a security feature.
 var handshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
-	MagicCookieKey:   plugins.MagicKey,
+	MagicCookieKey:   common.MagicKey,
 	MagicCookieValue: "97bddc18-7cd3-4976-81cf-bcb5b756262a",
 }
 
@@ -67,6 +63,5 @@ func main() {
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
-		GRPCServer:      plugin.DefaultGRPCServer,
 	})
 }

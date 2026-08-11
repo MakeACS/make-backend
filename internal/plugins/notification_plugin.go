@@ -3,6 +3,7 @@ package plugins
 import (
 	"errors"
 	"fmt"
+	"make-backend/internal/plugins/common"
 	"net/rpc"
 
 	"github.com/hashicorp/go-plugin"
@@ -16,21 +17,20 @@ type Notification struct {
 }
 
 type PluginInfoResponse struct {
-	Info PluginInfo
+	Info common.PluginInfo
 	Err  error
 }
 
 type NotifyUserArgs struct {
-	// Provider UserDataProvider
-	UserID  int
-	Content Notification
+	UserID        int
+	Email         string
+	PreferredName string
+	Content       Notification
 }
 
 type NotificationProvider interface {
 	Info() PluginInfoResponse
 	NotifyUser(NotifyUserArgs) error
-	// NotifyUsersIndependently(provider UserDataProvider, userIds []int, notification Notification) error
-	// NotifyGroup(provider UserDataProvider, groupId string, notification Notification) error
 }
 
 type nothingNotificationProvider struct{}
@@ -40,7 +40,7 @@ func (n *nothingNotificationProvider) NotifyUser(NotifyUserArgs) error {
 }
 
 func (n *nothingNotificationProvider) Info() PluginInfoResponse {
-	return PluginInfoResponse{Info: PluginInfo{}, Err: errors.New("no notification plugin")}
+	return PluginInfoResponse{Info: common.PluginInfo{}, Err: errors.New("no notification plugin")}
 }
 
 var _ NotificationProvider = &nothingNotificationProvider{}
@@ -82,6 +82,16 @@ func (g *NotificationProviderRPC) Info() PluginInfoResponse {
 type NotificationProviderRPCServer struct {
 	// This is the real implementation
 	Impl NotificationProvider
+}
+
+func (s *NotificationProviderRPCServer) NotifyUser(args NotifyUserArgs, resp *error) error {
+	arg := NotifyUserArgs{
+		UserID:        2,
+		Email:         "test2",
+		PreferredName: "test 2",
+		Content:       Notification{},
+	}
+	return s.Impl.NotifyUser(arg)
 }
 
 func (s *NotificationProviderRPCServer) Info(args interface{}, resp *PluginInfoResponse) error {

@@ -1,72 +1,105 @@
 package main
 
-import (
-	"fmt"
-	"log"
-	"make-backend/internal/plugins"
-
-	"github.com/hashicorp/go-plugin"
-)
-
+/*
 var pluginName = "auth.core.mock_saml"
 
-// Here is a real implementation of Greeter
-type MockNotifier struct {
-}
+const PluginName = "auth"
 
-// NotifyUser implements [plugins.NotificationProvider].
-func (m *MockNotifier) NotifyUser(args plugins.NotifyUserArgs) error {
-	name, err := args.Provider.EmailForUser(args.UserID)
-	if err != nil {
-		return fmt.Errorf("failed to get name to mock send: %w", name)
-	}
-	email, err := args.Provider.EmailForUser(args.UserID)
-	if err != nil {
-		return fmt.Errorf("failed to get email to mock send: %w", name)
-	}
-	s := fmt.Sprintf("To: %s\nDear %s,\n%s", email, name, args.Content.BodyHtml)
-	log.Println("mock sending to single user: ", args.UserID, s)
-	return nil
-
-}
-
-// Info implements [plugins.NotificationProvider].
-func (m *MockNotifier) Info() plugins.PluginInfoResponse {
-	// log.Println("info called")
-	return plugins.PluginInfoResponse{
-		Info: plugins.PluginInfo{
-			Id:    pluginName,
-			About: "plugin for not sending notifications but pretending to",
-		},
-		Err: nil,
-	}
-}
-
-// from example code:
-//
-//	handshakeConfigs are used to just do a basic handshake between
-//	a plugin and host. If the handshake fails, a user friendly error is shown.
-//	This prevents users from executing bad plugins or executing a plugin
-//	directory. It is a UX feature, not a security feature.
-var handshakeConfig = plugin.HandshakeConfig{
+var Handshake = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
-	MagicCookieKey:   plugins.MagicKey,
+	MagicCookieKey:   common.MagicKey,
 	MagicCookieValue: "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
 }
 
-var _ plugins.NotificationProvider = &MockNotifier{}
+// CallbackServer is implemented by the host application. The plugin gets a
+// brokered gRPC client for this interface after Initialize is called.
+type CallbackServer interface {
+	auth.AuthCallbackServiceServer
+}
+
+type Plugin struct {
+	plugin.NetRPCUnsupportedPlugin
+	Impl           auth.AuthPluginServer
+	CallbackServer CallbackServer
+}
+
+func (p *Plugin) GRPCServer(broker *plugin.GRPCBroker, server *grpc.Server) error {
+	auth.RegisterAuthPluginServer(server, p.Impl)
+	return nil
+}
+
+func (p *Plugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, conn *auth.ClientConn) (interface{}, error) {
+	return &Client{
+		client:         auth.NewAuthPluginClient(conn),
+		broker:         broker,
+		callbackServer: p.CallbackServer,
+	}, nil
+}
+
+var _ plugin.GRPCPlugin = (*Plugin)(nil)
+
+// Client is the host-side wrapper. It owns the brokered callback server and
+// exposes the generated AuthPlugin client.
+type Client struct {
+	client           auth.AuthPluginClient
+	broker           *plugin.GRPCBroker
+	callbackServer   CallbackServer
+	callbackBrokerID uint32
+}
+
+func (c *Client) Initialize(ctx context.Context) error {
+	if c.callbackServer == nil {
+		return fmt.Errorf("callback server is nil")
+	}
+
+	c.callbackBrokerID = c.broker.NextId()
+
+	go c.broker.AcceptAndServe(c.callbackBrokerID, func(opts []grpc.ServerOption) *grpc.Server {
+		server := grpc.NewServer(opts...)
+		auth.RegisterAuthCallbackServiceServer(server, c.callbackServer)
+		return server
+	})
+
+	// // _, err := c.client.Initialize(ctx, &auth.PluginInitRequest{
+	// // 	CallbackBrokerId: uint64(c.callbackBrokerID),
+	// // })
+	// return err
+	return nil
+}
+
+func (c *Client) GetLoginURL(ctx context.Context, req *auth.UserLoginStartRequest) (*auth.LoginURL, error) {
+	return c.client.GetLoginURL(ctx, req)
+}
+
+func (c *Client) Logout(ctx context.Context, req *auth.UserLogOffRequest) error {
+	_, err := c.client.Logout(ctx, req)
+	return err
+}
 
 func main() {
-	notifier := &MockNotifier{}
-	// pluginMap is the map of plugins we can dispense.
-	var pluginMap = map[string]plugin.Plugin{
-		pluginName: &plugins.NotificationPlugin{Impl: notifier},
-	}
-	log.Println("Mock notification plugin started")
+	// impl, err := authplugin.NewSAMLAuthPlugin()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// p := &authplugin.Plugin{Impl: impl}
 
+	// The broker is available when GRPCServer is invoked.
+	// Wrap the plugin so it can inject it into the implementation.
+	pImpl := &serverPlugin{}
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins:         pluginMap,
+		HandshakeConfig: Handshake,
+		Plugins:         map[string]plugin.GRPCPlugin{PluginName: pImpl},
 		GRPCServer:      plugin.DefaultGRPCServer,
 	})
 }
+
+type serverPlugin struct {
+	// *authplugin.Plugin
+	// impl *authplugin.SAMLAuthPlugin
+}
+
+func (p *serverPlugin) GRPCServer(b *plugin.GRPCBroker, s *grpc.Server) error {
+	p.impl.SetBroker(b)
+	return p.Plugin.GRPCServer(b, s)
+}
+*/

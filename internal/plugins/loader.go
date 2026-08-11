@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"make-backend/internal/database"
@@ -12,52 +11,32 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
+func init() {
+	// gob.Register(NotifyUserArgs{})
+}
+
 var primaryNotificationProvider NotificationProvider = &nothingNotificationProvider{}
 
 func PrimaryNotificationProvider() NotificationProvider {
 	return primaryNotificationProvider
 }
 
-type PluginType string
-
-var (
-	PluginType_Auth             PluginType = "auth"
-	PluginType_CurrencyProvider PluginType = "currency_provider"
-	PluginType_CurrencyConsumer PluginType = "currency_consumer"
-	PluginType_Notification     PluginType = "notification"
-)
-
-type PluginInfo struct {
-	Id    string
-	About string
-}
-
-var MagicKey string = "ACS_PLUGIN_ID"
-
-type PluginDescription struct {
-	Name       string
-	PluginType PluginType
-	Version    uint
-	MagicValue string
-	Url        string /// empty url implies that the plugin will just be there and theres no need to download
-}
-
 // DB table somewhere
-var wanted_plugins = []PluginDescription{
+var wanted_plugins = []common.PluginDescription{
 	{
-		Name:       "notification.core.mock",
-		Version:    1,
-		MagicValue: "97bddc18-7cd3-4976-81cf-bcb5b756262a",
-		Url:        "",
-		PluginType: PluginType_Notification,
+		Name:        "notification.core.mock",
+		Version:     1,
+		MagicValue:  "97bddc18-7cd3-4976-81cf-bcb5b756262a",
+		DownloadUrl: "",
+		PluginType:  common.PluginType_Notification,
 	},
-	{
-		Name:       "notification.core.linux_email",
-		Version:    1,
-		MagicValue: "904d74d0-24e7-49b8-a4f6-0914aa4edde8",
-		Url:        "",
-		PluginType: PluginType_Notification,
-	},
+	// {
+	// 	Name:       "notification.core.linux_email",
+	// 	Version:    1,
+	// 	MagicValue: "904d74d0-24e7-49b8-a4f6-0914aa4edde8",
+	// 	Url:        "",
+	// 	PluginType: PluginType_Notification,
+	// },
 	// {
 	// 	Name:       "auth.rit.shibboleth_sso",
 	// 	Version:    1,
@@ -65,18 +44,18 @@ var wanted_plugins = []PluginDescription{
 	// 	Url:        "",
 	// 	PluginType: PluginType_Notification,
 	// },
-	{
-		Name:       "notification.base.mock_saml",
-		Version:    1,
-		MagicValue: "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
-		Url:        "",
-		PluginType: PluginType_Auth,
-	},
+	// {
+	// 	Name:        "notification.base.mock_saml",
+	// 	Version:     1,
+	// 	MagicValue:  "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
+	// 	DownloadUrl: "",
+	// 	PluginType:  common.PluginType_Auth,
+	// },
 }
 
-func InterfaceForPluginType(t PluginType) plugin.Plugin {
+func InterfaceForPluginType(t common.PluginType) plugin.Plugin {
 	switch t {
-	case PluginType_Notification:
+	case common.PluginType_Notification:
 		return &NotificationPlugin{}
 	// case PluginType_Auth:
 	// return &AuthPlugin{}
@@ -87,7 +66,7 @@ func InterfaceForPluginType(t PluginType) plugin.Plugin {
 }
 
 // generate the name:type mapping from the database plugin types
-func generatePluginMap(wanted []PluginDescription) map[string]plugin.Plugin {
+func generatePluginMap(wanted []common.PluginDescription) map[string]plugin.Plugin {
 	pluginMap := map[string]plugin.Plugin{}
 	for _, plugin_desc := range wanted {
 		t := InterfaceForPluginType(plugin_desc.PluginType)
@@ -98,31 +77,6 @@ func generatePluginMap(wanted []PluginDescription) map[string]plugin.Plugin {
 	return pluginMap
 }
 
-type userProviderFromStore struct {
-	store *database.Store
-}
-
-// EmailForUser implements [UserDataProvider].
-func (u *userProviderFromStore) EmailForUser(userID int) (string, error) {
-	user, err := u.store.Users.GetUserById(context.TODO(), userID)
-	if err != nil {
-		return "", err
-	}
-	return user.Email, nil
-}
-
-// FullNameForUser implements [UserDataProvider].
-func (u *userProviderFromStore) FullNameForUser(userID int) (string, error) {
-	user, err := u.store.Users.GetUserById(context.TODO(), userID)
-	if err != nil {
-		return "", err
-	}
-	return user.FullName, nil
-
-}
-
-// var _ UserDataProvider = &userProviderFromStore{}
-
 func StartPlugins(store *database.Store) (func(), error) {
 	plugin_dir := path.Join("./plugins", "bin")
 
@@ -132,7 +86,7 @@ func StartPlugins(store *database.Store) (func(), error) {
 
 		handshakeConfig := plugin.HandshakeConfig{
 			ProtocolVersion:  plugin_desc.Version,
-			MagicCookieKey:   MagicKey,
+			MagicCookieKey:   common.MagicKey,
 			MagicCookieValue: plugin_desc.MagicValue,
 		}
 
@@ -142,7 +96,7 @@ func StartPlugins(store *database.Store) (func(), error) {
 			Cmd:             exec.Command(path.Join(plugin_dir, plugin_desc.Name)),
 			Managed:         true, // Allow parent process (us) to kill clients when we leave
 			SkipHostEnv:     true, // Dont leak secrets to plugins
-			Logger:          &common.PluginLogAdapter{*slog.Default(), plugin_desc.Name},
+			Logger:          common.NewPluginLogAdapter(*slog.Default(), plugin_desc.Name, slog.LevelInfo),
 		})
 
 		// Connect via RPC
@@ -164,11 +118,12 @@ func StartPlugins(store *database.Store) (func(), error) {
 		fmt.Println("plugin info err", infoErr)
 
 		err = notifier.NotifyUser(NotifyUserArgs{
-			// Provider: &userProviderFromStore{store: store},
-			UserID:  1,
-			Content: Notification{},
+			UserID:        1,
+			Email:         "test@example.com",
+			PreferredName: "test user",
+			Content:       Notification{},
 		})
-		fmt.Println("sent message", err)
+		fmt.Println("sent message err", err)
 
 	}
 

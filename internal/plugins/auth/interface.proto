@@ -5,64 +5,56 @@ package auth_plugin;
 option go_package = 'github.com/MakeACS/make-backend/internal/plugin/auth';
 
 message UserLoginCallback {
-    string email = 1;
-    string full_name = 2;
-    string preferred_name = 3;
-    string profile_picture_url = 4;
-
-    string passthrough_data = 5;
+  string email = 1;
+  string full_name = 2;
+  string preferred_name = 3;
+  string profile_picture_url = 4;
+  string passthrough_data = 5;
 }
 
-
-// user clicks login button
-// user selects login provider
-// forward to provider to do the actual auth
-// provider gets back to us and hands back passthrough data
 message UserLoginStartRequest {
-    string passthrough_data = 1;
+  string passthrough_data = 1;
 }
 
-enum UserLoginResponseType{
-    USER_CREATED = 0;  
-    USER_FOUND = 1; 
-    USER_ALREADY_EXISTS_OTHER_Provider = 2;
-    ERROR = 3;
+enum UserLoginResponseType {
+  USER_LOGIN_RESPONSE_TYPE_UNSPECIFIED = 0;
+  USER_CREATED = 1;
+  USER_FOUND = 2;
+  USER_ALREADY_EXISTS_OTHER_PROVIDER = 3;
+  ERROR = 4;
 }
 
 message UserLoginResponse {
-    UserLoginResponseType response_type = 1;
-    bool user_created = 2;
-    int32 user_id = 3;
-    string error_message = 4;
+  UserLoginResponseType response_type = 1;
+  int32 user_id = 2;
+  string error_message = 3;
 }
 
 message UserLogOffRequest {
-    oneof user {
-        int32 id = 1;
-        string email = 2; 
-    }
-    string signed_out_url = 3;
+  oneof user {
+    int32 id = 1;
+    string email = 2;
+  }
+  string signed_out_url = 3;
 }
 
-
-message Empty{}
-
-message LoginURL{
-    string url = 1;
+message Empty {}
+message LoginURL { string url = 1; }
+message RedirectURL { string url = 1; }
+message Subserver{
+    int32 port = 1;
 }
-message RedirectURL{
-    string url = 1;
+message PluginInitRequest {
+  uint64 callback_broker_id = 1;
 }
 
 service AuthPlugin {
-    // ask a provider to start the login process
-    rpc GetLoginURL(UserLoginStartRequest) returns (LoginURL);
-    // ask provider to log out a user
-    rpc Logout(UserLogOffRequest) returns (Empty);
+  rpc Initialize(PluginInitRequest) returns (Empty);
+  rpc GetLoginURL(UserLoginStartRequest) returns (LoginURL);
+  rpc Logout(UserLogOffRequest) returns (Empty);
 }
+
 service AuthCallbackService {
-    // told to the base server when a user finishes logging in 
-    rpc UserLoggedIn(UserLoginCallback) returns (RedirectURL);
-    // told to the base server when a user finishes logging out
-    rpc UserLoggedOut(UserLogOffRequest) returns (Empty);
+  rpc UserLoggedIn(UserLoginCallback) returns (RedirectURL);
+  rpc UserLoggedOut(UserLogOffRequest) returns (Empty);
 }
