@@ -2,13 +2,14 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        v7.35.1
-// source: interface.proto
+// source: auth/interface.proto
 
 package auth
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	common "make-backend/internal/plugins/common"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -24,25 +25,28 @@ const (
 type UserLoginResponseType int32
 
 const (
-	UserLoginResponseType_USER_CREATED                       UserLoginResponseType = 0
-	UserLoginResponseType_USER_FOUND                         UserLoginResponseType = 1
-	UserLoginResponseType_USER_ALREADY_EXISTS_OTHER_Provider UserLoginResponseType = 2
-	UserLoginResponseType_ERROR                              UserLoginResponseType = 3
+	UserLoginResponseType_USER_LOGIN_RESPONSE_TYPE_UNSPECIFIED UserLoginResponseType = 0
+	UserLoginResponseType_USER_CREATED                         UserLoginResponseType = 1
+	UserLoginResponseType_USER_FOUND                           UserLoginResponseType = 2
+	UserLoginResponseType_USER_ALREADY_EXISTS_OTHER_PROVIDER   UserLoginResponseType = 3
+	UserLoginResponseType_ERROR                                UserLoginResponseType = 4
 )
 
 // Enum value maps for UserLoginResponseType.
 var (
 	UserLoginResponseType_name = map[int32]string{
-		0: "USER_CREATED",
-		1: "USER_FOUND",
-		2: "USER_ALREADY_EXISTS_OTHER_Provider",
-		3: "ERROR",
+		0: "USER_LOGIN_RESPONSE_TYPE_UNSPECIFIED",
+		1: "USER_CREATED",
+		2: "USER_FOUND",
+		3: "USER_ALREADY_EXISTS_OTHER_PROVIDER",
+		4: "ERROR",
 	}
 	UserLoginResponseType_value = map[string]int32{
-		"USER_CREATED":                       0,
-		"USER_FOUND":                         1,
-		"USER_ALREADY_EXISTS_OTHER_Provider": 2,
-		"ERROR":                              3,
+		"USER_LOGIN_RESPONSE_TYPE_UNSPECIFIED": 0,
+		"USER_CREATED":                         1,
+		"USER_FOUND":                           2,
+		"USER_ALREADY_EXISTS_OTHER_PROVIDER":   3,
+		"ERROR":                                4,
 	}
 )
 
@@ -57,11 +61,11 @@ func (x UserLoginResponseType) String() string {
 }
 
 func (UserLoginResponseType) Descriptor() protoreflect.EnumDescriptor {
-	return file_interface_proto_enumTypes[0].Descriptor()
+	return file_auth_interface_proto_enumTypes[0].Descriptor()
 }
 
 func (UserLoginResponseType) Type() protoreflect.EnumType {
-	return &file_interface_proto_enumTypes[0]
+	return &file_auth_interface_proto_enumTypes[0]
 }
 
 func (x UserLoginResponseType) Number() protoreflect.EnumNumber {
@@ -70,7 +74,7 @@ func (x UserLoginResponseType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use UserLoginResponseType.Descriptor instead.
 func (UserLoginResponseType) EnumDescriptor() ([]byte, []int) {
-	return file_interface_proto_rawDescGZIP(), []int{0}
+	return file_auth_interface_proto_rawDescGZIP(), []int{0}
 }
 
 type UserLoginCallback struct {
@@ -86,7 +90,7 @@ type UserLoginCallback struct {
 
 func (x *UserLoginCallback) Reset() {
 	*x = UserLoginCallback{}
-	mi := &file_interface_proto_msgTypes[0]
+	mi := &file_auth_interface_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -98,7 +102,7 @@ func (x *UserLoginCallback) String() string {
 func (*UserLoginCallback) ProtoMessage() {}
 
 func (x *UserLoginCallback) ProtoReflect() protoreflect.Message {
-	mi := &file_interface_proto_msgTypes[0]
+	mi := &file_auth_interface_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -111,7 +115,7 @@ func (x *UserLoginCallback) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserLoginCallback.ProtoReflect.Descriptor instead.
 func (*UserLoginCallback) Descriptor() ([]byte, []int) {
-	return file_interface_proto_rawDescGZIP(), []int{0}
+	return file_auth_interface_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *UserLoginCallback) GetEmail() string {
@@ -149,10 +153,6 @@ func (x *UserLoginCallback) GetPassthroughData() string {
 	return ""
 }
 
-// user clicks login button
-// user selects login provider
-// forward to provider to do the actual auth
-// provider gets back to us and hands back passthrough data
 type UserLoginStartRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	PassthroughData string                 `protobuf:"bytes,1,opt,name=passthrough_data,json=passthroughData,proto3" json:"passthrough_data,omitempty"`
@@ -162,7 +162,7 @@ type UserLoginStartRequest struct {
 
 func (x *UserLoginStartRequest) Reset() {
 	*x = UserLoginStartRequest{}
-	mi := &file_interface_proto_msgTypes[1]
+	mi := &file_auth_interface_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -174,7 +174,7 @@ func (x *UserLoginStartRequest) String() string {
 func (*UserLoginStartRequest) ProtoMessage() {}
 
 func (x *UserLoginStartRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_interface_proto_msgTypes[1]
+	mi := &file_auth_interface_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -187,7 +187,7 @@ func (x *UserLoginStartRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserLoginStartRequest.ProtoReflect.Descriptor instead.
 func (*UserLoginStartRequest) Descriptor() ([]byte, []int) {
-	return file_interface_proto_rawDescGZIP(), []int{1}
+	return file_auth_interface_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *UserLoginStartRequest) GetPassthroughData() string {
@@ -199,17 +199,16 @@ func (x *UserLoginStartRequest) GetPassthroughData() string {
 
 type UserLoginResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ResponseType  UserLoginResponseType  `protobuf:"varint,1,opt,name=response_type,json=responseType,proto3,enum=auth_plugin.UserLoginResponseType" json:"response_type,omitempty"`
-	UserCreated   bool                   `protobuf:"varint,2,opt,name=user_created,json=userCreated,proto3" json:"user_created,omitempty"`
-	UserId        int32                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ErrorMessage  string                 `protobuf:"bytes,4,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	ResponseType  UserLoginResponseType  `protobuf:"varint,1,opt,name=response_type,json=responseType,proto3,enum=auth.UserLoginResponseType" json:"response_type,omitempty"`
+	UserId        int32                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ErrorMessage  string                 `protobuf:"bytes,3,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UserLoginResponse) Reset() {
 	*x = UserLoginResponse{}
-	mi := &file_interface_proto_msgTypes[2]
+	mi := &file_auth_interface_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -221,7 +220,7 @@ func (x *UserLoginResponse) String() string {
 func (*UserLoginResponse) ProtoMessage() {}
 
 func (x *UserLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_interface_proto_msgTypes[2]
+	mi := &file_auth_interface_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -234,21 +233,14 @@ func (x *UserLoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserLoginResponse.ProtoReflect.Descriptor instead.
 func (*UserLoginResponse) Descriptor() ([]byte, []int) {
-	return file_interface_proto_rawDescGZIP(), []int{2}
+	return file_auth_interface_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *UserLoginResponse) GetResponseType() UserLoginResponseType {
 	if x != nil {
 		return x.ResponseType
 	}
-	return UserLoginResponseType_USER_CREATED
-}
-
-func (x *UserLoginResponse) GetUserCreated() bool {
-	if x != nil {
-		return x.UserCreated
-	}
-	return false
+	return UserLoginResponseType_USER_LOGIN_RESPONSE_TYPE_UNSPECIFIED
 }
 
 func (x *UserLoginResponse) GetUserId() int32 {
@@ -279,7 +271,7 @@ type UserLogOffRequest struct {
 
 func (x *UserLogOffRequest) Reset() {
 	*x = UserLogOffRequest{}
-	mi := &file_interface_proto_msgTypes[3]
+	mi := &file_auth_interface_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -291,7 +283,7 @@ func (x *UserLogOffRequest) String() string {
 func (*UserLogOffRequest) ProtoMessage() {}
 
 func (x *UserLogOffRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_interface_proto_msgTypes[3]
+	mi := &file_auth_interface_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -304,7 +296,7 @@ func (x *UserLogOffRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserLogOffRequest.ProtoReflect.Descriptor instead.
 func (*UserLogOffRequest) Descriptor() ([]byte, []int) {
-	return file_interface_proto_rawDescGZIP(), []int{3}
+	return file_auth_interface_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UserLogOffRequest) GetUser() isUserLogOffRequest_User {
@@ -355,42 +347,6 @@ func (*UserLogOffRequest_Id) isUserLogOffRequest_User() {}
 
 func (*UserLogOffRequest_Email) isUserLogOffRequest_User() {}
 
-type Empty struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Empty) Reset() {
-	*x = Empty{}
-	mi := &file_interface_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Empty) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Empty) ProtoMessage() {}
-
-func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_interface_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
-func (*Empty) Descriptor() ([]byte, []int) {
-	return file_interface_proto_rawDescGZIP(), []int{4}
-}
-
 type LoginURL struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
@@ -400,7 +356,7 @@ type LoginURL struct {
 
 func (x *LoginURL) Reset() {
 	*x = LoginURL{}
-	mi := &file_interface_proto_msgTypes[5]
+	mi := &file_auth_interface_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +368,7 @@ func (x *LoginURL) String() string {
 func (*LoginURL) ProtoMessage() {}
 
 func (x *LoginURL) ProtoReflect() protoreflect.Message {
-	mi := &file_interface_proto_msgTypes[5]
+	mi := &file_auth_interface_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,7 +381,7 @@ func (x *LoginURL) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginURL.ProtoReflect.Descriptor instead.
 func (*LoginURL) Descriptor() ([]byte, []int) {
-	return file_interface_proto_rawDescGZIP(), []int{5}
+	return file_auth_interface_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LoginURL) GetUrl() string {
@@ -444,7 +400,7 @@ type RedirectURL struct {
 
 func (x *RedirectURL) Reset() {
 	*x = RedirectURL{}
-	mi := &file_interface_proto_msgTypes[6]
+	mi := &file_auth_interface_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +412,7 @@ func (x *RedirectURL) String() string {
 func (*RedirectURL) ProtoMessage() {}
 
 func (x *RedirectURL) ProtoReflect() protoreflect.Message {
-	mi := &file_interface_proto_msgTypes[6]
+	mi := &file_auth_interface_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +425,7 @@ func (x *RedirectURL) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RedirectURL.ProtoReflect.Descriptor instead.
 func (*RedirectURL) Descriptor() ([]byte, []int) {
-	return file_interface_proto_rawDescGZIP(), []int{6}
+	return file_auth_interface_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RedirectURL) GetUrl() string {
@@ -479,11 +435,99 @@ func (x *RedirectURL) GetUrl() string {
 	return ""
 }
 
-var File_interface_proto protoreflect.FileDescriptor
+type Subserver struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Port          int32                  `protobuf:"varint,1,opt,name=port,proto3" json:"port,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_interface_proto_rawDesc = "" +
+func (x *Subserver) Reset() {
+	*x = Subserver{}
+	mi := &file_auth_interface_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Subserver) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Subserver) ProtoMessage() {}
+
+func (x *Subserver) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_interface_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Subserver.ProtoReflect.Descriptor instead.
+func (*Subserver) Descriptor() ([]byte, []int) {
+	return file_auth_interface_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Subserver) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+type PluginInitRequest struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	CallbackBrokerId uint64                 `protobuf:"varint,1,opt,name=callback_broker_id,json=callbackBrokerId,proto3" json:"callback_broker_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *PluginInitRequest) Reset() {
+	*x = PluginInitRequest{}
+	mi := &file_auth_interface_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PluginInitRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PluginInitRequest) ProtoMessage() {}
+
+func (x *PluginInitRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_interface_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PluginInitRequest.ProtoReflect.Descriptor instead.
+func (*PluginInitRequest) Descriptor() ([]byte, []int) {
+	return file_auth_interface_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *PluginInitRequest) GetCallbackBrokerId() uint64 {
+	if x != nil {
+		return x.CallbackBrokerId
+	}
+	return 0
+}
+
+var File_auth_interface_proto protoreflect.FileDescriptor
+
+const file_auth_interface_proto_rawDesc = "" +
 	"\n" +
-	"\x0finterface.proto\x12\vauth_plugin\"\xc8\x01\n" +
+	"\x14auth/interface.proto\x12\x04auth\x1a\x13common/plugin.proto\"\xc8\x01\n" +
 	"\x11UserLoginCallback\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12%\n" +
@@ -491,83 +535,100 @@ const file_interface_proto_rawDesc = "" +
 	"\x13profile_picture_url\x18\x04 \x01(\tR\x11profilePictureUrl\x12)\n" +
 	"\x10passthrough_data\x18\x05 \x01(\tR\x0fpassthroughData\"B\n" +
 	"\x15UserLoginStartRequest\x12)\n" +
-	"\x10passthrough_data\x18\x01 \x01(\tR\x0fpassthroughData\"\xbd\x01\n" +
-	"\x11UserLoginResponse\x12G\n" +
-	"\rresponse_type\x18\x01 \x01(\x0e2\".auth_plugin.UserLoginResponseTypeR\fresponseType\x12!\n" +
-	"\fuser_created\x18\x02 \x01(\bR\vuserCreated\x12\x17\n" +
-	"\auser_id\x18\x03 \x01(\x05R\x06userId\x12#\n" +
-	"\rerror_message\x18\x04 \x01(\tR\ferrorMessage\"k\n" +
+	"\x10passthrough_data\x18\x01 \x01(\tR\x0fpassthroughData\"\x93\x01\n" +
+	"\x11UserLoginResponse\x12@\n" +
+	"\rresponse_type\x18\x01 \x01(\x0e2\x1b.auth.UserLoginResponseTypeR\fresponseType\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\x05R\x06userId\x12#\n" +
+	"\rerror_message\x18\x03 \x01(\tR\ferrorMessage\"k\n" +
 	"\x11UserLogOffRequest\x12\x10\n" +
 	"\x02id\x18\x01 \x01(\x05H\x00R\x02id\x12\x16\n" +
 	"\x05email\x18\x02 \x01(\tH\x00R\x05email\x12$\n" +
 	"\x0esigned_out_url\x18\x03 \x01(\tR\fsignedOutUrlB\x06\n" +
-	"\x04user\"\a\n" +
-	"\x05Empty\"\x1c\n" +
+	"\x04user\"\x1c\n" +
 	"\bLoginURL\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\"\x1f\n" +
 	"\vRedirectURL\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url*l\n" +
-	"\x15UserLoginResponseType\x12\x10\n" +
-	"\fUSER_CREATED\x10\x00\x12\x0e\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"\x1f\n" +
+	"\tSubserver\x12\x12\n" +
+	"\x04port\x18\x01 \x01(\x05R\x04port\"A\n" +
+	"\x11PluginInitRequest\x12,\n" +
+	"\x12callback_broker_id\x18\x01 \x01(\x04R\x10callbackBrokerId*\x96\x01\n" +
+	"\x15UserLoginResponseType\x12(\n" +
+	"$USER_LOGIN_RESPONSE_TYPE_UNSPECIFIED\x10\x00\x12\x10\n" +
+	"\fUSER_CREATED\x10\x01\x12\x0e\n" +
 	"\n" +
-	"USER_FOUND\x10\x01\x12&\n" +
-	"\"USER_ALREADY_EXISTS_OTHER_Provider\x10\x02\x12\t\n" +
-	"\x05ERROR\x10\x032\x94\x01\n" +
+	"USER_FOUND\x10\x02\x12&\n" +
+	"\"USER_ALREADY_EXISTS_OTHER_PROVIDER\x10\x03\x12\t\n" +
+	"\x05ERROR\x10\x042\x8e\x02\n" +
 	"\n" +
-	"AuthPlugin\x12H\n" +
-	"\vGetLoginURL\x12\".auth_plugin.UserLoginStartRequest\x1a\x15.auth_plugin.LoginURL\x12<\n" +
-	"\x06Logout\x12\x1e.auth_plugin.UserLogOffRequest\x1a\x12.auth_plugin.Empty2\xa4\x01\n" +
-	"\x13AuthCallbackService\x12H\n" +
-	"\fUserLoggedIn\x12\x1e.auth_plugin.UserLoginCallback\x1a\x18.auth_plugin.RedirectURL\x12C\n" +
-	"\rUserLoggedOut\x12\x1e.auth_plugin.UserLogOffRequest\x1a\x12.auth_plugin.EmptyB6Z4github.com/MakeACS/make-backend/internal/plugin/authb\x06proto3"
+	"AuthPlugin\x12)\n" +
+	"\x04Info\x12\r.common.Empty\x1a\x12.common.PluginInfo\x121\n" +
+	"\tHeartbeat\x12\r.common.Empty\x1a\x15.common.HeartbeatInfo\x124\n" +
+	"\n" +
+	"Initialize\x12\x17.auth.PluginInitRequest\x1a\r.common.Empty\x12:\n" +
+	"\vGetLoginURL\x12\x1b.auth.UserLoginStartRequest\x1a\x0e.auth.LoginURL\x120\n" +
+	"\x06Logout\x12\x17.auth.UserLogOffRequest\x1a\r.common.Empty2\x8a\x01\n" +
+	"\x13AuthCallbackService\x12:\n" +
+	"\fUserLoggedIn\x12\x17.auth.UserLoginCallback\x1a\x11.auth.RedirectURL\x127\n" +
+	"\rUserLoggedOut\x12\x17.auth.UserLogOffRequest\x1a\r.common.EmptyB$Z\"make-backend/internal/plugins/authb\x06proto3"
 
 var (
-	file_interface_proto_rawDescOnce sync.Once
-	file_interface_proto_rawDescData []byte
+	file_auth_interface_proto_rawDescOnce sync.Once
+	file_auth_interface_proto_rawDescData []byte
 )
 
-func file_interface_proto_rawDescGZIP() []byte {
-	file_interface_proto_rawDescOnce.Do(func() {
-		file_interface_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_interface_proto_rawDesc), len(file_interface_proto_rawDesc)))
+func file_auth_interface_proto_rawDescGZIP() []byte {
+	file_auth_interface_proto_rawDescOnce.Do(func() {
+		file_auth_interface_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_auth_interface_proto_rawDesc), len(file_auth_interface_proto_rawDesc)))
 	})
-	return file_interface_proto_rawDescData
+	return file_auth_interface_proto_rawDescData
 }
 
-var file_interface_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_interface_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_interface_proto_goTypes = []any{
-	(UserLoginResponseType)(0),    // 0: auth_plugin.UserLoginResponseType
-	(*UserLoginCallback)(nil),     // 1: auth_plugin.UserLoginCallback
-	(*UserLoginStartRequest)(nil), // 2: auth_plugin.UserLoginStartRequest
-	(*UserLoginResponse)(nil),     // 3: auth_plugin.UserLoginResponse
-	(*UserLogOffRequest)(nil),     // 4: auth_plugin.UserLogOffRequest
-	(*Empty)(nil),                 // 5: auth_plugin.Empty
-	(*LoginURL)(nil),              // 6: auth_plugin.LoginURL
-	(*RedirectURL)(nil),           // 7: auth_plugin.RedirectURL
+var file_auth_interface_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_auth_interface_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_auth_interface_proto_goTypes = []any{
+	(UserLoginResponseType)(0),    // 0: auth.UserLoginResponseType
+	(*UserLoginCallback)(nil),     // 1: auth.UserLoginCallback
+	(*UserLoginStartRequest)(nil), // 2: auth.UserLoginStartRequest
+	(*UserLoginResponse)(nil),     // 3: auth.UserLoginResponse
+	(*UserLogOffRequest)(nil),     // 4: auth.UserLogOffRequest
+	(*LoginURL)(nil),              // 5: auth.LoginURL
+	(*RedirectURL)(nil),           // 6: auth.RedirectURL
+	(*Subserver)(nil),             // 7: auth.Subserver
+	(*PluginInitRequest)(nil),     // 8: auth.PluginInitRequest
+	(*common.Empty)(nil),          // 9: common.Empty
+	(*common.PluginInfo)(nil),     // 10: common.PluginInfo
+	(*common.HeartbeatInfo)(nil),  // 11: common.HeartbeatInfo
 }
-var file_interface_proto_depIdxs = []int32{
-	0, // 0: auth_plugin.UserLoginResponse.response_type:type_name -> auth_plugin.UserLoginResponseType
-	2, // 1: auth_plugin.AuthPlugin.GetLoginURL:input_type -> auth_plugin.UserLoginStartRequest
-	4, // 2: auth_plugin.AuthPlugin.Logout:input_type -> auth_plugin.UserLogOffRequest
-	1, // 3: auth_plugin.AuthCallbackService.UserLoggedIn:input_type -> auth_plugin.UserLoginCallback
-	4, // 4: auth_plugin.AuthCallbackService.UserLoggedOut:input_type -> auth_plugin.UserLogOffRequest
-	6, // 5: auth_plugin.AuthPlugin.GetLoginURL:output_type -> auth_plugin.LoginURL
-	5, // 6: auth_plugin.AuthPlugin.Logout:output_type -> auth_plugin.Empty
-	7, // 7: auth_plugin.AuthCallbackService.UserLoggedIn:output_type -> auth_plugin.RedirectURL
-	5, // 8: auth_plugin.AuthCallbackService.UserLoggedOut:output_type -> auth_plugin.Empty
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+var file_auth_interface_proto_depIdxs = []int32{
+	0,  // 0: auth.UserLoginResponse.response_type:type_name -> auth.UserLoginResponseType
+	9,  // 1: auth.AuthPlugin.Info:input_type -> common.Empty
+	9,  // 2: auth.AuthPlugin.Heartbeat:input_type -> common.Empty
+	8,  // 3: auth.AuthPlugin.Initialize:input_type -> auth.PluginInitRequest
+	2,  // 4: auth.AuthPlugin.GetLoginURL:input_type -> auth.UserLoginStartRequest
+	4,  // 5: auth.AuthPlugin.Logout:input_type -> auth.UserLogOffRequest
+	1,  // 6: auth.AuthCallbackService.UserLoggedIn:input_type -> auth.UserLoginCallback
+	4,  // 7: auth.AuthCallbackService.UserLoggedOut:input_type -> auth.UserLogOffRequest
+	10, // 8: auth.AuthPlugin.Info:output_type -> common.PluginInfo
+	11, // 9: auth.AuthPlugin.Heartbeat:output_type -> common.HeartbeatInfo
+	9,  // 10: auth.AuthPlugin.Initialize:output_type -> common.Empty
+	5,  // 11: auth.AuthPlugin.GetLoginURL:output_type -> auth.LoginURL
+	9,  // 12: auth.AuthPlugin.Logout:output_type -> common.Empty
+	6,  // 13: auth.AuthCallbackService.UserLoggedIn:output_type -> auth.RedirectURL
+	9,  // 14: auth.AuthCallbackService.UserLoggedOut:output_type -> common.Empty
+	8,  // [8:15] is the sub-list for method output_type
+	1,  // [1:8] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_interface_proto_init() }
-func file_interface_proto_init() {
-	if File_interface_proto != nil {
+func init() { file_auth_interface_proto_init() }
+func file_auth_interface_proto_init() {
+	if File_auth_interface_proto != nil {
 		return
 	}
-	file_interface_proto_msgTypes[3].OneofWrappers = []any{
+	file_auth_interface_proto_msgTypes[3].OneofWrappers = []any{
 		(*UserLogOffRequest_Id)(nil),
 		(*UserLogOffRequest_Email)(nil),
 	}
@@ -575,18 +636,18 @@ func file_interface_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_interface_proto_rawDesc), len(file_interface_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_interface_proto_rawDesc), len(file_auth_interface_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_interface_proto_goTypes,
-		DependencyIndexes: file_interface_proto_depIdxs,
-		EnumInfos:         file_interface_proto_enumTypes,
-		MessageInfos:      file_interface_proto_msgTypes,
+		GoTypes:           file_auth_interface_proto_goTypes,
+		DependencyIndexes: file_auth_interface_proto_depIdxs,
+		EnumInfos:         file_auth_interface_proto_enumTypes,
+		MessageInfos:      file_auth_interface_proto_msgTypes,
 	}.Build()
-	File_interface_proto = out.File
-	file_interface_proto_goTypes = nil
-	file_interface_proto_depIdxs = nil
+	File_auth_interface_proto = out.File
+	file_auth_interface_proto_goTypes = nil
+	file_auth_interface_proto_depIdxs = nil
 }

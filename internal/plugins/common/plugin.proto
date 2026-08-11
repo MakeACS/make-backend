@@ -1,0 +1,25 @@
+syntax="proto3";
+
+package common;
+
+option go_package = 'make-backend/internal/plugins/common';
+
+message Empty {}
+
+message PluginInfo{
+    string id = 1;
+    string about = 2;
+    uint32 port = 3; // 0 if no port needed
+}
+
+enum PluginStatus{
+    UNKNOWN = 0;
+    GOOD = 1;
+    DEGRADED = 2;
+    UNCONFIGURED = 3;
+    CRASHED = 4;
+}
+message HeartbeatInfo {
+    PluginStatus status = 1;
+    string status_message = 2;
+}

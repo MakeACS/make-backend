@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"make-backend/internal/plugins"
 	"make-backend/internal/plugins/common"
+	"make-backend/internal/plugins/notify"
 
 	"github.com/hashicorp/go-plugin"
 )
@@ -16,7 +16,7 @@ type MockNotifier struct {
 }
 
 // NotifyUser implements [plugins.NotificationProvider].
-func (m *MockNotifier) NotifyUser(args plugins.NotifyUserArgs) error {
+func (m *MockNotifier) NotifyUser(args notify.NotifyUserArgs) error {
 	name := args.PreferredName
 	email := args.Email
 	s := fmt.Sprintf("To: %s\nDear %s,\n%s", email, name, args.Content.BodyHtml)
@@ -26,16 +26,14 @@ func (m *MockNotifier) NotifyUser(args plugins.NotifyUserArgs) error {
 }
 
 // Info implements [plugins.NotificationProvider].
-func (m *MockNotifier) Info() plugins.PluginInfoResponse {
+func (m *MockNotifier) Info() (*common.PluginInfo, error) {
 	// log.Println("info called")
-	return plugins.PluginInfoResponse{
-		Info: common.PluginInfo{
+	return &common.PluginInfo{
 			Id:    pluginName,
 			About: "plugin for not sending notifications but pretending to",
 			Port:  0, // dont need any HTTP passthrough
 		},
-		Err: nil,
-	}
+		nil
 }
 
 // from example code:
@@ -50,18 +48,19 @@ var handshakeConfig = plugin.HandshakeConfig{
 	MagicCookieValue: "97bddc18-7cd3-4976-81cf-bcb5b756262a",
 }
 
-var _ plugins.NotificationProvider = &MockNotifier{}
+var _ notify.NotificationProvider = &MockNotifier{}
 
 func main() {
 	notifier := &MockNotifier{}
 	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
-		pluginName: &plugins.NotificationPlugin{Impl: notifier},
+		pluginName: &notify.NotificationPlugin{Impl: notifier},
 	}
 	log.Println("Mock notification plugin started")
 
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
+		GRPCServer:      plugin.DefaultGRPCServer,
 	})
 }

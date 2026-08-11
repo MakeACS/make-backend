@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"log/slog"
 	"make-backend/internal/database"
+	"make-backend/internal/plugins/auth"
 	"make-backend/internal/plugins/common"
+	"make-backend/internal/plugins/notify"
 	"os/exec"
 	"path"
 
 	"github.com/hashicorp/go-plugin"
 )
 
-var primaryNotificationProvider NotificationProvider = &nothingNotificationProvider{}
+var primaryNotificationProvider notify.NotificationProvider = nil
 
-func PrimaryNotificationProvider() NotificationProvider {
+func PrimaryNotificationProvider() notify.NotificationProvider {
 	return primaryNotificationProvider
 }
 
@@ -40,21 +42,21 @@ var wanted_plugins = []common.PluginDescription{
 	// 	Url:        "",
 	// 	PluginType: PluginType_Notification,
 	// },
-	// {
-	// 	Name:        "notification.base.mock_saml",
-	// 	Version:     1,
-	// 	MagicValue:  "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
-	// 	DownloadUrl: "",
-	// 	PluginType:  common.PluginType_Auth,
-	// },
+	{
+		Name:        "auth.core.saml",
+		Version:     1,
+		MagicValue:  "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
+		DownloadUrl: "",
+		PluginType:  common.PluginType_Auth,
+	},
 }
 
 func InterfaceForPluginType(t common.PluginType) plugin.Plugin {
 	switch t {
 	case common.PluginType_Notification:
-		return &NotificationPlugin{}
-	// case PluginType_Auth:
-	// return &AuthPlugin{}
+		return &notify.NotificationPlugin{}
+	case common.PluginType_Auth:
+		return &auth.AuthPlugin{}
 	default:
 		slog.Warn("unknown PluginType value", "type", t)
 		return nil
@@ -89,12 +91,13 @@ func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error)
 		}
 
 		client := plugin.NewClient(&plugin.ClientConfig{
-			HandshakeConfig: handshakeConfig,
-			Plugins:         pluginMap,
-			Cmd:             exec.Command(path.Join(plugin_dir, plugin_desc.Name)),
-			Managed:         true, // Allow parent process (us) to kill clients when we leave
-			SkipHostEnv:     true, // Dont leak secrets to plugins
-			Logger:          common.NewPluginLogAdapter(*slog.Default(), plugin_desc.Name, slog.LevelInfo),
+			HandshakeConfig:  handshakeConfig,
+			Plugins:          pluginMap,
+			Cmd:              exec.Command(path.Join(plugin_dir, plugin_desc.Name)),
+			Managed:          true, // Allow parent process (us) to kill clients when we leave
+			SkipHostEnv:      true, // Dont leak secrets to plugins
+			Logger:           common.NewPluginLogAdapter(*slog.Default(), plugin_desc.Name, slog.LevelInfo),
+			AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		})
 
 		// Connect via RPC
@@ -111,17 +114,17 @@ func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error)
 			continue
 		}
 
-		notifier := raw.(BasePlugin)
-		infoErr := notifier.Info()
+		notifier := raw.(common.BasePlugin)
+		info, err := notifier.Info()
 
-		if infoErr.Err != nil {
-			slog.Error("Failed to start plugin", "plugin", plugin_desc.Name, "err", infoErr.Err)
+		if err != nil {
+			slog.Error("Failed to start plugin", "plugin", plugin_desc.Name, "err", err)
 			continue
 		}
-		if infoErr.Info.Port != 0 {
+		if info.Port != 0 {
 			forwards = append(forwards, PluginHTTPForwarding{
 				Path:   fmt.Sprintf("/plugin/%s", plugin_desc.Name),
-				ToPort: infoErr.Info.Port,
+				ToPort: uint16(info.Port),
 			})
 		}
 	}

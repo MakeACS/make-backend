@@ -1,8 +1,10 @@
 syntax="proto3";
 
-package auth_plugin;
+package auth;
+import "common/plugin.proto"; 
 
-option go_package = 'github.com/MakeACS/make-backend/internal/plugin/auth';
+
+option go_package = 'make-backend/internal/plugins/auth';
 
 message UserLoginCallback {
   string email = 1;
@@ -38,7 +40,6 @@ message UserLogOffRequest {
   string signed_out_url = 3;
 }
 
-message Empty {}
 message LoginURL { string url = 1; }
 message RedirectURL { string url = 1; }
 message Subserver{
@@ -49,12 +50,14 @@ message PluginInitRequest {
 }
 
 service AuthPlugin {
-  rpc Initialize(PluginInitRequest) returns (Empty);
+  rpc Info(common.Empty) returns (common.PluginInfo);
+  rpc Heartbeat(common.Empty) returns (common.HeartbeatInfo);
+  rpc Initialize(PluginInitRequest) returns (common.Empty);
   rpc GetLoginURL(UserLoginStartRequest) returns (LoginURL);
-  rpc Logout(UserLogOffRequest) returns (Empty);
+  rpc Logout(UserLogOffRequest) returns (common.Empty);
 }
 
 service AuthCallbackService {
   rpc UserLoggedIn(UserLoginCallback) returns (RedirectURL);
-  rpc UserLoggedOut(UserLogOffRequest) returns (Empty);
+  rpc UserLoggedOut(UserLogOffRequest) returns (common.Empty);
 }

@@ -1,12 +1,13 @@
-package plugins
+package notify
 
 import (
-	"errors"
+	context "context"
 	"fmt"
 	"make-backend/internal/plugins/common"
 	"net/rpc"
 
 	"github.com/hashicorp/go-plugin"
+	grpc "google.golang.org/grpc"
 )
 
 type Notification struct {
@@ -16,11 +17,6 @@ type Notification struct {
 	BodyMarkdown string
 }
 
-type PluginInfoResponse struct {
-	Info common.PluginInfo
-	Err  error
-}
-
 type NotifyUserArgs struct {
 	UserID        int
 	Email         string
@@ -28,27 +24,13 @@ type NotifyUserArgs struct {
 	Content       Notification
 }
 
-type BasePlugin interface {
-	Info() PluginInfoResponse
-}
 type NotificationProvider interface {
-	BasePlugin
+	common.BasePlugin
 	NotifyUser(NotifyUserArgs) error
 }
 
-type nothingNotificationProvider struct{}
-
-func (n *nothingNotificationProvider) NotifyUser(NotifyUserArgs) error {
-	return errors.New("no notification plugin")
-}
-
-func (n *nothingNotificationProvider) Info() PluginInfoResponse {
-	return PluginInfoResponse{Info: common.PluginInfo{}, Err: errors.New("no notification plugin")}
-}
-
-var _ NotificationProvider = &nothingNotificationProvider{}
-
 type NotificationPlugin struct {
+	plugin.NetRPCUnsupportedPlugin
 	// Impl Injection
 	Impl NotificationProvider
 }
@@ -68,16 +50,17 @@ func (g *NotificationProviderRPC) NotifyUser(arg NotifyUserArgs) error {
 
 var _ NotificationProvider = &NotificationProviderRPC{}
 
-func (g *NotificationProviderRPC) Info() PluginInfoResponse {
-	var info PluginInfoResponse
-	err := g.client.Call("Plugin.Info", new(interface{}), &info)
-	if err != nil {
-		// You usually want your interfaces to return errors. If they don't,
-		// there isn't much other choice here.
-		return PluginInfoResponse{info.Info, fmt.Errorf("failed to RPC call Info() : %w", err)}
-	}
+func (g *NotificationProviderRPC) Info() (*common.PluginInfo, error) {
+	panic("broken with grpc migration")
+	// var info common.PluginInfo
+	// err := g.client.Call("Plugin.Info", new(interface{}), &info)
+	// if err != nil {
+	// 	// You usually want your interfaces to return errors. If they don't,
+	// 	// there isn't much other choice here.
+	// 	return common.PluginInfoResponse{info.Info, fmt.Errorf("failed to RPC call Info() : %w", err)}
+	// }
 
-	return info
+	// return info
 }
 
 // Here is the RPC server that GreeterRPC talks to, conforming to
@@ -97,15 +80,16 @@ func (s *NotificationProviderRPCServer) NotifyUser(args NotifyUserArgs, resp *er
 	return s.Impl.NotifyUser(arg)
 }
 
-func (s *NotificationProviderRPCServer) Info(args interface{}, resp *PluginInfoResponse) error {
-	*resp = s.Impl.Info()
+func (s *NotificationProviderRPCServer) Info(args interface{}, resp *common.PluginInfo) error {
+	panic("broken on the way to grpc")
+	// *resp = s.Impl.Info()
+	return nil
+}
+func (p *NotificationPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
+	RegisterNotificationPluginServer(s, &GRPCServer{Impl: p.Impl})
 	return nil
 }
 
-func (p *NotificationPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
-	return &NotificationProviderRPCServer{Impl: p.Impl}, nil
-}
-
-func (NotificationPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
-	return &NotificationProviderRPC{client: c}, nil
+func (p *NotificationPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+	return &GRPCClient{client: NewNotificationPluginClient(c)}, nil
 }

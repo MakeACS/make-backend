@@ -25,9 +25,9 @@ func (m *EmailNotifier) NotifyUser(args plugins.NotifyUserArgs) error {
 }
 
 // Info implements [plugins.NotificationProvider].
-func (m *EmailNotifier) Info() plugins.PluginInfoResponse {
+func (m *EmailNotifier) Info() common.PluginInfoResponse {
 	// log.Println("info called")
-	return plugins.PluginInfoResponse{
+	return common.PluginInfoResponse{
 		Info: common.PluginInfo{
 			Id:    PluginId,
 			About: "plugin for sending notifications via email",

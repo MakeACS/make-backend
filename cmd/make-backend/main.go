@@ -79,6 +79,8 @@ func main() {
 		slog.Error("failed to start plugins", "err", err)
 	}
 
+	log.Printf("connect to http://localhost:%s/playground for GraphQL playground", port)
+
 	logger.AuditLog.CreateUnassociatedWithData("builtin.server.start.1", map[string]any{"time": time.Now()}, "Server started")
 	<-done
 	slog.Warn("caught signal, stopping...")
@@ -168,8 +170,6 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 	fileHandler := http.StripPrefix("/app/", http.FileServer(http.Dir("./client")))
 	mux.Handle("/app/", fileHandler)
 	mux.Handle("/", http.RedirectHandler("/app/", http.StatusFound))
-
-	log.Printf("connect to http://localhost:%d/ for GraphQL playground", port)
 
 	rest.RegisterHandlers(mux)
 

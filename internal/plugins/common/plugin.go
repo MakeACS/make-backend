@@ -9,13 +9,6 @@ var (
 	PluginType_Notification     PluginType = "notification"
 )
 
-type PluginInfo struct {
-	Id    string
-	About string
-	Port  uint16 // 0 if the plugin does not require forwarding http requests
-
-}
-
 var MagicKey string = "ACS_PLUGIN_ID"
 
 type PluginDescription struct {
@@ -24,4 +17,8 @@ type PluginDescription struct {
 	Version     uint
 	MagicValue  string
 	DownloadUrl string /// empty url implies that the plugin will just be there and theres no need to download
+}
+
+type BasePlugin interface {
+	Info() (*PluginInfo, error)
 }
