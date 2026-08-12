@@ -20,11 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthPlugin_Info_FullMethodName        = "/auth.AuthPlugin/Info"
-	AuthPlugin_Heartbeat_FullMethodName   = "/auth.AuthPlugin/Heartbeat"
-	AuthPlugin_Initialize_FullMethodName  = "/auth.AuthPlugin/Initialize"
-	AuthPlugin_GetLoginURL_FullMethodName = "/auth.AuthPlugin/GetLoginURL"
-	AuthPlugin_Logout_FullMethodName      = "/auth.AuthPlugin/Logout"
+	AuthPlugin_Info_FullMethodName                        = "/auth.AuthPlugin/Info"
+	AuthPlugin_Heartbeat_FullMethodName                   = "/auth.AuthPlugin/Heartbeat"
+	AuthPlugin_GetLoginURL_FullMethodName                 = "/auth.AuthPlugin/GetLoginURL"
+	AuthPlugin_Logout_FullMethodName                      = "/auth.AuthPlugin/Logout"
+	AuthPlugin_InternalInitializeCallbacks_FullMethodName = "/auth.AuthPlugin/internalInitializeCallbacks"
 )
 
 // AuthPluginClient is the client API for AuthPlugin service.
@@ -33,9 +33,10 @@ const (
 type AuthPluginClient interface {
 	Info(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*common.PluginInfo, error)
 	Heartbeat(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*common.HeartbeatInfo, error)
-	Initialize(ctx context.Context, in *PluginInitRequest, opts ...grpc.CallOption) (*common.Empty, error)
 	GetLoginURL(ctx context.Context, in *UserLoginStartRequest, opts ...grpc.CallOption) (*LoginURL, error)
 	Logout(ctx context.Context, in *UserLogOffRequest, opts ...grpc.CallOption) (*common.Empty, error)
+	// end user doesn't have to use this, they have to implement register callback in go land. this is intercepted by the rpc server and the details taken care of for the actual plugin
+	InternalInitializeCallbacks(ctx context.Context, in *PluginInitRequest, opts ...grpc.CallOption) (*common.Empty, error)
 }
 
 type authPluginClient struct {
@@ -66,16 +67,6 @@ func (c *authPluginClient) Heartbeat(ctx context.Context, in *common.Empty, opts
 	return out, nil
 }
 
-func (c *authPluginClient) Initialize(ctx context.Context, in *PluginInitRequest, opts ...grpc.CallOption) (*common.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(common.Empty)
-	err := c.cc.Invoke(ctx, AuthPlugin_Initialize_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *authPluginClient) GetLoginURL(ctx context.Context, in *UserLoginStartRequest, opts ...grpc.CallOption) (*LoginURL, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoginURL)
@@ -96,15 +87,26 @@ func (c *authPluginClient) Logout(ctx context.Context, in *UserLogOffRequest, op
 	return out, nil
 }
 
+func (c *authPluginClient) InternalInitializeCallbacks(ctx context.Context, in *PluginInitRequest, opts ...grpc.CallOption) (*common.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(common.Empty)
+	err := c.cc.Invoke(ctx, AuthPlugin_InternalInitializeCallbacks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthPluginServer is the server API for AuthPlugin service.
 // All implementations must embed UnimplementedAuthPluginServer
 // for forward compatibility.
 type AuthPluginServer interface {
 	Info(context.Context, *common.Empty) (*common.PluginInfo, error)
 	Heartbeat(context.Context, *common.Empty) (*common.HeartbeatInfo, error)
-	Initialize(context.Context, *PluginInitRequest) (*common.Empty, error)
 	GetLoginURL(context.Context, *UserLoginStartRequest) (*LoginURL, error)
 	Logout(context.Context, *UserLogOffRequest) (*common.Empty, error)
+	// end user doesn't have to use this, they have to implement register callback in go land. this is intercepted by the rpc server and the details taken care of for the actual plugin
+	InternalInitializeCallbacks(context.Context, *PluginInitRequest) (*common.Empty, error)
 	mustEmbedUnimplementedAuthPluginServer()
 }
 
@@ -121,14 +123,14 @@ func (UnimplementedAuthPluginServer) Info(context.Context, *common.Empty) (*comm
 func (UnimplementedAuthPluginServer) Heartbeat(context.Context, *common.Empty) (*common.HeartbeatInfo, error) {
 	return nil, status.Error(codes.Unimplemented, "method Heartbeat not implemented")
 }
-func (UnimplementedAuthPluginServer) Initialize(context.Context, *PluginInitRequest) (*common.Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "method Initialize not implemented")
-}
 func (UnimplementedAuthPluginServer) GetLoginURL(context.Context, *UserLoginStartRequest) (*LoginURL, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLoginURL not implemented")
 }
 func (UnimplementedAuthPluginServer) Logout(context.Context, *UserLogOffRequest) (*common.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Logout not implemented")
+}
+func (UnimplementedAuthPluginServer) InternalInitializeCallbacks(context.Context, *PluginInitRequest) (*common.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method InternalInitializeCallbacks not implemented")
 }
 func (UnimplementedAuthPluginServer) mustEmbedUnimplementedAuthPluginServer() {}
 func (UnimplementedAuthPluginServer) testEmbeddedByValue()                    {}
@@ -187,24 +189,6 @@ func _AuthPlugin_Heartbeat_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthPlugin_Initialize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PluginInitRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthPluginServer).Initialize(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthPlugin_Initialize_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthPluginServer).Initialize(ctx, req.(*PluginInitRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _AuthPlugin_GetLoginURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserLoginStartRequest)
 	if err := dec(in); err != nil {
@@ -241,6 +225,24 @@ func _AuthPlugin_Logout_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthPlugin_InternalInitializeCallbacks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PluginInitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthPluginServer).InternalInitializeCallbacks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthPlugin_InternalInitializeCallbacks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthPluginServer).InternalInitializeCallbacks(ctx, req.(*PluginInitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthPlugin_ServiceDesc is the grpc.ServiceDesc for AuthPlugin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -257,16 +259,16 @@ var AuthPlugin_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthPlugin_Heartbeat_Handler,
 		},
 		{
-			MethodName: "Initialize",
-			Handler:    _AuthPlugin_Initialize_Handler,
-		},
-		{
 			MethodName: "GetLoginURL",
 			Handler:    _AuthPlugin_GetLoginURL_Handler,
 		},
 		{
 			MethodName: "Logout",
 			Handler:    _AuthPlugin_Logout_Handler,
+		},
+		{
+			MethodName: "internalInitializeCallbacks",
+			Handler:    _AuthPlugin_InternalInitializeCallbacks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

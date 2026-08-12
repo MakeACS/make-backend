@@ -52,9 +52,10 @@ message PluginInitRequest {
 service AuthPlugin {
   rpc Info(common.Empty) returns (common.PluginInfo);
   rpc Heartbeat(common.Empty) returns (common.HeartbeatInfo);
-  rpc Initialize(PluginInitRequest) returns (common.Empty);
   rpc GetLoginURL(UserLoginStartRequest) returns (LoginURL);
   rpc Logout(UserLogOffRequest) returns (common.Empty);
+  // end user doesn't have to use this, they have to implement register callback in go land. this is intercepted by the rpc server and the details taken care of for the actual plugin
+  rpc internalInitializeCallbacks(PluginInitRequest) returns (common.Empty);
 }
 
 service AuthCallbackService {

@@ -75,6 +75,23 @@ func generatePluginMap(wanted []common.PluginDescription) map[string]plugin.Plug
 	return pluginMap
 }
 
+type TestAuthCBProvider struct{}
+
+// UserLoggedIn implements [auth.AuthCallbackProvider].
+func (t *TestAuthCBProvider) UserLoggedIn(*auth.UserLoginCallback) (*auth.RedirectURL, error) {
+	slog.Info("User logged in")
+	return nil, nil
+}
+
+// UserLoggedOut implements [auth.AuthCallbackProvider].
+func (t *TestAuthCBProvider) UserLoggedOut(*auth.UserLogOffRequest) error {
+	slog.Info("User logged out")
+	return nil
+
+}
+
+var _ auth.AuthCallbackProvider = &TestAuthCBProvider{}
+
 func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error) {
 	plugin_dir := path.Join("./plugins", "bin")
 
@@ -96,7 +113,7 @@ func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error)
 			Cmd:              exec.Command(path.Join(plugin_dir, plugin_desc.Name)),
 			Managed:          true, // Allow parent process (us) to kill clients when we leave
 			SkipHostEnv:      true, // Dont leak secrets to plugins
-			Logger:           common.NewPluginLogAdapter(*slog.Default(), plugin_desc.Name, slog.LevelInfo),
+			Logger:           common.NewPluginLogAdapter(*slog.Default().With("plugin", plugin_desc.Name), plugin_desc.Name, slog.LevelInfo),
 			AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		})
 
@@ -114,8 +131,8 @@ func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error)
 			continue
 		}
 
-		notifier := raw.(common.BasePlugin)
-		info, err := notifier.Info()
+		base := raw.(common.BasePlugin)
+		info, err := base.Info()
 
 		if err != nil {
 			slog.Error("Failed to start plugin", "plugin", plugin_desc.Name, "err", err)
@@ -126,6 +143,15 @@ func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error)
 				Path:   fmt.Sprintf("/plugin/%s", plugin_desc.Name),
 				ToPort: uint16(info.Port),
 			})
+		}
+
+		if plugin_desc.PluginType == common.PluginType_Auth {
+			authPlugin, ok := raw.(auth.AuthProvider)
+			if !ok {
+				slog.Warn("plugin lied about type", "wanted", plugin_desc.PluginType)
+			}
+			slog.Info("giving broker channel via init")
+			authPlugin.RegisterCallbackProvider(&TestAuthCBProvider{})
 		}
 	}
 

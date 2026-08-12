@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"make-backend/internal/plugins/auth"
 	"make-backend/internal/plugins/common"
@@ -25,10 +26,28 @@ var Info = common.PluginInfo{
 	Port:  0, // filled in later
 }
 
-type SAMLAuth struct{}
+type SAMLAuth struct {
+	server    *auth.AuthPluginServer
+	callbacks auth.AuthCallbackProvider
+}
+
+// RegisterCallbackProvider implements [auth.AuthProvider].
+func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
+	s.callbacks = cb
+	log.Println("cb provided")
+	r, err := s.callbacks.UserLoggedIn(&auth.UserLoginCallback{
+		Email:             "test@gmail",
+		FullName:          "test man",
+		PreferredName:     "tman",
+		ProfilePictureUrl: "http.cat/404",
+		PassthroughData:   "token",
+	})
+	log.Println("used CB ", r, err)
+
+}
 
 // GetLoginURL implements [auth.AuthProvider].
-func (s *SAMLAuth) GetLoginURL(auth.UserLoginStartRequest) auth.LoginURL {
+func (s *SAMLAuth) GetLoginURL(*auth.UserLoginStartRequest) auth.LoginURL {
 	panic("unimplemented")
 }
 
@@ -38,12 +57,12 @@ func (s *SAMLAuth) Heartbeat() common.HeartbeatInfo {
 }
 
 // Initialize implements [auth.AuthProvider].
-func (s *SAMLAuth) Initialize(req auth.PluginInitRequest) {
-	panic("unimplemented")
+func (s *SAMLAuth) Initialize(req *auth.PluginInitRequest) error {
+	return fmt.Errorf("initialize called when it was supposed to be intercepted")
 }
 
 // Logout implements [auth.AuthProvider].
-func (s *SAMLAuth) Logout(auth.UserLogOffRequest) {
+func (s *SAMLAuth) Logout(*auth.UserLogOffRequest) {
 	panic("unimplemented")
 }
 
@@ -76,8 +95,6 @@ func startHTTPHandle() (uint16, error) {
 }
 
 func main() {
-	// log.Println("SAML  starting")
-
 	port, err := startHTTPHandle()
 	if err != nil {
 		// slog.Error("failed to start", "err", err)
@@ -86,11 +103,12 @@ func main() {
 	Info.Port = uint32(port)
 
 	auth_s := &SAMLAuth{}
+	s_plugin := auth.AuthPlugin{
+		Impl: auth_s,
+	}
 	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
-		pluginName: &auth.AuthPlugin{
-			Impl: auth_s,
-		},
+		pluginName: &s_plugin,
 	}
 	// log.Println("SAML auth plugin started")
 
