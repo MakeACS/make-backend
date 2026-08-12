@@ -50,7 +50,7 @@ func (g *NotificationProviderRPC) NotifyUser(arg NotifyUserArgs) error {
 
 var _ NotificationProvider = &NotificationProviderRPC{}
 
-func (g *NotificationProviderRPC) Info() (*common.PluginInfo, error) {
+func (g *NotificationProviderRPC) Info(*common.PluginInitialMessage) (*common.PluginInfo, error) {
 	panic("broken with grpc migration")
 	// var info common.PluginInfo
 	// err := g.client.Call("Plugin.Info", new(interface{}), &info)
@@ -80,8 +80,8 @@ func (s *NotificationProviderRPCServer) NotifyUser(args NotifyUserArgs, resp *er
 	return s.Impl.NotifyUser(arg)
 }
 
-func (s *NotificationProviderRPCServer) Info(args interface{}, resp *common.PluginInfo) error {
-	r, err := s.Impl.Info()
+func (s *NotificationProviderRPCServer) Info(args *common.PluginInitialMessage, resp *common.PluginInfo) error {
+	r, err := s.Impl.Info(args)
 	resp.Id = r.Id
 	resp.About = r.About
 	resp.Port = r.Port

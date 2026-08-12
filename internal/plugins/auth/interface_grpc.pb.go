@@ -31,7 +31,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthPluginClient interface {
-	Info(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*common.PluginInfo, error)
+	Info(ctx context.Context, in *common.PluginInitialMessage, opts ...grpc.CallOption) (*common.PluginInfo, error)
 	Heartbeat(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*common.HeartbeatInfo, error)
 	GetLoginURL(ctx context.Context, in *UserLoginStartRequest, opts ...grpc.CallOption) (*LoginURL, error)
 	Logout(ctx context.Context, in *UserLogOffRequest, opts ...grpc.CallOption) (*common.Empty, error)
@@ -47,7 +47,7 @@ func NewAuthPluginClient(cc grpc.ClientConnInterface) AuthPluginClient {
 	return &authPluginClient{cc}
 }
 
-func (c *authPluginClient) Info(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*common.PluginInfo, error) {
+func (c *authPluginClient) Info(ctx context.Context, in *common.PluginInitialMessage, opts ...grpc.CallOption) (*common.PluginInfo, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(common.PluginInfo)
 	err := c.cc.Invoke(ctx, AuthPlugin_Info_FullMethodName, in, out, cOpts...)
@@ -101,7 +101,7 @@ func (c *authPluginClient) InternalInitializeCallbacks(ctx context.Context, in *
 // All implementations must embed UnimplementedAuthPluginServer
 // for forward compatibility.
 type AuthPluginServer interface {
-	Info(context.Context, *common.Empty) (*common.PluginInfo, error)
+	Info(context.Context, *common.PluginInitialMessage) (*common.PluginInfo, error)
 	Heartbeat(context.Context, *common.Empty) (*common.HeartbeatInfo, error)
 	GetLoginURL(context.Context, *UserLoginStartRequest) (*LoginURL, error)
 	Logout(context.Context, *UserLogOffRequest) (*common.Empty, error)
@@ -117,7 +117,7 @@ type AuthPluginServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthPluginServer struct{}
 
-func (UnimplementedAuthPluginServer) Info(context.Context, *common.Empty) (*common.PluginInfo, error) {
+func (UnimplementedAuthPluginServer) Info(context.Context, *common.PluginInitialMessage) (*common.PluginInfo, error) {
 	return nil, status.Error(codes.Unimplemented, "method Info not implemented")
 }
 func (UnimplementedAuthPluginServer) Heartbeat(context.Context, *common.Empty) (*common.HeartbeatInfo, error) {
@@ -154,7 +154,7 @@ func RegisterAuthPluginServer(s grpc.ServiceRegistrar, srv AuthPluginServer) {
 }
 
 func _AuthPlugin_Info_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(common.Empty)
+	in := new(common.PluginInitialMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func _AuthPlugin_Info_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: AuthPlugin_Info_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthPluginServer).Info(ctx, req.(*common.Empty))
+		return srv.(AuthPluginServer).Info(ctx, req.(*common.PluginInitialMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }

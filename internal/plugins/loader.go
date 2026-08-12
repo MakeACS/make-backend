@@ -7,6 +7,7 @@ import (
 	"make-backend/internal/plugins/auth"
 	"make-backend/internal/plugins/common"
 	"make-backend/internal/plugins/notify"
+	"os"
 	"os/exec"
 	"path"
 
@@ -27,6 +28,7 @@ var wanted_plugins = []common.PluginDescription{
 		MagicValue:  "97bddc18-7cd3-4976-81cf-bcb5b756262a",
 		DownloadUrl: "",
 		PluginType:  common.PluginType_Notification,
+		Options:     map[string]string{},
 	},
 	// {
 	// 	Name:       "notification.core.linux_email",
@@ -48,6 +50,11 @@ var wanted_plugins = []common.PluginDescription{
 		MagicValue:  "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
 		DownloadUrl: "",
 		PluginType:  common.PluginType_Auth,
+		Options: map[string]string{
+			"SP_CERT":               os.Getenv("SAML_SP_CERT"),
+			"SP_KEY":                os.Getenv("SAML_SP_KEY"),
+			"IDP_METADATA_PROVIDER": os.Getenv("SAML_SP_METADATA_URL"),
+		},
 	},
 }
 
@@ -92,7 +99,23 @@ func (t *TestAuthCBProvider) UserLoggedOut(*auth.UserLogOffRequest) error {
 
 var _ auth.AuthCallbackProvider = &TestAuthCBProvider{}
 
-func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error) {
+func initMessageForPlugin(host string, desc common.PluginDescription) *common.PluginInitialMessage {
+	var msg = common.PluginInitialMessage{}
+	msg.ServerHost = host
+	msg.PluginUrlBase = fmt.Sprintf("%s/plugin/%s", host, desc.Name)
+
+	msg.Configs = []*common.ConfigPair{}
+	for k, v := range desc.Options {
+		cfg := common.ConfigPair{
+			Key:   k,
+			Value: v,
+		}
+		msg.Configs = append(msg.Configs, &cfg)
+	}
+	return &msg
+}
+
+func StartPlugins(host string, store *database.Store) (func(), []PluginHTTPForwarding, error) {
 	plugin_dir := path.Join("./plugins", "bin")
 
 	forwards := []PluginHTTPForwarding{}
@@ -131,8 +154,10 @@ func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error)
 			continue
 		}
 
+		msg := initMessageForPlugin(host, plugin_desc)
 		base := raw.(common.BasePlugin)
-		info, err := base.Info()
+		info, err := base.Info(msg)
+		slog.Info("plugin start", "info", info)
 
 		if err != nil {
 			slog.Error("Failed to start plugin", "plugin", plugin_desc.Name, "err", err)

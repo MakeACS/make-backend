@@ -17,8 +17,9 @@ type PluginDescription struct {
 	Version     uint
 	MagicValue  string
 	DownloadUrl string /// empty url implies that the plugin will just be there and theres no need to download
+	Options     map[string]string
 }
 
 type BasePlugin interface {
-	Info() (*PluginInfo, error)
+	Info(*PluginInitialMessage) (*PluginInfo, error)
 }

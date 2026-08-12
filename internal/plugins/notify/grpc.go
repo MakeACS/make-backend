@@ -15,7 +15,7 @@ func (g *GRPCClient) NotifyUser(NotifyUserArgs) error {
 var _ NotificationProvider = &GRPCClient{}
 
 // Info implements [AuthProvider].
-func (g *GRPCClient) Info() (*common.PluginInfo, error) {
+func (g *GRPCClient) Info(*common.PluginInitialMessage) (*common.PluginInfo, error) {
 	info, err := g.client.Info(context.Background(), nil)
 	if err != nil {
 
@@ -33,8 +33,8 @@ type GRPCServer struct {
 }
 
 // Info implements [AuthPluginServer].
-func (g *GRPCServer) Info(ctx context.Context, _ *common.Empty) (*common.PluginInfo, error) {
-	inf, err := g.Impl.Info()
+func (g *GRPCServer) Info(ctx context.Context, i *common.PluginInitialMessage) (*common.PluginInfo, error) {
+	inf, err := g.Impl.Info(i)
 	if err != nil {
 		return nil, err
 	}

@@ -7,5 +7,5 @@ import "common/plugin.proto";
 option go_package = 'make-backend/internal/plugins/notify';
 
 service NotificationPlugin {
-  rpc Info(common.Empty) returns (common.PluginInfo);
+  rpc Info(common.PluginInitialMessage) returns (common.PluginInfo);
 }

@@ -224,6 +224,118 @@ func (x *HeartbeatInfo) GetStatusMessage() string {
 	return ""
 }
 
+type ConfigPair struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfigPair) Reset() {
+	*x = ConfigPair{}
+	mi := &file_common_plugin_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfigPair) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfigPair) ProtoMessage() {}
+
+func (x *ConfigPair) ProtoReflect() protoreflect.Message {
+	mi := &file_common_plugin_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfigPair.ProtoReflect.Descriptor instead.
+func (*ConfigPair) Descriptor() ([]byte, []int) {
+	return file_common_plugin_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ConfigPair) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *ConfigPair) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type PluginInitialMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServerHost    string                 `protobuf:"bytes,1,opt,name=serverHost,proto3" json:"serverHost,omitempty"`
+	PluginUrlBase string                 `protobuf:"bytes,2,opt,name=pluginUrlBase,proto3" json:"pluginUrlBase,omitempty"` // if needed, where the http forwarding will come from
+	Configs       []*ConfigPair          `protobuf:"bytes,3,rep,name=configs,proto3" json:"configs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PluginInitialMessage) Reset() {
+	*x = PluginInitialMessage{}
+	mi := &file_common_plugin_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PluginInitialMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PluginInitialMessage) ProtoMessage() {}
+
+func (x *PluginInitialMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_common_plugin_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PluginInitialMessage.ProtoReflect.Descriptor instead.
+func (*PluginInitialMessage) Descriptor() ([]byte, []int) {
+	return file_common_plugin_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PluginInitialMessage) GetServerHost() string {
+	if x != nil {
+		return x.ServerHost
+	}
+	return ""
+}
+
+func (x *PluginInitialMessage) GetPluginUrlBase() string {
+	if x != nil {
+		return x.PluginUrlBase
+	}
+	return ""
+}
+
+func (x *PluginInitialMessage) GetConfigs() []*ConfigPair {
+	if x != nil {
+		return x.Configs
+	}
+	return nil
+}
+
 var File_common_plugin_proto protoreflect.FileDescriptor
 
 const file_common_plugin_proto_rawDesc = "" +
@@ -237,7 +349,17 @@ const file_common_plugin_proto_rawDesc = "" +
 	"\x04port\x18\x03 \x01(\rR\x04port\"d\n" +
 	"\rHeartbeatInfo\x12,\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x14.common.PluginStatusR\x06status\x12%\n" +
-	"\x0estatus_message\x18\x02 \x01(\tR\rstatusMessage*R\n" +
+	"\x0estatus_message\x18\x02 \x01(\tR\rstatusMessage\"4\n" +
+	"\n" +
+	"ConfigPair\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\x8a\x01\n" +
+	"\x14PluginInitialMessage\x12\x1e\n" +
+	"\n" +
+	"serverHost\x18\x01 \x01(\tR\n" +
+	"serverHost\x12$\n" +
+	"\rpluginUrlBase\x18\x02 \x01(\tR\rpluginUrlBase\x12,\n" +
+	"\aconfigs\x18\x03 \x03(\v2\x12.common.ConfigPairR\aconfigs*R\n" +
 	"\fPluginStatus\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\b\n" +
 	"\x04GOOD\x10\x01\x12\f\n" +
@@ -258,20 +380,23 @@ func file_common_plugin_proto_rawDescGZIP() []byte {
 }
 
 var file_common_plugin_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_common_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_common_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_common_plugin_proto_goTypes = []any{
-	(PluginStatus)(0),     // 0: common.PluginStatus
-	(*Empty)(nil),         // 1: common.Empty
-	(*PluginInfo)(nil),    // 2: common.PluginInfo
-	(*HeartbeatInfo)(nil), // 3: common.HeartbeatInfo
+	(PluginStatus)(0),            // 0: common.PluginStatus
+	(*Empty)(nil),                // 1: common.Empty
+	(*PluginInfo)(nil),           // 2: common.PluginInfo
+	(*HeartbeatInfo)(nil),        // 3: common.HeartbeatInfo
+	(*ConfigPair)(nil),           // 4: common.ConfigPair
+	(*PluginInitialMessage)(nil), // 5: common.PluginInitialMessage
 }
 var file_common_plugin_proto_depIdxs = []int32{
 	0, // 0: common.HeartbeatInfo.status:type_name -> common.PluginStatus
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	4, // 1: common.PluginInitialMessage.configs:type_name -> common.ConfigPair
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_common_plugin_proto_init() }
@@ -285,7 +410,7 @@ func file_common_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_plugin_proto_rawDesc), len(file_common_plugin_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

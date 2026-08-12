@@ -25,16 +25,16 @@ var File_notify_interface_proto protoreflect.FileDescriptor
 
 const file_notify_interface_proto_rawDesc = "" +
 	"\n" +
-	"\x16notify/interface.proto\x12\x06notify\x1a\x13common/plugin.proto2?\n" +
-	"\x12NotificationPlugin\x12)\n" +
-	"\x04Info\x12\r.common.Empty\x1a\x12.common.PluginInfoB&Z$make-backend/internal/plugins/notifyb\x06proto3"
+	"\x16notify/interface.proto\x12\x06notify\x1a\x13common/plugin.proto2N\n" +
+	"\x12NotificationPlugin\x128\n" +
+	"\x04Info\x12\x1c.common.PluginInitialMessage\x1a\x12.common.PluginInfoB&Z$make-backend/internal/plugins/notifyb\x06proto3"
 
 var file_notify_interface_proto_goTypes = []any{
-	(*common.Empty)(nil),      // 0: common.Empty
-	(*common.PluginInfo)(nil), // 1: common.PluginInfo
+	(*common.PluginInitialMessage)(nil), // 0: common.PluginInitialMessage
+	(*common.PluginInfo)(nil),           // 1: common.PluginInfo
 }
 var file_notify_interface_proto_depIdxs = []int32{
-	0, // 0: notify.NotificationPlugin.Info:input_type -> common.Empty
+	0, // 0: notify.NotificationPlugin.Info:input_type -> common.PluginInitialMessage
 	1, // 1: notify.NotificationPlugin.Info:output_type -> common.PluginInfo
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type

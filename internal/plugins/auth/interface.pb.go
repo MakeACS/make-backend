@@ -559,10 +559,10 @@ const file_auth_interface_proto_rawDesc = "" +
 	"\n" +
 	"USER_FOUND\x10\x02\x12&\n" +
 	"\"USER_ALREADY_EXISTS_OTHER_PROVIDER\x10\x03\x12\t\n" +
-	"\x05ERROR\x10\x042\x9f\x02\n" +
+	"\x05ERROR\x10\x042\xae\x02\n" +
 	"\n" +
-	"AuthPlugin\x12)\n" +
-	"\x04Info\x12\r.common.Empty\x1a\x12.common.PluginInfo\x121\n" +
+	"AuthPlugin\x128\n" +
+	"\x04Info\x12\x1c.common.PluginInitialMessage\x1a\x12.common.PluginInfo\x121\n" +
 	"\tHeartbeat\x12\r.common.Empty\x1a\x15.common.HeartbeatInfo\x12:\n" +
 	"\vGetLoginURL\x12\x1b.auth.UserLoginStartRequest\x1a\x0e.auth.LoginURL\x120\n" +
 	"\x06Logout\x12\x17.auth.UserLogOffRequest\x1a\r.common.Empty\x12E\n" +
@@ -586,35 +586,36 @@ func file_auth_interface_proto_rawDescGZIP() []byte {
 var file_auth_interface_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_auth_interface_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_auth_interface_proto_goTypes = []any{
-	(UserLoginResponseType)(0),    // 0: auth.UserLoginResponseType
-	(*UserLoginCallback)(nil),     // 1: auth.UserLoginCallback
-	(*UserLoginStartRequest)(nil), // 2: auth.UserLoginStartRequest
-	(*UserLoginResponse)(nil),     // 3: auth.UserLoginResponse
-	(*UserLogOffRequest)(nil),     // 4: auth.UserLogOffRequest
-	(*LoginURL)(nil),              // 5: auth.LoginURL
-	(*RedirectURL)(nil),           // 6: auth.RedirectURL
-	(*Subserver)(nil),             // 7: auth.Subserver
-	(*PluginInitRequest)(nil),     // 8: auth.PluginInitRequest
-	(*common.Empty)(nil),          // 9: common.Empty
-	(*common.PluginInfo)(nil),     // 10: common.PluginInfo
-	(*common.HeartbeatInfo)(nil),  // 11: common.HeartbeatInfo
+	(UserLoginResponseType)(0),          // 0: auth.UserLoginResponseType
+	(*UserLoginCallback)(nil),           // 1: auth.UserLoginCallback
+	(*UserLoginStartRequest)(nil),       // 2: auth.UserLoginStartRequest
+	(*UserLoginResponse)(nil),           // 3: auth.UserLoginResponse
+	(*UserLogOffRequest)(nil),           // 4: auth.UserLogOffRequest
+	(*LoginURL)(nil),                    // 5: auth.LoginURL
+	(*RedirectURL)(nil),                 // 6: auth.RedirectURL
+	(*Subserver)(nil),                   // 7: auth.Subserver
+	(*PluginInitRequest)(nil),           // 8: auth.PluginInitRequest
+	(*common.PluginInitialMessage)(nil), // 9: common.PluginInitialMessage
+	(*common.Empty)(nil),                // 10: common.Empty
+	(*common.PluginInfo)(nil),           // 11: common.PluginInfo
+	(*common.HeartbeatInfo)(nil),        // 12: common.HeartbeatInfo
 }
 var file_auth_interface_proto_depIdxs = []int32{
 	0,  // 0: auth.UserLoginResponse.response_type:type_name -> auth.UserLoginResponseType
-	9,  // 1: auth.AuthPlugin.Info:input_type -> common.Empty
-	9,  // 2: auth.AuthPlugin.Heartbeat:input_type -> common.Empty
+	9,  // 1: auth.AuthPlugin.Info:input_type -> common.PluginInitialMessage
+	10, // 2: auth.AuthPlugin.Heartbeat:input_type -> common.Empty
 	2,  // 3: auth.AuthPlugin.GetLoginURL:input_type -> auth.UserLoginStartRequest
 	4,  // 4: auth.AuthPlugin.Logout:input_type -> auth.UserLogOffRequest
 	8,  // 5: auth.AuthPlugin.internalInitializeCallbacks:input_type -> auth.PluginInitRequest
 	1,  // 6: auth.AuthCallbackService.UserLoggedIn:input_type -> auth.UserLoginCallback
 	4,  // 7: auth.AuthCallbackService.UserLoggedOut:input_type -> auth.UserLogOffRequest
-	10, // 8: auth.AuthPlugin.Info:output_type -> common.PluginInfo
-	11, // 9: auth.AuthPlugin.Heartbeat:output_type -> common.HeartbeatInfo
+	11, // 8: auth.AuthPlugin.Info:output_type -> common.PluginInfo
+	12, // 9: auth.AuthPlugin.Heartbeat:output_type -> common.HeartbeatInfo
 	5,  // 10: auth.AuthPlugin.GetLoginURL:output_type -> auth.LoginURL
-	9,  // 11: auth.AuthPlugin.Logout:output_type -> common.Empty
-	9,  // 12: auth.AuthPlugin.internalInitializeCallbacks:output_type -> common.Empty
+	10, // 11: auth.AuthPlugin.Logout:output_type -> common.Empty
+	10, // 12: auth.AuthPlugin.internalInitializeCallbacks:output_type -> common.Empty
 	6,  // 13: auth.AuthCallbackService.UserLoggedIn:output_type -> auth.RedirectURL
-	9,  // 14: auth.AuthCallbackService.UserLoggedOut:output_type -> common.Empty
+	10, // 14: auth.AuthCallbackService.UserLoggedOut:output_type -> common.Empty
 	8,  // [8:15] is the sub-list for method output_type
 	1,  // [1:8] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name

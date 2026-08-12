@@ -83,8 +83,8 @@ func (g *GRPCClient) initialize() error {
 }
 
 // Info implements [AuthProvider].
-func (g *GRPCClient) Info() (*common.PluginInfo, error) {
-	info, err := g.client.Info(context.Background(), nil)
+func (g *GRPCClient) Info(init *common.PluginInitialMessage) (*common.PluginInfo, error) {
+	info, err := g.client.Info(context.Background(), init)
 	if err != nil {
 
 		return nil, err
@@ -127,8 +127,8 @@ func (g *GRPCServer) Heartbeat(context.Context, *common.Empty) (*common.Heartbea
 }
 
 // Info implements [AuthPluginServer].
-func (g *GRPCServer) Info(ctx context.Context, _ *common.Empty) (*common.PluginInfo, error) {
-	inf, err := g.Impl.Info()
+func (g *GRPCServer) Info(ctx context.Context, init *common.PluginInitialMessage) (*common.PluginInfo, error) {
+	inf, err := g.Impl.Info(init)
 	if err != nil {
 		return nil, err
 	}

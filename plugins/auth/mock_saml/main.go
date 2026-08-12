@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"make-backend/internal/plugins/auth"
 	"make-backend/internal/plugins/common"
@@ -27,6 +28,8 @@ var Info = common.PluginInfo{
 
 type SAMLAuth struct {
 	callbacks auth.AuthCallbackProvider
+	listener  net.Listener
+	// pluginstate
 }
 
 // RegisterCallbackProvider implements [auth.AuthProvider].
@@ -54,23 +57,38 @@ func (s *SAMLAuth) Logout(*auth.UserLogOffRequest) {
 	panic("unimplemented")
 }
 
-func (s *SAMLAuth) Info() (*common.PluginInfo, error) {
-	// log.Println("info called")
+func SamlConfigFromPluginConfig(init *common.PluginInitialMessage) Config {
+	var c Config
+	c.Host = init.PluginUrlBase
+	for _, pair := range init.Configs {
+		switch pair.Key {
+		case "SP_CERT":
+			c.SPCert = pair.Value
+		case "SP_KEY":
+			c.SPKey = pair.Value
+		case "IDP_METADATA_PROVIDER":
+			c.SamlIDPMetadataProvider = pair.Value
+		}
+	}
+	return c
+}
+
+func (s *SAMLAuth) Info(init *common.PluginInitialMessage) (*common.PluginInfo, error) {
+	endpoints := SetupSamlSP(SamlConfigFromPluginConfig(init))
+	err := startHTTPHandle(s.listener, endpoints)
+	if err != nil {
+		// slog.Error("failed to start", "err", err)
+		return nil, err
+	}
+	port := s.listener.Addr().(*net.TCPAddr).Port
+
+	Info.Port = uint32(port)
 	return &Info, nil
 }
 
-func startHTTPHandle() (uint16, error) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		return 0, fmt.Errorf("failed to listen: %w", err)
-	}
+func startHTTPHandle(listener net.Listener, handler http.Handler) error {
 
-	port := listener.Addr().(*net.TCPAddr).Port
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello, World!")
-	})
-	// log.Println("SAML auth HTTP starting on port", port)
+	http.Handle("/", handler)
 
 	go func() {
 		if err := http.Serve(listener, nil); err != nil {
@@ -79,18 +97,18 @@ func startHTTPHandle() (uint16, error) {
 	}()
 	// log.Println("SAML auth HTTP started on port", port)
 
-	return uint16(port), nil
+	return nil
 }
 
 func main() {
-	port, err := startHTTPHandle()
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		// slog.Error("failed to start", "err", err)
-		return
+		log.Fatalf("failed to listen: %v", err)
 	}
-	Info.Port = uint32(port)
 
-	auth_s := &SAMLAuth{}
+	auth_s := &SAMLAuth{
+		listener: listener,
+	}
 	s_plugin := auth.AuthPlugin{
 		Impl: auth_s,
 	}

@@ -49,8 +49,9 @@ message PluginInitRequest {
   uint64 callback_broker_id = 1;
 }
 
+
 service AuthPlugin {
-  rpc Info(common.Empty) returns (common.PluginInfo);
+  rpc Info(common.PluginInitialMessage) returns (common.PluginInfo);
   rpc Heartbeat(common.Empty) returns (common.HeartbeatInfo);
   rpc GetLoginURL(UserLoginStartRequest) returns (LoginURL);
   rpc Logout(UserLogOffRequest) returns (common.Empty);

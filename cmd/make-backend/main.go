@@ -60,6 +60,11 @@ func main() {
 	if port == "" {
 		log.Fatal("No PORT env found")
 	}
+	host := os.Getenv("HOST_URL")
+	if port == "" {
+		log.Fatal("No HOST_URL env found")
+	}
+	hostAndPort := fmt.Sprintf("%s:%s", host, port)
 
 	// Database
 	db, err := database.SetupDB()
@@ -73,7 +78,7 @@ func main() {
 
 	httpServer := startHttp(db, store, logger, httpPort)
 	mqttServer, _ := acsmqtt.StartMqtt(logger, store, mqttPort)
-	stopPlugins, pluginForwards, err := plugins.StartPlugins(store)
+	stopPlugins, pluginForwards, err := plugins.StartPlugins(hostAndPort, store)
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort, pluginForwards)
 	if err != nil {
 		slog.Error("failed to start plugins", "err", err)
@@ -139,8 +144,6 @@ func StartReverseProxy(port string, httpPort, mqttPort int, pluginForwards []plu
 func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port int) *http.Server {
 	// Sessions
 	sessionManager := auth.SetupSessions(db)
-	// Auth
-	samlMiddleware := auth.SetupSamlSP(store, sessionManager)
 
 	// GraphQL
 	graphqlConfig := gql.Config{Resolvers: &resolvers.Resolver{Store: store}}
@@ -159,8 +162,6 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 	})
 
 	mux := http.NewServeMux()
-
-	mux.Handle("/saml/", samlMiddleware)
 
 	protectedQueryHandler := sessionManager.LoadAndSave(auth.AuthContextMiddleware(srv, sessionManager))
 

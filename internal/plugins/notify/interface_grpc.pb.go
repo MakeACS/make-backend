@@ -27,7 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NotificationPluginClient interface {
-	Info(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*common.PluginInfo, error)
+	Info(ctx context.Context, in *common.PluginInitialMessage, opts ...grpc.CallOption) (*common.PluginInfo, error)
 }
 
 type notificationPluginClient struct {
@@ -38,7 +38,7 @@ func NewNotificationPluginClient(cc grpc.ClientConnInterface) NotificationPlugin
 	return &notificationPluginClient{cc}
 }
 
-func (c *notificationPluginClient) Info(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*common.PluginInfo, error) {
+func (c *notificationPluginClient) Info(ctx context.Context, in *common.PluginInitialMessage, opts ...grpc.CallOption) (*common.PluginInfo, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(common.PluginInfo)
 	err := c.cc.Invoke(ctx, NotificationPlugin_Info_FullMethodName, in, out, cOpts...)
@@ -52,7 +52,7 @@ func (c *notificationPluginClient) Info(ctx context.Context, in *common.Empty, o
 // All implementations must embed UnimplementedNotificationPluginServer
 // for forward compatibility.
 type NotificationPluginServer interface {
-	Info(context.Context, *common.Empty) (*common.PluginInfo, error)
+	Info(context.Context, *common.PluginInitialMessage) (*common.PluginInfo, error)
 	mustEmbedUnimplementedNotificationPluginServer()
 }
 
@@ -63,7 +63,7 @@ type NotificationPluginServer interface {
 // pointer dereference when methods are called.
 type UnimplementedNotificationPluginServer struct{}
 
-func (UnimplementedNotificationPluginServer) Info(context.Context, *common.Empty) (*common.PluginInfo, error) {
+func (UnimplementedNotificationPluginServer) Info(context.Context, *common.PluginInitialMessage) (*common.PluginInfo, error) {
 	return nil, status.Error(codes.Unimplemented, "method Info not implemented")
 }
 func (UnimplementedNotificationPluginServer) mustEmbedUnimplementedNotificationPluginServer() {}
@@ -88,7 +88,7 @@ func RegisterNotificationPluginServer(s grpc.ServiceRegistrar, srv NotificationP
 }
 
 func _NotificationPlugin_Info_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(common.Empty)
+	in := new(common.PluginInitialMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func _NotificationPlugin_Info_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: NotificationPlugin_Info_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NotificationPluginServer).Info(ctx, req.(*common.Empty))
+		return srv.(NotificationPluginServer).Info(ctx, req.(*common.PluginInitialMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }

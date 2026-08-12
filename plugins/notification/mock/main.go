@@ -26,7 +26,7 @@ func (m *MockNotifier) NotifyUser(args notify.NotifyUserArgs) error {
 }
 
 // Info implements [plugins.NotificationProvider].
-func (m *MockNotifier) Info() (*common.PluginInfo, error) {
+func (m *MockNotifier) Info(*common.PluginInitialMessage) (*common.PluginInfo, error) {
 	// log.Println("info called")
 	return &common.PluginInfo{
 			Id:    pluginName,
