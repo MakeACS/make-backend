@@ -103,6 +103,7 @@ func initMessageForPlugin(host string, desc common.PluginDescription) *common.Pl
 	var msg = common.PluginInitialMessage{}
 	msg.ServerHost = host
 	msg.PluginUrlBase = fmt.Sprintf("%s/plugin/%s", host, desc.Name)
+	fmt.Println("pligln url base", msg.PluginUrlBase)
 
 	msg.Configs = []*common.ConfigPair{}
 	for k, v := range desc.Options {
@@ -115,10 +116,19 @@ func initMessageForPlugin(host string, desc common.PluginDescription) *common.Pl
 	return &msg
 }
 
-func StartPlugins(host string, store *database.Store) (func(), []PluginHTTPForwarding, error) {
+type Plugins struct {
+	Notification map[string]notify.NotificationProvider
+	Auth         map[string]auth.AuthProvider
+}
+
+func StartPlugins(host string, store *database.Store) (func(), []PluginHTTPForwarding, Plugins, error) {
 	plugin_dir := path.Join("./plugins", "bin")
 
 	forwards := []PluginHTTPForwarding{}
+	var plugins = Plugins{
+		Notification: map[string]notify.NotificationProvider{},
+		Auth:         map[string]auth.AuthProvider{},
+	}
 
 	var pluginMap = generatePluginMap(wanted_plugins)
 
@@ -170,17 +180,28 @@ func StartPlugins(host string, store *database.Store) (func(), []PluginHTTPForwa
 			})
 		}
 
-		if plugin_desc.PluginType == common.PluginType_Auth {
+		switch plugin_desc.PluginType {
+		case common.PluginType_Auth:
 			authPlugin, ok := raw.(auth.AuthProvider)
 			if !ok {
 				slog.Warn("plugin lied about type", "wanted", plugin_desc.PluginType, "plugin", plugin_desc.Name)
 			}
 			authPlugin.RegisterCallbackProvider(&TestAuthCBProvider{})
+			plugins.Auth[plugin_desc.Name] = authPlugin
+
+		case common.PluginType_Notification:
+			notifyPlugin, ok := raw.(notify.NotificationProvider)
+			if !ok {
+				slog.Warn("plugin lied about type", "wanted", plugin_desc.PluginType, "plugin", plugin_desc.Name)
+			}
+			plugins.Notification[plugin_desc.Name] = notifyPlugin
+
 		}
+
 	}
 
 	return func() {
 		plugin.CleanupClients()
-	}, forwards, nil
+	}, forwards, plugins, nil
 
 }

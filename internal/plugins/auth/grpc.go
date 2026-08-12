@@ -95,8 +95,14 @@ func (g *GRPCClient) Info(init *common.PluginInitialMessage) (*common.PluginInfo
 }
 
 // GetLoginURL implements [AuthProvider].
-func (g *GRPCClient) GetLoginURL(*UserLoginStartRequest) LoginURL {
-	panic("unimplemented")
+func (g *GRPCClient) GetLoginURL(req *UserLoginStartRequest) (*LoginURL, error) {
+	res, err := g.client.GetLoginURL(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+
 }
 
 // Heartbeat implements [AuthProvider].
@@ -117,8 +123,13 @@ type GRPCServer struct {
 }
 
 // GetLoginURL implements [AuthPluginServer].
-func (g *GRPCServer) GetLoginURL(context.Context, *UserLoginStartRequest) (*LoginURL, error) {
-	panic("unimplemented")
+func (g *GRPCServer) GetLoginURL(ctx context.Context, req *UserLoginStartRequest) (*LoginURL, error) {
+	res, err := g.Impl.GetLoginURL(req)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+
 }
 
 // Heartbeat implements [AuthPluginServer].

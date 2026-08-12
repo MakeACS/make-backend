@@ -10,6 +10,7 @@ import (
 	"make-backend/internal/gql"
 	"make-backend/internal/logging"
 	"make-backend/internal/plugins"
+	auth_plugin "make-backend/internal/plugins/auth"
 	"time"
 
 	acsmqtt "make-backend/internal/api/acs/acs-mqtt"
@@ -47,6 +48,15 @@ func init() {
 const httpPort = 23003
 const mqttPort = 23002
 
+var glblPlugins = plugins.Plugins{}
+
+func GetAuthPlugin() auth_plugin.AuthProvider {
+	for _, p := range glblPlugins.Auth {
+		return p
+	}
+	return nil
+}
+
 func main() {
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
@@ -78,7 +88,8 @@ func main() {
 
 	httpServer := startHttp(db, store, logger, httpPort)
 	mqttServer, _ := acsmqtt.StartMqtt(logger, store, mqttPort)
-	stopPlugins, pluginForwards, err := plugins.StartPlugins(hostAndPort, store)
+	stopPlugins, pluginForwards, plugins, err := plugins.StartPlugins(hostAndPort, store)
+	glblPlugins = plugins
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort, pluginForwards)
 	if err != nil {
 		slog.Error("failed to start plugins", "err", err)
@@ -103,7 +114,18 @@ func StartReverseProxy(port string, httpPort, mqttPort int, pluginForwards []plu
 	pluginRProxies := []*httputil.ReverseProxy{}
 	for _, forward := range pluginForwards {
 		target, _ := url.Parse(fmt.Sprintf("http://localhost:%d", forward.ToPort))
-		pluginRProxies = append(pluginRProxies, httputil.NewSingleHostReverseProxy(target))
+
+		proxy := &httputil.ReverseProxy{
+			Rewrite: func(pr *httputil.ProxyRequest) {
+				pr.SetURL(target)
+
+				inboundPath := pr.In.URL.Path
+				if strings.HasPrefix(inboundPath, forward.Path) {
+					pr.Out.URL.Path = strings.TrimPrefix(inboundPath, forward.Path)
+				}
+			},
+		}
+		pluginRProxies = append(pluginRProxies, proxy)
 		slog.Info("Setting up plugin HTTP forwarding", "path", forward.Path, "to", target)
 	}
 
@@ -122,6 +144,7 @@ func StartReverseProxy(port string, httpPort, mqttPort int, pluginForwards []plu
 		for i, path := range pluginForwards {
 			if strings.HasPrefix(r.URL.Path, path.Path) {
 				pluginRProxies[i].ServeHTTP(w, r)
+				slog.Info("serving to plugin", "path", pluginForwards[i].Path, "to", pluginForwards[i].ToPort)
 				return
 			}
 		}
@@ -163,13 +186,29 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 
 	mux := http.NewServeMux()
 
-	protectedQueryHandler := sessionManager.LoadAndSave(auth.AuthContextMiddleware(srv, sessionManager))
+	protectedQueryHandler := sessionManager.LoadAndSave(auth.OptionalAuthMiddleware(srv, sessionManager))
 
 	mux.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	mux.Handle("/query", protectedQueryHandler)
 
+	loginHandler := func(w http.ResponseWriter, r *http.Request) {
+		a := GetAuthPlugin()
+		u, err := a.GetLoginURL(&auth_plugin.UserLoginStartRequest{
+			PassthroughData: "hello",
+		})
+		if err != nil {
+			slog.Error("failed to get login url")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, u.Url, http.StatusFound)
+	}
+
 	fileHandler := http.StripPrefix("/app/", http.FileServer(http.Dir("./client")))
 	mux.Handle("/app/", fileHandler)
+	mux.HandleFunc("/login", loginHandler)
+
 	mux.Handle("/", http.RedirectHandler("/app/", http.StatusFound))
 
 	rest.RegisterHandlers(mux)

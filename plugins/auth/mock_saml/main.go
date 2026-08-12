@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/crewjam/saml/samlsp"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -38,8 +39,9 @@ func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
 }
 
 // GetLoginURL implements [auth.AuthProvider].
-func (s *SAMLAuth) GetLoginURL(*auth.UserLoginStartRequest) auth.LoginURL {
-	panic("unimplemented")
+func (s *SAMLAuth) GetLoginURL(*auth.UserLoginStartRequest) (*auth.LoginURL, error) {
+	return &auth.LoginURL{Url: "http://http.cat/404"}, nil
+
 }
 
 // Heartbeat implements [auth.AuthProvider].
@@ -59,7 +61,8 @@ func (s *SAMLAuth) Logout(*auth.UserLogOffRequest) {
 
 func SamlConfigFromPluginConfig(init *common.PluginInitialMessage) Config {
 	var c Config
-	c.Host = init.PluginUrlBase
+	c.BaseURL = init.PluginUrlBase
+	log.Println("CHost", c.BaseURL)
 	for _, pair := range init.Configs {
 		switch pair.Key {
 		case "SP_CERT":
@@ -86,16 +89,19 @@ func (s *SAMLAuth) Info(init *common.PluginInitialMessage) (*common.PluginInfo, 
 	return &Info, nil
 }
 
-func startHTTPHandle(listener net.Listener, handler http.Handler) error {
+func startHTTPHandle(listener net.Listener, handler *samlsp.Middleware) error {
 
-	http.Handle("/", handler)
-
+	http.DefaultServeMux.HandleFunc("/metadata", handler.ServeMetadata)
+	http.DefaultServeMux.HandleFunc("/acs", handler.ServeACS)
+	// http.Handle("/plugin/auth.core.saml/", handler)
+	http.Handle("/protected", handler.RequireAccount(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("protected"))
+	})))
 	go func() {
 		if err := http.Serve(listener, nil); err != nil {
 			slog.Error("server error", "err", err)
 		}
 	}()
-	// log.Println("SAML auth HTTP started on port", port)
 
 	return nil
 }
