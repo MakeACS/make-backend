@@ -148,9 +148,8 @@ func StartPlugins(store *database.Store) (func(), []PluginHTTPForwarding, error)
 		if plugin_desc.PluginType == common.PluginType_Auth {
 			authPlugin, ok := raw.(auth.AuthProvider)
 			if !ok {
-				slog.Warn("plugin lied about type", "wanted", plugin_desc.PluginType)
+				slog.Warn("plugin lied about type", "wanted", plugin_desc.PluginType, "plugin", plugin_desc.Name)
 			}
-			slog.Info("giving broker channel via init")
 			authPlugin.RegisterCallbackProvider(&TestAuthCBProvider{})
 		}
 	}

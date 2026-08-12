@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"log/slog"
 	"make-backend/internal/plugins/auth"
 	"make-backend/internal/plugins/common"
@@ -27,23 +26,12 @@ var Info = common.PluginInfo{
 }
 
 type SAMLAuth struct {
-	server    *auth.AuthPluginServer
 	callbacks auth.AuthCallbackProvider
 }
 
 // RegisterCallbackProvider implements [auth.AuthProvider].
 func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
 	s.callbacks = cb
-	log.Println("cb provided")
-	r, err := s.callbacks.UserLoggedIn(&auth.UserLoginCallback{
-		Email:             "test@gmail",
-		FullName:          "test man",
-		PreferredName:     "tman",
-		ProfilePictureUrl: "http.cat/404",
-		PassthroughData:   "token",
-	})
-	log.Println("used CB ", r, err)
-
 }
 
 // GetLoginURL implements [auth.AuthProvider].

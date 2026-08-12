@@ -3,7 +3,6 @@ package auth
 import (
 	context "context"
 	"fmt"
-	"log"
 	"log/slog"
 	"make-backend/internal/plugins/common"
 
@@ -12,10 +11,10 @@ import (
 )
 
 type GRPCClient struct {
-	client           AuthPluginClient
-	broker           *plugin.GRPCBroker
-	callbackBrokerID uint32
-	callbackServer   AuthCallbackServiceServer
+	client AuthPluginClient
+
+	broker         *plugin.GRPCBroker
+	callbackServer AuthCallbackServiceServer
 }
 
 // RegisterCallbackProvider implements [AuthProvider].
@@ -29,10 +28,7 @@ func (g *GRPCClient) RegisterCallbackProvider(cb AuthCallbackProvider) {
 }
 
 type GRPCCallbackClient struct {
-	client           AuthCallbackServiceClient
-	broker           *plugin.GRPCBroker
-	callbackServer   AuthCallbackServiceServer
-	callbackBrokerID uint32
+	client AuthCallbackServiceClient
 }
 type GRPCCallbackServer struct {
 	UnimplementedAuthCallbackServiceServer
@@ -72,16 +68,16 @@ var _ AuthProvider = &GRPCClient{}
 
 func (g *GRPCClient) initialize() error {
 
-	g.callbackBrokerID = g.broker.NextId()
+	callbackBrokerID := g.broker.NextId()
 
-	go g.broker.AcceptAndServe(g.callbackBrokerID, func(opts []grpc.ServerOption) *grpc.Server {
+	go g.broker.AcceptAndServe(callbackBrokerID, func(opts []grpc.ServerOption) *grpc.Server {
 		server := grpc.NewServer(opts...)
 		RegisterAuthCallbackServiceServer(server, g.callbackServer)
 		return server
 	})
 
 	_, err := g.client.InternalInitializeCallbacks(context.TODO(), &PluginInitRequest{
-		CallbackBrokerId: uint64(g.callbackBrokerID),
+		CallbackBrokerId: uint64(callbackBrokerID),
 	})
 	return err
 }
@@ -141,7 +137,7 @@ func (g *GRPCServer) Info(ctx context.Context, _ *common.Empty) (*common.PluginI
 }
 
 func (g *GRPCServer) InternalInitializeCallbacks(ctx context.Context, req *PluginInitRequest) (*common.Empty, error) {
-	log.Println("GRPC server got init to channel", req.GetCallbackBrokerId())
+	slog.Debug("Auth GRPC server init callbacks", "broker_id", req.GetCallbackBrokerId())
 	conn, err := g.broker.Dial(uint32(req.GetCallbackBrokerId()))
 	if err != nil {
 		return nil, fmt.Errorf("dial host callback broker: %w", err)
@@ -151,12 +147,8 @@ func (g *GRPCServer) InternalInitializeCallbacks(ctx context.Context, req *Plugi
 		client: NewAuthCallbackServiceClient(conn),
 	}
 	g.Impl.RegisterCallbackProvider(&cbClient)
-	// err := g.Impl.Initialize(req)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	empty := common.Empty{}
 
+	empty := common.Empty{}
 	return &empty, nil
 }
 

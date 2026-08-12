@@ -23,19 +23,6 @@ type AuthProvider interface {
 	RegisterCallbackProvider(AuthCallbackProvider)
 }
 
-/*
- server start
-         plugin start
- ask for addr
-         give addr
- connect
- call initialize{channel}
-
- server -- init
-
-
-*/
-
 type AuthPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	// Impl Injection

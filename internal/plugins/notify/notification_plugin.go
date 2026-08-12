@@ -81,9 +81,11 @@ func (s *NotificationProviderRPCServer) NotifyUser(args NotifyUserArgs, resp *er
 }
 
 func (s *NotificationProviderRPCServer) Info(args interface{}, resp *common.PluginInfo) error {
-	panic("broken on the way to grpc")
-	// *resp = s.Impl.Info()
-	return nil
+	r, err := s.Impl.Info()
+	resp.Id = r.Id
+	resp.About = r.About
+	resp.Port = r.Port
+	return err
 }
 func (p *NotificationPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	RegisterNotificationPluginServer(s, &GRPCServer{Impl: p.Impl})
