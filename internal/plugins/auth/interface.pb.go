@@ -470,7 +470,7 @@ func (x *LoginRequest) GetBody() []byte {
 type RedirectURL struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GotoUrl       string                 `protobuf:"bytes,1,opt,name=gotoUrl,proto3" json:"gotoUrl,omitempty"`
-	SetCookies    []*SetKV               `protobuf:"bytes,2,rep,name=setCookies,proto3" json:"setCookies,omitempty"`
+	SetHeaders    []*SetKV               `protobuf:"bytes,2,rep,name=setHeaders,proto3" json:"setHeaders,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -512,9 +512,9 @@ func (x *RedirectURL) GetGotoUrl() string {
 	return ""
 }
 
-func (x *RedirectURL) GetSetCookies() []*SetKV {
+func (x *RedirectURL) GetSetHeaders() []*SetKV {
 	if x != nil {
-		return x.SetCookies
+		return x.SetHeaders
 	}
 	return nil
 }
@@ -642,8 +642,8 @@ const file_auth_interface_proto_rawDesc = "" +
 	"\vRedirectURL\x12\x18\n" +
 	"\agotoUrl\x18\x01 \x01(\tR\agotoUrl\x12+\n" +
 	"\n" +
-	"setCookies\x18\x02 \x03(\v2\v.auth.SetKVR\n" +
-	"setCookies\"\x1f\n" +
+	"setHeaders\x18\x02 \x03(\v2\v.auth.SetKVR\n" +
+	"setHeaders\"\x1f\n" +
 	"\tSubserver\x12\x12\n" +
 	"\x04port\x18\x01 \x01(\x05R\x04port\"A\n" +
 	"\x11PluginInitRequest\x12,\n" +
@@ -699,7 +699,7 @@ var file_auth_interface_proto_goTypes = []any{
 var file_auth_interface_proto_depIdxs = []int32{
 	0,  // 0: auth.UserLoginResponse.response_type:type_name -> auth.UserLoginResponseType
 	5,  // 1: auth.LoginRequest.setHeaders:type_name -> auth.SetKV
-	5,  // 2: auth.RedirectURL.setCookies:type_name -> auth.SetKV
+	5,  // 2: auth.RedirectURL.setHeaders:type_name -> auth.SetKV
 	10, // 3: auth.AuthPlugin.Info:input_type -> common.PluginInitialMessage
 	11, // 4: auth.AuthPlugin.Heartbeat:input_type -> common.Empty
 	2,  // 5: auth.AuthPlugin.GetLoginRequest:input_type -> auth.UserLoginStartRequest

@@ -49,7 +49,7 @@ func init() {
 const httpPort = 23003
 const mqttPort = 23002
 
-var glblPlugins = plugins.Plugins{}
+var glblPlugins = plugins.PluginStore{}
 
 func GetAuthPlugin() auth_plugin.AuthProvider {
 	for _, p := range glblPlugins.Auth {
@@ -91,9 +91,9 @@ func main() {
 
 	httpServer := startHttp(db, store, logger, httpPort, sessionManager)
 	mqttServer, _ := acsmqtt.StartMqtt(logger, store, mqttPort)
-	stopPlugins, pluginForwards, plugins, err := plugins.StartPlugins(hostAndPort, store, sessionManager)
+	plugins, err := plugins.StartPlugins(hostAndPort, store, sessionManager)
 	glblPlugins = plugins
-	reverseProxy := StartReverseProxy(port, httpPort, mqttPort, pluginForwards)
+	reverseProxy := StartReverseProxy(port, httpPort, mqttPort, plugins.HttpForwards)
 	if err != nil {
 		slog.Error("failed to start plugins", "err", err)
 	}
@@ -103,7 +103,7 @@ func main() {
 	logger.AuditLog.CreateUnassociatedWithData("builtin.server.start.1", map[string]any{"time": time.Now()}, "Server started")
 	<-done
 	slog.Warn("caught signal, stopping...")
-	stopPlugins()
+	plugins.Shutdown()
 	reverseProxy.Close()
 	mqttServer.Close()
 	httpServer.Close()

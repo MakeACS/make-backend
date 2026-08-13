@@ -58,7 +58,7 @@ message LoginRequest {
 
 message RedirectURL { 
     string gotoUrl = 1; 
-    repeated SetKV setCookies = 2;  
+    repeated SetKV setHeaders = 2;  
 }
 
 message Subserver{
