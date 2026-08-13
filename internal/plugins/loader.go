@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -82,11 +83,14 @@ func generatePluginMap(wanted []common.PluginDescription) map[string]plugin.Plug
 	return pluginMap
 }
 
-type TestAuthCBProvider struct{}
+type TestAuthCBProvider struct {
+	sessionManager *scs.SessionManager
+}
 
 // UserLoggedIn implements [auth.AuthCallbackProvider].
-func (t *TestAuthCBProvider) UserLoggedIn(*auth.UserLoginCallback) (*auth.RedirectURL, error) {
-	slog.Info("User logged in")
+func (t *TestAuthCBProvider) UserLoggedIn(data *auth.UserLoginCallback) (*auth.RedirectURL, error) {
+	slog.Info("User logged in", "data", data)
+	t.sessionManager.LoadAndSave()
 	return nil, nil
 }
 
@@ -121,7 +125,7 @@ type Plugins struct {
 	Auth         map[string]auth.AuthProvider
 }
 
-func StartPlugins(host string, store *database.Store) (func(), []PluginHTTPForwarding, Plugins, error) {
+func StartPlugins(host string, store *database.Store, sessionManager *scs.SessionManager) (func(), []PluginHTTPForwarding, Plugins, error) {
 	plugin_dir := path.Join("./plugins", "bin")
 
 	forwards := []PluginHTTPForwarding{}
@@ -186,7 +190,7 @@ func StartPlugins(host string, store *database.Store) (func(), []PluginHTTPForwa
 			if !ok {
 				slog.Warn("plugin lied about type", "wanted", plugin_desc.PluginType, "plugin", plugin_desc.Name)
 			}
-			authPlugin.RegisterCallbackProvider(&TestAuthCBProvider{})
+			authPlugin.RegisterCallbackProvider(&TestAuthCBProvider{sessionManager})
 			plugins.Auth[plugin_desc.Name] = authPlugin
 
 		case common.PluginType_Notification:

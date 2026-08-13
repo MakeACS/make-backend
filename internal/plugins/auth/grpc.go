@@ -52,7 +52,7 @@ func (g *GRPCCallbackClient) UserLoggedIn(cb *UserLoginCallback) (*RedirectURL, 
 		FullName:          cb.FullName,
 		PreferredName:     cb.PreferredName,
 		ProfilePictureUrl: cb.ProfilePictureUrl,
-		PassthroughData:   cb.PassthroughData,
+		OriginalURL:       cb.OriginalURL,
 	})
 	return u, err
 
@@ -94,9 +94,9 @@ func (g *GRPCClient) Info(init *common.PluginInitialMessage) (*common.PluginInfo
 
 }
 
-// GetLoginURL implements [AuthProvider].
-func (g *GRPCClient) GetLoginURL(req *UserLoginStartRequest) (*LoginURL, error) {
-	res, err := g.client.GetLoginURL(context.Background(), req)
+// GenerateLoginRequest implements [AuthProvider].
+func (g *GRPCClient) GenerateLoginRequest(req *UserLoginStartRequest) (*LoginRequest, error) {
+	res, err := g.client.GetLoginRequest(context.Background(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -122,9 +122,8 @@ type GRPCServer struct {
 	broker *plugin.GRPCBroker
 }
 
-// GetLoginURL implements [AuthPluginServer].
-func (g *GRPCServer) GetLoginURL(ctx context.Context, req *UserLoginStartRequest) (*LoginURL, error) {
-	res, err := g.Impl.GetLoginURL(req)
+func (g *GRPCServer) GetLoginRequest(ctx context.Context, req *UserLoginStartRequest) (*LoginRequest, error) {
+	res, err := g.Impl.GenerateLoginRequest(req)
 	if err != nil {
 		return nil, err
 	}

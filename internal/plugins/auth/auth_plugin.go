@@ -18,7 +18,7 @@ type AuthCallbackProvider interface {
 type AuthProvider interface {
 	common.BasePlugin
 	Heartbeat() common.HeartbeatInfo
-	GetLoginURL(*UserLoginStartRequest) (*LoginURL, error)
+	GenerateLoginRequest(*UserLoginStartRequest) (*LoginRequest, error)
 	Logout(*UserLogOffRequest)
 	RegisterCallbackProvider(AuthCallbackProvider)
 }

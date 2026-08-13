@@ -83,7 +83,7 @@ type UserLoginCallback struct {
 	FullName          string                 `protobuf:"bytes,2,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
 	PreferredName     string                 `protobuf:"bytes,3,opt,name=preferred_name,json=preferredName,proto3" json:"preferred_name,omitempty"`
 	ProfilePictureUrl string                 `protobuf:"bytes,4,opt,name=profile_picture_url,json=profilePictureUrl,proto3" json:"profile_picture_url,omitempty"`
-	PassthroughData   string                 `protobuf:"bytes,5,opt,name=passthrough_data,json=passthroughData,proto3" json:"passthrough_data,omitempty"`
+	OriginalURL       string                 `protobuf:"bytes,5,opt,name=originalURL,proto3" json:"originalURL,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -146,18 +146,18 @@ func (x *UserLoginCallback) GetProfilePictureUrl() string {
 	return ""
 }
 
-func (x *UserLoginCallback) GetPassthroughData() string {
+func (x *UserLoginCallback) GetOriginalURL() string {
 	if x != nil {
-		return x.PassthroughData
+		return x.OriginalURL
 	}
 	return ""
 }
 
 type UserLoginStartRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	PassthroughData string                 `protobuf:"bytes,1,opt,name=passthrough_data,json=passthroughData,proto3" json:"passthrough_data,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OriginalURL   string                 `protobuf:"bytes,1,opt,name=originalURL,proto3" json:"originalURL,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UserLoginStartRequest) Reset() {
@@ -190,9 +190,9 @@ func (*UserLoginStartRequest) Descriptor() ([]byte, []int) {
 	return file_auth_interface_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *UserLoginStartRequest) GetPassthroughData() string {
+func (x *UserLoginStartRequest) GetOriginalURL() string {
 	if x != nil {
-		return x.PassthroughData
+		return x.OriginalURL
 	}
 	return ""
 }
@@ -347,27 +347,28 @@ func (*UserLogOffRequest_Id) isUserLogOffRequest_User() {}
 
 func (*UserLogOffRequest_Email) isUserLogOffRequest_User() {}
 
-type LoginURL struct {
+type SetKV struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *LoginURL) Reset() {
-	*x = LoginURL{}
+func (x *SetKV) Reset() {
+	*x = SetKV{}
 	mi := &file_auth_interface_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *LoginURL) String() string {
+func (x *SetKV) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*LoginURL) ProtoMessage() {}
+func (*SetKV) ProtoMessage() {}
 
-func (x *LoginURL) ProtoReflect() protoreflect.Message {
+func (x *SetKV) ProtoReflect() protoreflect.Message {
 	mi := &file_auth_interface_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -379,28 +380,104 @@ func (x *LoginURL) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use LoginURL.ProtoReflect.Descriptor instead.
-func (*LoginURL) Descriptor() ([]byte, []int) {
+// Deprecated: Use SetKV.ProtoReflect.Descriptor instead.
+func (*SetKV) Descriptor() ([]byte, []int) {
 	return file_auth_interface_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *LoginURL) GetUrl() string {
+func (x *SetKV) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *SetKV) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type LoginRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Code          int32                  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
+	SetHeaders    []*SetKV               `protobuf:"bytes,3,rep,name=setHeaders,proto3" json:"setHeaders,omitempty"`
+	Body          []byte                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginRequest) Reset() {
+	*x = LoginRequest{}
+	mi := &file_auth_interface_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginRequest) ProtoMessage() {}
+
+func (x *LoginRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_interface_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
+func (*LoginRequest) Descriptor() ([]byte, []int) {
+	return file_auth_interface_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *LoginRequest) GetUrl() string {
 	if x != nil {
 		return x.Url
 	}
 	return ""
 }
 
+func (x *LoginRequest) GetCode() int32 {
+	if x != nil {
+		return x.Code
+	}
+	return 0
+}
+
+func (x *LoginRequest) GetSetHeaders() []*SetKV {
+	if x != nil {
+		return x.SetHeaders
+	}
+	return nil
+}
+
+func (x *LoginRequest) GetBody() []byte {
+	if x != nil {
+		return x.Body
+	}
+	return nil
+}
+
 type RedirectURL struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	GotoUrl       string                 `protobuf:"bytes,1,opt,name=gotoUrl,proto3" json:"gotoUrl,omitempty"`
+	SetCookies    []*SetKV               `protobuf:"bytes,2,rep,name=setCookies,proto3" json:"setCookies,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RedirectURL) Reset() {
 	*x = RedirectURL{}
-	mi := &file_auth_interface_proto_msgTypes[5]
+	mi := &file_auth_interface_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +489,7 @@ func (x *RedirectURL) String() string {
 func (*RedirectURL) ProtoMessage() {}
 
 func (x *RedirectURL) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_interface_proto_msgTypes[5]
+	mi := &file_auth_interface_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,14 +502,21 @@ func (x *RedirectURL) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RedirectURL.ProtoReflect.Descriptor instead.
 func (*RedirectURL) Descriptor() ([]byte, []int) {
-	return file_auth_interface_proto_rawDescGZIP(), []int{5}
+	return file_auth_interface_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *RedirectURL) GetUrl() string {
+func (x *RedirectURL) GetGotoUrl() string {
 	if x != nil {
-		return x.Url
+		return x.GotoUrl
 	}
 	return ""
+}
+
+func (x *RedirectURL) GetSetCookies() []*SetKV {
+	if x != nil {
+		return x.SetCookies
+	}
+	return nil
 }
 
 type Subserver struct {
@@ -444,7 +528,7 @@ type Subserver struct {
 
 func (x *Subserver) Reset() {
 	*x = Subserver{}
-	mi := &file_auth_interface_proto_msgTypes[6]
+	mi := &file_auth_interface_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +540,7 @@ func (x *Subserver) String() string {
 func (*Subserver) ProtoMessage() {}
 
 func (x *Subserver) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_interface_proto_msgTypes[6]
+	mi := &file_auth_interface_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +553,7 @@ func (x *Subserver) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Subserver.ProtoReflect.Descriptor instead.
 func (*Subserver) Descriptor() ([]byte, []int) {
-	return file_auth_interface_proto_rawDescGZIP(), []int{6}
+	return file_auth_interface_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Subserver) GetPort() int32 {
@@ -488,7 +572,7 @@ type PluginInitRequest struct {
 
 func (x *PluginInitRequest) Reset() {
 	*x = PluginInitRequest{}
-	mi := &file_auth_interface_proto_msgTypes[7]
+	mi := &file_auth_interface_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -500,7 +584,7 @@ func (x *PluginInitRequest) String() string {
 func (*PluginInitRequest) ProtoMessage() {}
 
 func (x *PluginInitRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_interface_proto_msgTypes[7]
+	mi := &file_auth_interface_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -513,7 +597,7 @@ func (x *PluginInitRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginInitRequest.ProtoReflect.Descriptor instead.
 func (*PluginInitRequest) Descriptor() ([]byte, []int) {
-	return file_auth_interface_proto_rawDescGZIP(), []int{7}
+	return file_auth_interface_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PluginInitRequest) GetCallbackBrokerId() uint64 {
@@ -527,15 +611,15 @@ var File_auth_interface_proto protoreflect.FileDescriptor
 
 const file_auth_interface_proto_rawDesc = "" +
 	"\n" +
-	"\x14auth/interface.proto\x12\x04auth\x1a\x13common/plugin.proto\"\xc8\x01\n" +
+	"\x14auth/interface.proto\x12\x04auth\x1a\x13common/plugin.proto\"\xbf\x01\n" +
 	"\x11UserLoginCallback\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12%\n" +
 	"\x0epreferred_name\x18\x03 \x01(\tR\rpreferredName\x12.\n" +
-	"\x13profile_picture_url\x18\x04 \x01(\tR\x11profilePictureUrl\x12)\n" +
-	"\x10passthrough_data\x18\x05 \x01(\tR\x0fpassthroughData\"B\n" +
-	"\x15UserLoginStartRequest\x12)\n" +
-	"\x10passthrough_data\x18\x01 \x01(\tR\x0fpassthroughData\"\x93\x01\n" +
+	"\x13profile_picture_url\x18\x04 \x01(\tR\x11profilePictureUrl\x12 \n" +
+	"\voriginalURL\x18\x05 \x01(\tR\voriginalURL\"9\n" +
+	"\x15UserLoginStartRequest\x12 \n" +
+	"\voriginalURL\x18\x01 \x01(\tR\voriginalURL\"\x93\x01\n" +
 	"\x11UserLoginResponse\x12@\n" +
 	"\rresponse_type\x18\x01 \x01(\x0e2\x1b.auth.UserLoginResponseTypeR\fresponseType\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x05R\x06userId\x12#\n" +
@@ -544,11 +628,22 @@ const file_auth_interface_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x05H\x00R\x02id\x12\x16\n" +
 	"\x05email\x18\x02 \x01(\tH\x00R\x05email\x12$\n" +
 	"\x0esigned_out_url\x18\x03 \x01(\tR\fsignedOutUrlB\x06\n" +
-	"\x04user\"\x1c\n" +
-	"\bLoginURL\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\"\x1f\n" +
-	"\vRedirectURL\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\"\x1f\n" +
+	"\x04user\"/\n" +
+	"\x05SetKV\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"u\n" +
+	"\fLoginRequest\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\x05R\x04code\x12+\n" +
+	"\n" +
+	"setHeaders\x18\x03 \x03(\v2\v.auth.SetKVR\n" +
+	"setHeaders\x12\x12\n" +
+	"\x04body\x18\x04 \x01(\fR\x04body\"T\n" +
+	"\vRedirectURL\x12\x18\n" +
+	"\agotoUrl\x18\x01 \x01(\tR\agotoUrl\x12+\n" +
+	"\n" +
+	"setCookies\x18\x02 \x03(\v2\v.auth.SetKVR\n" +
+	"setCookies\"\x1f\n" +
 	"\tSubserver\x12\x12\n" +
 	"\x04port\x18\x01 \x01(\x05R\x04port\"A\n" +
 	"\x11PluginInitRequest\x12,\n" +
@@ -559,12 +654,12 @@ const file_auth_interface_proto_rawDesc = "" +
 	"\n" +
 	"USER_FOUND\x10\x02\x12&\n" +
 	"\"USER_ALREADY_EXISTS_OTHER_PROVIDER\x10\x03\x12\t\n" +
-	"\x05ERROR\x10\x042\xae\x02\n" +
+	"\x05ERROR\x10\x042\xb6\x02\n" +
 	"\n" +
 	"AuthPlugin\x128\n" +
 	"\x04Info\x12\x1c.common.PluginInitialMessage\x1a\x12.common.PluginInfo\x121\n" +
-	"\tHeartbeat\x12\r.common.Empty\x1a\x15.common.HeartbeatInfo\x12:\n" +
-	"\vGetLoginURL\x12\x1b.auth.UserLoginStartRequest\x1a\x0e.auth.LoginURL\x120\n" +
+	"\tHeartbeat\x12\r.common.Empty\x1a\x15.common.HeartbeatInfo\x12B\n" +
+	"\x0fGetLoginRequest\x12\x1b.auth.UserLoginStartRequest\x1a\x12.auth.LoginRequest\x120\n" +
 	"\x06Logout\x12\x17.auth.UserLogOffRequest\x1a\r.common.Empty\x12E\n" +
 	"\x1binternalInitializeCallbacks\x12\x17.auth.PluginInitRequest\x1a\r.common.Empty2\x8a\x01\n" +
 	"\x13AuthCallbackService\x12:\n" +
@@ -584,43 +679,46 @@ func file_auth_interface_proto_rawDescGZIP() []byte {
 }
 
 var file_auth_interface_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_auth_interface_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_auth_interface_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_auth_interface_proto_goTypes = []any{
 	(UserLoginResponseType)(0),          // 0: auth.UserLoginResponseType
 	(*UserLoginCallback)(nil),           // 1: auth.UserLoginCallback
 	(*UserLoginStartRequest)(nil),       // 2: auth.UserLoginStartRequest
 	(*UserLoginResponse)(nil),           // 3: auth.UserLoginResponse
 	(*UserLogOffRequest)(nil),           // 4: auth.UserLogOffRequest
-	(*LoginURL)(nil),                    // 5: auth.LoginURL
-	(*RedirectURL)(nil),                 // 6: auth.RedirectURL
-	(*Subserver)(nil),                   // 7: auth.Subserver
-	(*PluginInitRequest)(nil),           // 8: auth.PluginInitRequest
-	(*common.PluginInitialMessage)(nil), // 9: common.PluginInitialMessage
-	(*common.Empty)(nil),                // 10: common.Empty
-	(*common.PluginInfo)(nil),           // 11: common.PluginInfo
-	(*common.HeartbeatInfo)(nil),        // 12: common.HeartbeatInfo
+	(*SetKV)(nil),                       // 5: auth.SetKV
+	(*LoginRequest)(nil),                // 6: auth.LoginRequest
+	(*RedirectURL)(nil),                 // 7: auth.RedirectURL
+	(*Subserver)(nil),                   // 8: auth.Subserver
+	(*PluginInitRequest)(nil),           // 9: auth.PluginInitRequest
+	(*common.PluginInitialMessage)(nil), // 10: common.PluginInitialMessage
+	(*common.Empty)(nil),                // 11: common.Empty
+	(*common.PluginInfo)(nil),           // 12: common.PluginInfo
+	(*common.HeartbeatInfo)(nil),        // 13: common.HeartbeatInfo
 }
 var file_auth_interface_proto_depIdxs = []int32{
 	0,  // 0: auth.UserLoginResponse.response_type:type_name -> auth.UserLoginResponseType
-	9,  // 1: auth.AuthPlugin.Info:input_type -> common.PluginInitialMessage
-	10, // 2: auth.AuthPlugin.Heartbeat:input_type -> common.Empty
-	2,  // 3: auth.AuthPlugin.GetLoginURL:input_type -> auth.UserLoginStartRequest
-	4,  // 4: auth.AuthPlugin.Logout:input_type -> auth.UserLogOffRequest
-	8,  // 5: auth.AuthPlugin.internalInitializeCallbacks:input_type -> auth.PluginInitRequest
-	1,  // 6: auth.AuthCallbackService.UserLoggedIn:input_type -> auth.UserLoginCallback
-	4,  // 7: auth.AuthCallbackService.UserLoggedOut:input_type -> auth.UserLogOffRequest
-	11, // 8: auth.AuthPlugin.Info:output_type -> common.PluginInfo
-	12, // 9: auth.AuthPlugin.Heartbeat:output_type -> common.HeartbeatInfo
-	5,  // 10: auth.AuthPlugin.GetLoginURL:output_type -> auth.LoginURL
-	10, // 11: auth.AuthPlugin.Logout:output_type -> common.Empty
-	10, // 12: auth.AuthPlugin.internalInitializeCallbacks:output_type -> common.Empty
-	6,  // 13: auth.AuthCallbackService.UserLoggedIn:output_type -> auth.RedirectURL
-	10, // 14: auth.AuthCallbackService.UserLoggedOut:output_type -> common.Empty
-	8,  // [8:15] is the sub-list for method output_type
-	1,  // [1:8] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	5,  // 1: auth.LoginRequest.setHeaders:type_name -> auth.SetKV
+	5,  // 2: auth.RedirectURL.setCookies:type_name -> auth.SetKV
+	10, // 3: auth.AuthPlugin.Info:input_type -> common.PluginInitialMessage
+	11, // 4: auth.AuthPlugin.Heartbeat:input_type -> common.Empty
+	2,  // 5: auth.AuthPlugin.GetLoginRequest:input_type -> auth.UserLoginStartRequest
+	4,  // 6: auth.AuthPlugin.Logout:input_type -> auth.UserLogOffRequest
+	9,  // 7: auth.AuthPlugin.internalInitializeCallbacks:input_type -> auth.PluginInitRequest
+	1,  // 8: auth.AuthCallbackService.UserLoggedIn:input_type -> auth.UserLoginCallback
+	4,  // 9: auth.AuthCallbackService.UserLoggedOut:input_type -> auth.UserLogOffRequest
+	12, // 10: auth.AuthPlugin.Info:output_type -> common.PluginInfo
+	13, // 11: auth.AuthPlugin.Heartbeat:output_type -> common.HeartbeatInfo
+	6,  // 12: auth.AuthPlugin.GetLoginRequest:output_type -> auth.LoginRequest
+	11, // 13: auth.AuthPlugin.Logout:output_type -> common.Empty
+	11, // 14: auth.AuthPlugin.internalInitializeCallbacks:output_type -> common.Empty
+	7,  // 15: auth.AuthCallbackService.UserLoggedIn:output_type -> auth.RedirectURL
+	11, // 16: auth.AuthCallbackService.UserLoggedOut:output_type -> common.Empty
+	10, // [10:17] is the sub-list for method output_type
+	3,  // [3:10] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_auth_interface_proto_init() }
@@ -638,7 +736,7 @@ func file_auth_interface_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_interface_proto_rawDesc), len(file_auth_interface_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

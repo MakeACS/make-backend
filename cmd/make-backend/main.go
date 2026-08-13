@@ -30,6 +30,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/alexedwards/scs/v2"
 	_ "github.com/lib/pq"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -85,10 +86,12 @@ func main() {
 
 	store := database.NewStore(db)
 	logger := logging.NewLogger(store)
+	// Sessions
+	sessionManager := auth.SetupSessions(db)
 
-	httpServer := startHttp(db, store, logger, httpPort)
+	httpServer := startHttp(db, store, logger, httpPort, sessionManager)
 	mqttServer, _ := acsmqtt.StartMqtt(logger, store, mqttPort)
-	stopPlugins, pluginForwards, plugins, err := plugins.StartPlugins(hostAndPort, store)
+	stopPlugins, pluginForwards, plugins, err := plugins.StartPlugins(hostAndPort, store, sessionManager)
 	glblPlugins = plugins
 	reverseProxy := StartReverseProxy(port, httpPort, mqttPort, pluginForwards)
 	if err != nil {
@@ -164,9 +167,7 @@ func StartReverseProxy(port string, httpPort, mqttPort int, pluginForwards []plu
 
 }
 
-func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port int) *http.Server {
-	// Sessions
-	sessionManager := auth.SetupSessions(db)
+func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port int, sessionManager *scs.SessionManager) *http.Server {
 
 	// GraphQL
 	graphqlConfig := gql.Config{Resolvers: &resolvers.Resolver{Store: store}}
@@ -186,23 +187,31 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 
 	mux := http.NewServeMux()
 
-	protectedQueryHandler := sessionManager.LoadAndSave(auth.OptionalAuthMiddleware(srv, sessionManager))
+	protectedQueryHandler := sessionManager.LoadAndSave(auth.RequiredAuthMiddleware(srv, sessionManager))
 
 	mux.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	mux.Handle("/query", protectedQueryHandler)
 
 	loginHandler := func(w http.ResponseWriter, r *http.Request) {
 		a := GetAuthPlugin()
-		u, err := a.GetLoginURL(&auth_plugin.UserLoginStartRequest{
-			PassthroughData: "hello",
+
+		req, err := a.GenerateLoginRequest(&auth_plugin.UserLoginStartRequest{
+			OriginalURL: "http://localhost:8080",
 		})
 		if err != nil {
-			slog.Error("failed to get login url")
+			slog.Error("failed to get login url", "err", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		http.Redirect(w, r, u.Url, http.StatusFound)
+		h := w.Header()
+		for _, header := range req.SetHeaders {
+			h.Add(header.Key, header.Value)
+		}
+		w.WriteHeader(int(req.Code))
+		_, err = w.Write(req.Body)
+		if err != nil {
+			slog.Error("failed to write login redirect", "err", err)
+		}
 	}
 
 	fileHandler := http.StripPrefix("/app/", http.FileServer(http.Dir("./client")))

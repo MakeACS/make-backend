@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"log"
+	"make-backend/internal/plugins/auth"
 	"net/http"
 	"net/url"
 
@@ -21,7 +22,7 @@ type Config struct {
 	SamlIDPMetadataProvider string
 }
 
-func SetupSamlSP(c Config) *samlsp.Middleware {
+func SetupSamlSP(c Config, sp *SessionProviderViaPlugin) *samlsp.Middleware {
 	if c.SPCert == "" {
 		log.Fatal("No SAML SP Cert provided")
 	}
@@ -67,12 +68,6 @@ func SetupSamlSP(c Config) *samlsp.Middleware {
 		Certificate:        keyPair.Leaf,
 		IDPMetadata:        idpMetadata,
 		DefaultRedirectURI: c.BaseURL + "/protected",
-		RelayStateFunc: func(w http.ResponseWriter, r *http.Request) string {
-			rs := r.Header.Get("RelayState")
-			ws := w.Header().Get("RelayState")
-			log.Println("ReState", rs, " - ", ws)
-			return rs
-		},
 	})
 	metaU, _ := url.Parse(fmt.Sprintf("%s/metadata", c.BaseURL))
 	acsU, _ := url.Parse(fmt.Sprintf("%s/acs", c.BaseURL))
@@ -86,21 +81,49 @@ func SetupSamlSP(c Config) *samlsp.Middleware {
 	}
 	samlSP.ServiceProvider.AuthnNameIDFormat = saml.EmailAddressNameIDFormat
 
-	samlSP.Session = &SessionProviderViaPlugin{}
+	samlSP.Session = sp
 
 	return samlSP
 }
 
 type SessionProviderViaPlugin struct {
+	cb auth.AuthCallbackProvider
+}
+
+func extractStringFromAttributeValues(values []saml.AttributeValue) string {
+	for _, value := range values {
+		return value.Value
+	}
+	return ""
+}
+
+func mapAssertionToCallback(assertion *saml.Assertion, cb *auth.UserLoginCallback) {
+	for _, stmt := range assertion.AttributeStatements {
+		for _, attr := range stmt.Attributes {
+			if attr.Name == "email" {
+				cb.Email = extractStringFromAttributeValues(attr.Values)
+			}
+		}
+	}
 }
 
 // CreateSession is called when we have received a valid SAML assertion and
 // should create a new session and modify the http response accordingly, e.g. by
 // setting a cookie.
 func (s *SessionProviderViaPlugin) CreateSession(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion) error {
-	rs := r.Header.Get("RelayState")
-	cs := r.Cookies()
-	log.Println("create session", rs, "assertion", assertion, "cookeis", cs)
+	cb := auth.UserLoginCallback{}
+	mapAssertionToCallback(assertion, &cb)
+	resp, err := s.cb.UserLoggedIn(&cb)
+	if err != nil {
+		return err
+	}
+	for _, c := range resp.SetCookies {
+		http.SetCookie(w, &http.Cookie{
+			Name:  c.Key,
+			Value: c.Value,
+		})
+	}
+
 	return nil
 }
 

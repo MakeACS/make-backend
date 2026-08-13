@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"log/slog"
@@ -8,6 +9,7 @@ import (
 	"make-backend/internal/plugins/common"
 	"net"
 	"net/http"
+	"net/url"
 
 	"github.com/crewjam/saml/samlsp"
 	"github.com/hashicorp/go-plugin"
@@ -28,19 +30,75 @@ var Info = common.PluginInfo{
 }
 
 type SAMLAuth struct {
+	saml      *samlsp.Middleware
 	callbacks auth.AuthCallbackProvider
 	listener  net.Listener
+	sp        SessionProviderViaPlugin
 	// pluginstate
 }
 
 // RegisterCallbackProvider implements [auth.AuthProvider].
 func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
+	s.sp = SessionProviderViaPlugin{
+		cb: cb,
+	}
 	s.callbacks = cb
+
 }
 
-// GetLoginURL implements [auth.AuthProvider].
-func (s *SAMLAuth) GetLoginURL(*auth.UserLoginStartRequest) (*auth.LoginURL, error) {
-	return &auth.LoginURL{Url: "http://http.cat/404"}, nil
+type WriteAdapter struct {
+	Headers http.Header
+	Body    bytes.Buffer
+	Code    int
+}
+
+func (w *WriteAdapter) Header() http.Header {
+	return w.Headers
+}
+
+func (w *WriteAdapter) Write(b []byte) (int, error) {
+	log.Println("writing to adapter ", len(b), "bytes")
+	return w.Body.Write(b)
+
+}
+
+func (w *WriteAdapter) WriteHeader(statusCode int) {
+	w.Code = statusCode
+}
+
+func (w *WriteAdapter) IntoFormat() *auth.LoginRequest {
+	req := auth.LoginRequest{}
+	req.Code = int32(w.Code)
+	req.Body = w.Body.Bytes()
+	req.SetHeaders = []*auth.SetKV{}
+	for k, vs := range w.Headers {
+		for _, v := range vs {
+			req.SetHeaders = append(req.SetHeaders, &auth.SetKV{
+				Key:   k,
+				Value: v,
+			})
+		}
+	}
+	return &req
+}
+
+var _ http.ResponseWriter = &WriteAdapter{}
+
+// GenerateLoginRequest implements [auth.AuthProvider].
+func (s *SAMLAuth) GenerateLoginRequest(start *auth.UserLoginStartRequest) (*auth.LoginRequest, error) {
+	w := WriteAdapter{
+		Headers: http.Header{},
+		Body:    bytes.Buffer{},
+		Code:    0,
+	}
+	url, _ := url.Parse(start.GetOriginalURL())
+	r := http.Request{
+		URL: url,
+	}
+	s.saml.HandleStartAuthFlow(&w, &r)
+
+	req := w.IntoFormat()
+	return req, nil
 
 }
 
@@ -77,8 +135,8 @@ func SamlConfigFromPluginConfig(init *common.PluginInitialMessage) Config {
 }
 
 func (s *SAMLAuth) Info(init *common.PluginInitialMessage) (*common.PluginInfo, error) {
-	endpoints := SetupSamlSP(SamlConfigFromPluginConfig(init))
-	err := startHTTPHandle(s.listener, endpoints)
+	s.saml = SetupSamlSP(SamlConfigFromPluginConfig(init), &s.sp)
+	err := startHTTPHandle(s.listener, s.saml)
 	if err != nil {
 		// slog.Error("failed to start", "err", err)
 		return nil, err
