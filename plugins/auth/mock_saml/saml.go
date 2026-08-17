@@ -117,12 +117,10 @@ func (s *SessionProviderViaPlugin) CreateSession(w http.ResponseWriter, r *http.
 	if err != nil {
 		return err
 	}
-	for _, c := range resp.SetCookies {
-		http.SetCookie(w, &http.Cookie{
-			Name:  c.Key,
-			Value: c.Value,
-		})
+	for _, c := range resp.SetHeaders {
+		w.Header().Add(c.Key, c.Value)
 	}
+	w.Header().Add("Location", resp.GotoUrl)
 
 	return nil
 }

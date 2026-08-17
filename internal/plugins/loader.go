@@ -1,12 +1,17 @@
 package plugins
 
 import (
+	"bytes"
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"make-backend/internal/database"
 	"make-backend/internal/plugins/auth"
 	"make-backend/internal/plugins/common"
 	"make-backend/internal/plugins/notify"
+	"net/http"
 	"os/exec"
 	"path"
 
@@ -16,15 +21,76 @@ import (
 
 type TestAuthCBProvider struct {
 	sessionManager *scs.SessionManager
+	store          *database.Store
 }
 
 // UserLoggedIn implements [auth.AuthCallbackProvider].
 func (t *TestAuthCBProvider) UserLoggedIn(data *auth.UserLoginCallback) (*auth.RedirectURL, error) {
 	// create a new session and inform plugin how to inform client what to do next
 	// {set headers, redirect}
+	ret := auth.RedirectURL{}
 	slog.Info("User logged in", "data", data)
 
-	return nil, nil
+	var newAccount bool = false
+	u, err := t.store.Users.GetUserByEmail(context.TODO(), data.Email)
+	if errors.Is(err, sql.ErrNoRows) {
+		var id int
+		id, err = t.store.Users.CreateUser(context.TODO(), data.Email)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new user on login {should make new user}", "err", err)
+		} else {
+			slog.Info("new user joined", "email", data.Email)
+			newAccount = true
+		}
+		u, err = t.store.Users.GetUserById(context.TODO(), id)
+	}
+	if err != nil || u == nil {
+		return nil, fmt.Errorf("failed to find user on login {should make new user}", "err", err)
+	}
+
+	ctx1 := context.Background()
+	ctx2, err := t.sessionManager.Load(ctx1, "")
+
+	t.sessionManager.Put(ctx2, "user_id", u.Id)
+	// sd := sessionData{
+	// deadline: time.Now().Add(lifetime).UTC(),
+	// status:   Unmodified,
+	// values:   make(map[string]interface{}),
+	// }
+
+	if err != nil {
+		slog.Warn("failed to load token", "err", err)
+		return nil, err
+	}
+	token, expiry, err := t.sessionManager.Commit(ctx2)
+	if err != nil {
+		slog.Warn("failed to commit token", "err", err)
+		return nil, err
+	}
+	w := common.WriteAdapter{
+		Headers: http.Header{},
+		Body:    bytes.Buffer{},
+		Code:    0,
+	}
+
+	t.sessionManager.WriteSessionCookie(ctx2, &w, token, expiry)
+
+	_, headers, _ := w.IntoParts()
+	if newAccount {
+		ret.GotoUrl = "http://localhost:8080/app/newAccount"
+	} else {
+		ret.GotoUrl = "http://localhost:8080/app/authed"
+	}
+	for k, vs := range headers {
+		for _, v := range vs {
+			ret.SetHeaders = append(ret.SetHeaders, &auth.SetKV{
+				Key:   k,
+				Value: v,
+			})
+		}
+	}
+
+	return &ret, nil
 }
 
 // UserLoggedOut implements [auth.AuthCallbackProvider].
@@ -131,7 +197,7 @@ func StartPlugins(host string, store *database.Store, sessionManager *scs.Sessio
 			if !ok {
 				slog.Warn("plugin lied about type", "wanted", plugin_desc.PluginType, "plugin", plugin_desc.Name)
 			}
-			authPlugin.RegisterCallbackProvider(&TestAuthCBProvider{sessionManager})
+			authPlugin.RegisterCallbackProvider(&TestAuthCBProvider{sessionManager, store})
 			plugins.Auth[plugin_desc.Name] = authPlugin
 
 		case common.PluginType_Notification:

@@ -28,8 +28,8 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int) (*models.User, error
 	query := `SELECT
 		id,
 		email,
-		first_name,
-		last_name,
+		full_name,
+		preferred_name,
 		pronouns,
 		join_date,
 		setup_complete,
@@ -68,8 +68,8 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 	query := `SELECT
 		id,
 		email,
-		first_name,
-		last_name,
+		full_name,
+		preferred_name,
 		pronouns,
 		join_date,
 		setup_complete,

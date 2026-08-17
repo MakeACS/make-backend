@@ -41,7 +41,7 @@ func RequiredAuthMiddleware(next http.Handler, sessionManager *scs.SessionManage
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		} else {
-			slog.Warn("user not authed, sending to login")
+			slog.Debug("user not authed, sending to login")
 			RedirectToLogin(w, r)
 		}
 

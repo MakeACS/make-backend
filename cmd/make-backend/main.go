@@ -113,7 +113,6 @@ func main() {
 }
 
 func StartReverseProxy(port string, httpPort, mqttPort int, pluginForwards []plugins.PluginHTTPForwarding) *http.Server {
-	// 	targetHttp, _ := url.Parse(fmt.Sprintf("http://localhost:%d", httpPort))
 	pluginRProxies := []*httputil.ReverseProxy{}
 	for _, forward := range pluginForwards {
 		target, _ := url.Parse(fmt.Sprintf("http://localhost:%d", forward.ToPort))
@@ -219,6 +218,20 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 	mux.HandleFunc("/login", loginHandler)
 
 	mux.Handle("/", http.RedirectHandler("/app/", http.StatusFound))
+
+	newAccountHandler := func(w http.ResponseWriter, r *http.Request) {
+		userId := sessionManager.GetInt(r.Context(), "user_id")
+		s := fmt.Sprintf("welcome. youre user id is %d. enter your name and stuff", userId)
+		w.Write([]byte(s))
+	}
+
+	authedHandler := func(w http.ResponseWriter, r *http.Request) {
+		userId := sessionManager.GetInt(r.Context(), "user_id")
+		s := fmt.Sprintf("Hello user id %d", userId)
+		w.Write([]byte(s))
+	}
+	mux.Handle("/app/newAccount", sessionManager.LoadAndSave(http.HandlerFunc(newAccountHandler)))
+	mux.Handle("/app/authed", sessionManager.LoadAndSave(http.HandlerFunc(authedHandler)))
 
 	rest.RegisterHandlers(mux)
 

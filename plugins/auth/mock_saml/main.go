@@ -46,47 +46,11 @@ func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
 
 }
 
-type WriteAdapter struct {
-	Headers http.Header
-	Body    bytes.Buffer
-	Code    int
-}
-
-func (w *WriteAdapter) Header() http.Header {
-	return w.Headers
-}
-
-func (w *WriteAdapter) Write(b []byte) (int, error) {
-	log.Println("writing to adapter ", len(b), "bytes")
-	return w.Body.Write(b)
-
-}
-
-func (w *WriteAdapter) WriteHeader(statusCode int) {
-	w.Code = statusCode
-}
-
-func (w *WriteAdapter) IntoFormat() *auth.LoginRequest {
-	req := auth.LoginRequest{}
-	req.Code = int32(w.Code)
-	req.Body = w.Body.Bytes()
-	req.SetHeaders = []*auth.SetKV{}
-	for k, vs := range w.Headers {
-		for _, v := range vs {
-			req.SetHeaders = append(req.SetHeaders, &auth.SetKV{
-				Key:   k,
-				Value: v,
-			})
-		}
-	}
-	return &req
-}
-
-var _ http.ResponseWriter = &WriteAdapter{}
+var _ http.ResponseWriter = &common.WriteAdapter{}
 
 // GenerateLoginRequest implements [auth.AuthProvider].
 func (s *SAMLAuth) GenerateLoginRequest(start *auth.UserLoginStartRequest) (*auth.LoginRequest, error) {
-	w := WriteAdapter{
+	w := common.WriteAdapter{
 		Headers: http.Header{},
 		Body:    bytes.Buffer{},
 		Code:    0,
@@ -97,8 +61,22 @@ func (s *SAMLAuth) GenerateLoginRequest(start *auth.UserLoginStartRequest) (*aut
 	}
 	s.saml.HandleStartAuthFlow(&w, &r)
 
-	req := w.IntoFormat()
-	return req, nil
+	code, headers, body := w.IntoParts()
+
+	req := auth.LoginRequest{}
+	req.Code = int32(code)
+	req.Body = body
+	req.SetHeaders = []*auth.SetKV{}
+	for k, vs := range headers {
+		for _, v := range vs {
+			req.SetHeaders = append(req.SetHeaders, &auth.SetKV{
+				Key:   k,
+				Value: v,
+			})
+		}
+	}
+
+	return &req, nil
 
 }
 
