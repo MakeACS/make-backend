@@ -22,68 +22,53 @@ type Config struct {
 	SamlIDPMetadataProvider string
 }
 
-func SetupSamlSP(c Config, sp *SessionProviderViaPlugin) *samlsp.Middleware {
-	if c.SPCert == "" {
-		log.Fatal("No SAML SP Cert provided")
-	}
-	if c.SPKey == "" {
-		log.Fatal("No SAML SP Key provided")
-	}
-	if c.SamlIDPMetadataProvider == "" {
-		log.Fatal("No SAML IDP Metadata url provided")
-
-	}
-
+func (s *SAMLAuth) SetupSamlSP(c Config, sp *SessionProviderViaPlugin) (*samlsp.Middleware, error) {
 	keyPair, err := tls.X509KeyPair([]byte(c.SPCert), []byte(c.SPKey))
 	if err != nil {
-		log.Fatalf("Failed to load SAML keypair: %s", err)
+		return nil, fmt.Errorf("failed to load SAML keypair: %w", err)
 	}
 
 	keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
 	if err != nil {
-		log.Fatalf("Failed to parse leaf cert: %s", err)
+		return nil, fmt.Errorf("Failed to parse leaf cert: %w", err)
 	}
 
 	idpMetadataURL, err := url.Parse(c.SamlIDPMetadataProvider)
 	if err != nil {
-		log.Fatalf("Failed to parse idpMetadataURL: %s", err)
+		return nil, fmt.Errorf("Failed to parse idpMetadataURL: %w", err)
 	}
 
 	idpMetadata, err := samlsp.FetchMetadata(context.Background(), http.DefaultClient, *idpMetadataURL)
 	if err != nil {
-		log.Fatalf("Failed to fetch idpMetadata: %s", err)
+		return nil, fmt.Errorf("Failed to fetch idpMetadata: %w", err)
 	}
 
 	rootUrl, err := url.Parse(c.BaseURL)
 	if err != nil {
-		log.Fatalf("Failed to parse root url: %s", err)
+		return nil, fmt.Errorf("failed to parse root url: %s", err)
 	}
-	go func() {
-		log.Println("root url, ", rootUrl)
-	}()
 
 	samlSP, err := samlsp.New(samlsp.Options{
 		URL:                *rootUrl,
 		Key:                keyPair.PrivateKey.(*rsa.PrivateKey),
 		Certificate:        keyPair.Leaf,
 		IDPMetadata:        idpMetadata,
-		DefaultRedirectURI: c.BaseURL + "/protected",
+		DefaultRedirectURI: c.BaseURL + "/help",
 	})
 	metaU, _ := url.Parse(fmt.Sprintf("%s/metadata", c.BaseURL))
 	acsU, _ := url.Parse(fmt.Sprintf("%s/acs", c.BaseURL))
 
 	samlSP.ServiceProvider.MetadataURL = *metaU
 	samlSP.ServiceProvider.AcsURL = *acsU
-	log.Println("binding", samlSP.Binding, samlSP.ResponseBinding)
 
 	if err != nil {
-		log.Fatalf("Failed to create samlSP: %s", err)
+		return nil, fmt.Errorf("failed to create samlSP: %w", err)
 	}
 	samlSP.ServiceProvider.AuthnNameIDFormat = saml.EmailAddressNameIDFormat
 
 	samlSP.Session = sp
 
-	return samlSP
+	return samlSP, nil
 }
 
 type SessionProviderViaPlugin struct {

@@ -2,8 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
-	"log"
+	"errors"
 	"log/slog"
 	"make-backend/internal/plugins/auth"
 	"make-backend/internal/plugins/common"
@@ -16,28 +15,22 @@ import (
 )
 
 var pluginName = "auth.core.saml"
-
+var pluginAbout = "A plugin for working with SAML SSO"
 var handshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
 	MagicCookieKey:   common.MagicKey,
 	MagicCookieValue: "76d15ef6-1f0a-4e77-bff2-463daa54e19b",
 }
 
-var Info = common.PluginInfo{
-	Id:    pluginName,
-	About: "A plugin for working with SAML SSO",
-	Port:  0, // filled in later
-}
-
 type SAMLAuth struct {
-	saml      *samlsp.Middleware
-	callbacks auth.AuthCallbackProvider
-	listener  net.Listener
-	sp        SessionProviderViaPlugin
-	// pluginstate
+	saml         *samlsp.Middleware
+	callbacks    auth.AuthCallbackProvider
+	listener     net.Listener
+	sp           SessionProviderViaPlugin
+	status       common.PluginStatus
+	statusString string
 }
 
-// RegisterCallbackProvider implements [auth.AuthProvider].
 func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
 	s.sp = SessionProviderViaPlugin{
 		cb: cb,
@@ -48,8 +41,10 @@ func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
 
 var _ http.ResponseWriter = &common.WriteAdapter{}
 
-// GenerateLoginRequest implements [auth.AuthProvider].
 func (s *SAMLAuth) GenerateLoginRequest(start *auth.UserLoginStartRequest) (*auth.LoginRequest, error) {
+	if s.saml == nil {
+		return nil, errors.New("SAML provider degraded")
+	}
 	w := common.WriteAdapter{
 		Headers: http.Header{},
 		Body:    bytes.Buffer{},
@@ -80,32 +75,38 @@ func (s *SAMLAuth) GenerateLoginRequest(start *auth.UserLoginStartRequest) (*aut
 
 }
 
-// Heartbeat implements [auth.AuthProvider].
-func (s *SAMLAuth) Heartbeat() common.HeartbeatInfo {
-	panic("unimplemented")
+func (s *SAMLAuth) Heartbeat() (*common.HeartbeatInfo, error) {
+	hb := common.HeartbeatInfo{
+		Status:        s.status,
+		StatusMessage: s.statusString,
+	}
+	return &hb, nil
 }
 
-// Initialize implements [auth.AuthProvider].
-func (s *SAMLAuth) Initialize(req *auth.PluginInitRequest) error {
-	return fmt.Errorf("initialize called when it was supposed to be intercepted")
+func (s *SAMLAuth) Logout(*auth.UserLogOffRequest) error {
+	if s.saml == nil {
+		return errors.New("SAML provider degraded")
+	}
+	// nothing to do on IDP side (for now)
+	return nil
 }
 
-// Logout implements [auth.AuthProvider].
-func (s *SAMLAuth) Logout(*auth.UserLogOffRequest) {
-	panic("unimplemented")
-}
+var (
+	ConfigKeySpCert              = "SP_CERT"
+	ConfigKeySpKey               = "SP_KEY"
+	ConfigKeyIdpMetadataProvider = "IDP_METADATA_PROVIDER"
+)
 
 func SamlConfigFromPluginConfig(init *common.PluginInitialMessage) Config {
 	var c Config
 	c.BaseURL = init.PluginUrlBase
-	log.Println("CHost", c.BaseURL)
 	for _, pair := range init.Configs {
 		switch pair.Key {
-		case "SP_CERT":
+		case ConfigKeySpCert:
 			c.SPCert = pair.Value
-		case "SP_KEY":
+		case ConfigKeySpKey:
 			c.SPKey = pair.Value
-		case "IDP_METADATA_PROVIDER":
+		case ConfigKeyIdpMetadataProvider:
 			c.SamlIDPMetadataProvider = pair.Value
 		}
 	}
@@ -113,58 +114,80 @@ func SamlConfigFromPluginConfig(init *common.PluginInitialMessage) Config {
 }
 
 func (s *SAMLAuth) Info(init *common.PluginInitialMessage) (*common.PluginInfo, error) {
-	s.saml = SetupSamlSP(SamlConfigFromPluginConfig(init), &s.sp)
-	err := startHTTPHandle(s.listener, s.saml)
-	if err != nil {
-		// slog.Error("failed to start", "err", err)
-		return nil, err
+	info := common.PluginInfo{
+		Id:    pluginName,
+		About: pluginAbout,
+		Port:  0,
+	}
+
+	// only bring up if not up
+	if s.saml == nil {
+		cfg := SamlConfigFromPluginConfig(init)
+		if cfg.SPCert == "" {
+			s.status = common.PluginStatus_UNCONFIGURED
+			s.statusString = "missing " + ConfigKeySpCert + " config key"
+			return &info, errors.New(s.statusString)
+		} else if cfg.SPKey == "" {
+			s.status = common.PluginStatus_UNCONFIGURED
+			s.statusString = "missing " + ConfigKeySpKey + " config key"
+			return &info, errors.New(s.statusString)
+		} else if cfg.SamlIDPMetadataProvider == "" {
+			s.status = common.PluginStatus_UNCONFIGURED
+			s.statusString = "missing " + ConfigKeyIdpMetadataProvider + " config key"
+			return &info, errors.New(s.statusString)
+		}
+		var err error
+		s.saml, err = s.SetupSamlSP(cfg, &s.sp)
+		if err != nil {
+			slog.Error("Failed to setup SAML SP connection", "err", err)
+			s.status = common.PluginStatus_DEGRADED
+			s.statusString = err.Error()
+			return &info, err
+
+		}
+		s.startHTTPHandle()
 	}
 	port := s.listener.Addr().(*net.TCPAddr).Port
+	info.Port = uint32(port)
 
-	Info.Port = uint32(port)
-	return &Info, nil
+	return &info, nil
 }
 
-func startHTTPHandle(listener net.Listener, handler *samlsp.Middleware) error {
+func (s *SAMLAuth) startHTTPHandle() {
+	http.DefaultServeMux.HandleFunc("/metadata", s.saml.ServeMetadata)
+	http.DefaultServeMux.HandleFunc("/acs", s.saml.ServeACS)
 
-	http.DefaultServeMux.HandleFunc("/metadata", handler.ServeMetadata)
-	http.DefaultServeMux.HandleFunc("/acs", handler.ServeACS)
-	// http.Handle("/plugin/auth.core.saml/", handler)
-	http.Handle("/protected", handler.RequireAccount(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("protected"))
-	})))
 	go func() {
-		if err := http.Serve(listener, nil); err != nil {
+		if err := http.Serve(s.listener, nil); err != nil {
 			slog.Error("server error", "err", err)
+			s.status = common.PluginStatus_DEGRADED
+			s.statusString = "http server error: " + err.Error()
 		}
 	}()
 
-	return nil
 }
 
 func main() {
+	// Claim a network port now so we know which to port to report to the core
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		slog.Error("failed to listen for http server", "err", err)
 	}
 
-	auth_s := &SAMLAuth{
-		listener: listener,
-	}
 	s_plugin := auth.AuthPlugin{
-		Impl: auth_s,
+		Impl: &SAMLAuth{
+			listener: listener,
+		},
 	}
-	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
 		pluginName: &s_plugin,
 	}
-	// log.Println("SAML auth plugin started")
-
+	// start serving plugin interface.
+	// HTTP interface will be started when the core connects to us
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
-
-		GRPCServer: plugin.DefaultGRPCServer,
+		GRPCServer:      plugin.DefaultGRPCServer,
 	})
 
 }

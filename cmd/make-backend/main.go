@@ -221,7 +221,7 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 
 	newAccountHandler := func(w http.ResponseWriter, r *http.Request) {
 		userId := sessionManager.GetInt(r.Context(), "user_id")
-		s := fmt.Sprintf("welcome. youre user id is %d. enter your name and stuff", userId)
+		s := fmt.Sprintf("welcome. your user id is %d. enter your name and stuff", userId)
 		w.Write([]byte(s))
 	}
 

@@ -105,14 +105,14 @@ func (g *GRPCClient) GenerateLoginRequest(req *UserLoginStartRequest) (*LoginReq
 
 }
 
-// Heartbeat implements [AuthProvider].
-func (g *GRPCClient) Heartbeat() common.HeartbeatInfo {
-	panic("unimplemented")
+func (g *GRPCClient) Heartbeat() (*common.HeartbeatInfo, error) {
+	e := common.Empty{}
+	return g.client.Heartbeat(context.Background(), &e)
 }
 
-// Logout implements [AuthProvider].
-func (g *GRPCClient) Logout(*UserLogOffRequest) {
-	panic("unimplemented")
+func (g *GRPCClient) Logout(req *UserLogOffRequest) error {
+	_, e := g.client.Logout(context.Background(), req)
+	return e
 }
 
 type GRPCServer struct {
@@ -133,7 +133,11 @@ func (g *GRPCServer) GetLoginRequest(ctx context.Context, req *UserLoginStartReq
 
 // Heartbeat implements [AuthPluginServer].
 func (g *GRPCServer) Heartbeat(context.Context, *common.Empty) (*common.HeartbeatInfo, error) {
-	panic("unimplemented")
+	hb, err := g.Impl.Heartbeat()
+	if err != nil {
+		return nil, err
+	}
+	return hb, nil
 }
 
 // Info implements [AuthPluginServer].
@@ -147,7 +151,6 @@ func (g *GRPCServer) Info(ctx context.Context, init *common.PluginInitialMessage
 }
 
 func (g *GRPCServer) InternalInitializeCallbacks(ctx context.Context, req *PluginInitRequest) (*common.Empty, error) {
-	slog.Debug("Auth GRPC server init callbacks", "broker_id", req.GetCallbackBrokerId())
 	conn, err := g.broker.Dial(uint32(req.GetCallbackBrokerId()))
 	if err != nil {
 		return nil, fmt.Errorf("dial host callback broker: %w", err)
@@ -163,6 +166,12 @@ func (g *GRPCServer) InternalInitializeCallbacks(ctx context.Context, req *Plugi
 }
 
 // Logout implements [AuthPluginServer].
-func (g *GRPCServer) Logout(context.Context, *UserLogOffRequest) (*common.Empty, error) {
-	panic("unimplemented")
+func (g *GRPCServer) Logout(ctx context.Context, req *UserLogOffRequest) (*common.Empty, error) {
+	err := g.Impl.Logout(req)
+	if err != nil {
+		return nil, err
+	}
+	c := common.Empty{}
+	return &c, nil
+
 }

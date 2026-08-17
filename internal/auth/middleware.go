@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	"github.com/alexedwards/scs/v2"
@@ -14,7 +13,6 @@ func OptionalAuthMiddleware(next http.Handler, sessionManager *scs.SessionManage
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		userId := sessionManager.GetInt(r.Context(), "user_id")
-
 		// if theres a user, grab the id but if not don't worry
 		if userId > 0 {
 			ctx := context.WithValue(r.Context(), UserContextKey{}, userId)
@@ -41,7 +39,6 @@ func RequiredAuthMiddleware(next http.Handler, sessionManager *scs.SessionManage
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		} else {
-			slog.Debug("user not authed, sending to login")
 			RedirectToLogin(w, r)
 		}
 
