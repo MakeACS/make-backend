@@ -12,9 +12,9 @@ CREATE TABLE audit_logs (
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    first_name TEXT NOT NULL DEFAULT '',
-    last_name TEXT NOT NULL DEFAULT '',
-    username TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL DEFAULT '',
+    preferred_name TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL UNIQUE,
     pronouns TEXT NOT NULL DEFAULT '',
     join_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     setup_complete BOOLEAN NOT NULL DEFAULT FALSE,
@@ -22,8 +22,7 @@ CREATE TABLE users (
     notes TEXT NOT NULL DEFAULT '',
     admin BOOLEAN NOT NULL DEFAULT FALSE,
     force_archive BOOLEAN,
-    card_tag TEXT NOT NULL DEFAULT '',
-    email TEXT NOT NULL DEFAULT ''
+    card_tag TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE holds (

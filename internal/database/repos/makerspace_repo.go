@@ -102,9 +102,9 @@ func (r *MakerspaceRepo) AddStaff(ctx context.Context, makerspace_id int, user_i
 func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]*models.User, error) {
 	query := `SELECT
 		users.id,
-		users.username,
-		users.firstname,
-		users.lastname,
+		users.email,
+		users.full_name,
+		users.preferred_name,
 		users.pronouns,
 		users.join_date,
 		users.setup_complete,
@@ -129,9 +129,9 @@ func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]
 
 		err := rows.Scan(
 			&user.Id,
-			&user.Username,
-			&user.Firstname,
-			&user.Lastname,
+			&user.Email,
+			&user.FullName,
+			&user.PreferredName,
 			&user.Pronouns,
 			&user.JoinDate,
 			&user.SetupComplete,
