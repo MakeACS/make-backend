@@ -28,8 +28,8 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int) (*models.User, error
 	query := `SELECT
 		id,
 		email,
-		first_name,
-		last_name,
+		full_name,
+		preferred_name,
 		pronouns,
 		join_date,
 		setup_complete,
@@ -43,8 +43,8 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int) (*models.User, error
 	err := r.DB.QueryRowContext(ctx, query, id).Scan(
 		&user_result.Id,
 		&user_result.Email,
-		&user_result.Firstname,
-		&user_result.Lastname,
+		&user_result.FullName,
+		&user_result.PreferredName,
 		&user_result.Pronouns,
 		&user_result.JoinDate,
 		&user_result.SetupComplete,
@@ -68,8 +68,8 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 	query := `SELECT
 		id,
 		email,
-		first_name,
-		last_name,
+		full_name,
+		preferred_name,
 		pronouns,
 		join_date,
 		setup_complete,
@@ -83,8 +83,8 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 	err := r.DB.QueryRowContext(ctx, query, email).Scan(
 		&user_result.Id,
 		&user_result.Email,
-		&user_result.Firstname,
-		&user_result.Lastname,
+		&user_result.FullName,
+		&user_result.PreferredName,
 		&user_result.Pronouns,
 		&user_result.JoinDate,
 		&user_result.SetupComplete,

@@ -308,12 +308,12 @@ type ComplexityRoot struct {
 		Archived      func(childComplexity int) int
 		CardTag       func(childComplexity int) int
 		Email         func(childComplexity int) int
-		Firstname     func(childComplexity int) int
 		ForceArchive  func(childComplexity int) int
+		FullName      func(childComplexity int) int
 		Id            func(childComplexity int) int
 		JoinDate      func(childComplexity int) int
-		Lastname      func(childComplexity int) int
 		Notes         func(childComplexity int) int
+		PreferredName func(childComplexity int) int
 		Pronouns      func(childComplexity int) int
 		SetupComplete func(childComplexity int) int
 	}
@@ -1463,18 +1463,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.Email(childComplexity), true
-	case "User.firstname":
-		if e.ComplexityRoot.User.Firstname == nil {
-			break
-		}
-
-		return e.ComplexityRoot.User.Firstname(childComplexity), true
 	case "User.force_archive":
 		if e.ComplexityRoot.User.ForceArchive == nil {
 			break
 		}
 
 		return e.ComplexityRoot.User.ForceArchive(childComplexity), true
+	case "User.full_name":
+		if e.ComplexityRoot.User.FullName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.FullName(childComplexity), true
 	case "User.id":
 		if e.ComplexityRoot.User.Id == nil {
 			break
@@ -1487,18 +1487,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.JoinDate(childComplexity), true
-	case "User.lastname":
-		if e.ComplexityRoot.User.Lastname == nil {
-			break
-		}
-
-		return e.ComplexityRoot.User.Lastname(childComplexity), true
 	case "User.notes":
 		if e.ComplexityRoot.User.Notes == nil {
 			break
 		}
 
 		return e.ComplexityRoot.User.Notes(childComplexity), true
+	case "User.preferred_name":
+		if e.ComplexityRoot.User.PreferredName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.PreferredName(childComplexity), true
 	case "User.pronouns":
 		if e.ComplexityRoot.User.Pronouns == nil {
 			break
@@ -1812,10 +1812,10 @@ func (ec *executionContext) childFields_User(ctx context.Context, field graphql.
 		return ec.fieldContext_User_id(ctx, field)
 	case "email":
 		return ec.fieldContext_User_email(ctx, field)
-	case "firstname":
-		return ec.fieldContext_User_firstname(ctx, field)
-	case "lastname":
-		return ec.fieldContext_User_lastname(ctx, field)
+	case "full_name":
+		return ec.fieldContext_User_full_name(ctx, field)
+	case "preferred_name":
+		return ec.fieldContext_User_preferred_name(ctx, field)
 	case "pronouns":
 		return ec.fieldContext_User_pronouns(ctx, field)
 	case "join_date":
@@ -6453,16 +6453,16 @@ func (ec *executionContext) fieldContext_User_email(_ context.Context, field gra
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _User_firstname(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_full_name(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_User_firstname(ctx, field)
+			return ec.fieldContext_User_full_name(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Firstname, nil
+			return obj.FullName, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
@@ -6472,20 +6472,20 @@ func (ec *executionContext) _User_firstname(ctx context.Context, field graphql.C
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_User_firstname(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_full_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _User_lastname(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_preferred_name(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_User_lastname(ctx, field)
+			return ec.fieldContext_User_preferred_name(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Lastname, nil
+			return obj.PreferredName, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
@@ -6495,7 +6495,7 @@ func (ec *executionContext) _User_lastname(ctx context.Context, field graphql.Co
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_User_lastname(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_preferred_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -10290,13 +10290,13 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "firstname":
-			out.Values[i] = ec._User_firstname(ctx, field, obj)
+		case "full_name":
+			out.Values[i] = ec._User_full_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "lastname":
-			out.Values[i] = ec._User_lastname(ctx, field, obj)
+		case "preferred_name":
+			out.Values[i] = ec._User_preferred_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

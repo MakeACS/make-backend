@@ -1,0 +1,36 @@
+syntax="proto3";
+
+package common;
+
+option go_package = 'make-backend/internal/plugins/common';
+
+message Empty {}
+
+message PluginInfo{
+    string id = 1;
+    string about = 2;
+    uint32 port = 3; // 0 if no port needed
+}
+
+enum PluginStatus{
+    UNKNOWN = 0;
+    GOOD = 1;
+    DEGRADED = 2;
+    UNCONFIGURED = 3;
+    CRASHED = 4;
+}
+message HeartbeatInfo {
+    PluginStatus status = 1;
+    string status_message = 2;
+}
+
+message ConfigPair{
+    string key = 1;
+    string value = 2;
+}
+
+message PluginInitialMessage{
+    string serverHost = 1;
+    string pluginUrlBase = 2; // if needed, where the http forwarding will come from
+    repeated ConfigPair configs = 3;
+}

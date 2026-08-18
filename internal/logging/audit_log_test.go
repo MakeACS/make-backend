@@ -6,14 +6,14 @@ import (
 )
 
 var user1 = models.User{
-	Id:        0,
-	Firstname: "John",
-	Lastname:  "Doe",
+	Id:            0,
+	FullName:      "Johnathan Doe",
+	PreferredName: "John Doe",
 }
 var user2 = models.User{
-	Id:        2,
-	Firstname: "Jane",
-	Lastname:  "Doe",
+	Id:            2,
+	FullName:      "Jane Doe",
+	PreferredName: "Jane Doe",
 }
 var equipment1 = models.Equipment{
 	Id:   1,
@@ -25,7 +25,7 @@ func TestPlainStringGenerationOrder(t *testing.T) {
 	str := CreatePlainString("{user} elevated {user} to admin privileges", user1.LogEntity(), user2.LogEntity())
 	ref := "John Doe elevated Jane Doe to admin privileges"
 	if str != ref {
-		t.Errorf("reference and created string don't agree. Wanted `%s` got `%s`", str, ref)
+		t.Errorf("reference and created string don't agree. Wanted `%s` got `%s`", ref, str)
 	}
 }
 

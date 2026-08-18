@@ -11,6 +11,5 @@ func SetupSessions(db *sql.DB) *scs.SessionManager {
 
 	sessionManager := scs.New()
 	sessionManager.Store = postgresstore.New(db)
-
 	return sessionManager
 }

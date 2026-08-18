@@ -103,8 +103,8 @@ func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]
 	query := `SELECT
 		users.id,
 		users.email,
-		users.firstname,
-		users.lastname,
+		users.full_name,
+		users.preferred_name,
 		users.pronouns,
 		users.join_date,
 		users.setup_complete,
@@ -130,8 +130,8 @@ func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]
 		err := rows.Scan(
 			&user.Id,
 			&user.Email,
-			&user.Firstname,
-			&user.Lastname,
+			&user.FullName,
+			&user.PreferredName,
 			&user.Pronouns,
 			&user.JoinDate,
 			&user.SetupComplete,
