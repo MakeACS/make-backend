@@ -248,11 +248,11 @@ func areGroupsEqual(wantedIds, gotIds []int) bool {
 
 func TestMembersOfGroupAsManager(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
-	groupId := data.BeatlesMusicians.Id
 	askerId := data.Users[0].Id
+	group := data.BeatlesMusicians
 
 	ctx := ContextWithUser(t.Context(), askerId)
-	members, err := resolver.Query().MembersOfGroup(ctx, groupId)
+	members, err := resolver.Group().Members(ctx, &group)
 	if err != nil {
 		t.Fatalf("failed to get members of group: %v", err)
 	}
@@ -274,11 +274,11 @@ func TestMembersOfGroupAsManager(t *testing.T) {
 
 func TestMembersOfGroupAsSeeSelf(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
-	groupId := data.Brits.Id
+	group := data.BeatlesMusicians
 	askerId := data.Users[1].Id
 
 	ctx := ContextWithUser(t.Context(), askerId)
-	members, err := resolver.Query().MembersOfGroup(ctx, groupId)
+	members, err := resolver.Group().Members(ctx, &group)
 	if err != nil {
 		t.Fatalf("failed to get members of group: %v", err)
 	}
@@ -295,11 +295,11 @@ func TestMembersOfGroupAsSeeSelf(t *testing.T) {
 
 func TestMembersOfGroupAsSeeAll(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
-	groupId := data.BeatlesMusicians.Id
+	group := data.BeatlesMusicians
 	askerId := data.Users[1].Id
 
 	ctx := ContextWithUser(t.Context(), askerId)
-	members, err := resolver.Query().MembersOfGroup(ctx, groupId)
+	members, err := resolver.Group().Members(ctx, &group)
 	if err != nil {
 		t.Fatalf("failed to get members of group: %v", err)
 	}
@@ -319,12 +319,12 @@ func TestMembersOfGroupAsSeeAll(t *testing.T) {
 
 func TestMembersOfGroupAsSeeNone(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
-	groupId := data.BeatlesMusicians.Id
+	group := data.BeatlesMusicians
 	askerId := data.Users[5].Id
 
 	ctx := ContextWithUser(t.Context(), askerId)
-	_, err := resolver.Query().MembersOfGroup(ctx, groupId)
+	members, err := resolver.Group().Members(ctx, &group)
 	if err == nil {
-		t.Fatalf("see none member should not be able to see themselves: %v", err)
+		t.Fatalf("see none member should not be able to see themselves: saw %v", members)
 	}
 }

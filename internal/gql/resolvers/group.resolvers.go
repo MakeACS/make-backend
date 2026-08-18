@@ -8,7 +8,6 @@ package resolvers
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
@@ -21,8 +20,20 @@ func (r *groupResolver) DirectMembers(ctx context.Context, obj *models.Group) ([
 
 // Members is the resolver for the members field.
 func (r *groupResolver) Members(ctx context.Context, obj *models.Group) ([]*models.MembershipToGroup, error) {
+	userId := auth.UserIDFromContext(ctx)
+	if userId == nil {
+		return nil, auth.ErrNotAuthenticated
+	}
+
+	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *userId, obj.Id)
+	if err != nil {
+		return nil, err
+	}
+	if !visible {
+		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
+	}
+
 	members, err := r.Store.Groups.GetGroupMembers(ctx, obj.Id)
-	slog.Info("get members", "members", members)
 	if err != nil {
 		return nil, err
 	}
@@ -124,16 +135,19 @@ func (r *queryResolver) IsUserInGroupDirectly(ctx context.Context, userID int, g
 
 // CanGroupManageGroup is the resolver for the canGroupManageGroup field.
 func (r *queryResolver) CanGroupManageGroup(ctx context.Context, managerID int, groupID int) (bool, error) {
-	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
+	askingUserID := auth.UserIDFromContext(ctx)
+	if askingUserID == nil {
+		return false, auth.ErrNotAuthenticated
+	}
 
-	managerVisibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, managerID)
+	managerVisibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *askingUserID, managerID)
 	if err != nil {
 		return false, err
 	}
 	if !managerVisibleToAsker {
 		return false, fmt.Errorf("manager group does not exist or user has invalid permissions to query it")
 	}
-	managedVisibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
+	managedVisibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *askingUserID, groupID)
 	if err != nil {
 		return false, err
 	}
@@ -153,9 +167,13 @@ func (r *queryResolver) CanGroupManageGroup(ctx context.Context, managerID int, 
 
 // CanUserManageGroup is the resolver for the canUserManageGroup field.
 func (r *queryResolver) CanUserManageGroup(ctx context.Context, managerID int, groupID int) (bool, error) {
-	askingUserID := ctx.Value(auth.UserContextKey{}).(int)
+	askingUserID := auth.UserIDFromContext(ctx)
 
-	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, askingUserID, groupID)
+	if askingUserID == nil {
+		return false, auth.ErrNotAuthenticated
+	}
+
+	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *askingUserID, groupID)
 	if err != nil {
 		return false, err
 	}
