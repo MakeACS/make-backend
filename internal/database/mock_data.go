@@ -25,6 +25,8 @@ type TestMockData struct {
 	ExMusicians      models.Group
 	BeatlesManagers  models.Group
 	Brits            models.Group
+
+	Parlophone models.Makerspace
 }
 
 var localContext TestMockData = TestMockData{
@@ -41,6 +43,20 @@ var localContext TestMockData = TestMockData{
 	},
 }
 
+func makeTestMakerspace(ctx context.Context, l *slog.Logger, store *Store) bool {
+	id, err := store.Makerspaces.CreateMakerspace(ctx, "Parlophone", false)
+	if err != nil {
+		l.Error("Failed to create makerspace", "err", err)
+		return false
+	}
+	m, err := store.Makerspaces.GetMakerspaceById(ctx, id)
+	if err != nil {
+		l.Error("Failed to get created makerspace", "err", err)
+		return false
+	}
+	localContext.Parlophone = *m
+	return true
+}
 func fillTestUsers(ctx context.Context, l *slog.Logger, store *Store) bool {
 	for i, u := range localContext.Users {
 		id, err := store.Users.CreateUser(ctx, u.Email)
@@ -155,6 +171,7 @@ func fillTestData(ctx context.Context, l *slog.Logger, store *Store) {
 	fillTestUsers(ctx, l, store)
 	makeTestGroups(ctx, l, store)
 	addUsersToTestGroups(ctx, l, store)
+	makeTestMakerspace(ctx, l, store)
 
 }
 

@@ -325,3 +325,12 @@ func TestMembersOfGroupAsSeeNone(t *testing.T) {
 		t.Fatalf("see none member should not be able to see group at all: saw %v", members)
 	}
 }
+func TestMembersOfGroupAsNotSignedIn(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+	group := data.BeatlesMusicians
+
+	members, err := resolver.Group().Members(t.Context(), &group)
+	if err == nil {
+		t.Fatalf("non signed in user should not be able to see group at all: saw %v", members)
+	}
+}
