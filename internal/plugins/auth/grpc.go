@@ -59,8 +59,9 @@ func (g *GRPCCallbackClient) UserLoggedIn(cb *UserLoginCallback) (*RedirectURL, 
 }
 
 // UserLoggedOut implements [AuthCallbackProvider].
-func (g *GRPCCallbackClient) UserLoggedOut(*UserLogOffRequest) error {
-	panic("unimplemented")
+func (g *GRPCCallbackClient) UserLoggedOut(in *UserLogOffRequest) error {
+	_, err := g.client.UserLoggedOut(context.TODO(), in)
+	return err
 }
 
 var _ AuthCallbackProvider = &GRPCCallbackClient{}
@@ -82,27 +83,21 @@ func (g *GRPCClient) initialize() error {
 	return err
 }
 
-// Info implements [AuthProvider].
 func (g *GRPCClient) Info(init *common.PluginInitialMessage) (*common.PluginInfo, error) {
 	info, err := g.client.Info(context.Background(), init)
 	if err != nil {
 
 		return nil, err
 	}
-
 	return info, nil
-
 }
 
-// GenerateLoginRequest implements [AuthProvider].
 func (g *GRPCClient) GenerateLoginRequest(req *UserLoginStartRequest) (*LoginRequest, error) {
 	res, err := g.client.GetLoginRequest(context.Background(), req)
 	if err != nil {
 		return nil, err
 	}
-
 	return res, nil
-
 }
 
 func (g *GRPCClient) Heartbeat() (*common.HeartbeatInfo, error) {

@@ -5,8 +5,8 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
-	"log"
 	"make-backend/internal/plugins/auth"
 	"net/http"
 	"net/url"
@@ -30,17 +30,17 @@ func (s *SAMLAuth) SetupSamlSP(c Config, sp *SessionProviderViaPlugin) (*samlsp.
 
 	keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse leaf cert: %w", err)
+		return nil, fmt.Errorf("failed to parse leaf cert: %w", err)
 	}
 
 	idpMetadataURL, err := url.Parse(c.SamlIDPMetadataProvider)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse idpMetadataURL: %w", err)
+		return nil, fmt.Errorf("failed to parse idp metadata URL: %w", err)
 	}
 
 	idpMetadata, err := samlsp.FetchMetadata(context.Background(), http.DefaultClient, *idpMetadataURL)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch idpMetadata: %w", err)
+		return nil, fmt.Errorf("failed to fetch idpMetadata: %w", err)
 	}
 
 	rootUrl, err := url.Parse(c.BaseURL)
@@ -113,8 +113,7 @@ func (s *SessionProviderViaPlugin) CreateSession(w http.ResponseWriter, r *http.
 // DeleteSession is called to modify the response such that it removed the current
 // session, e.g. by deleting a cookie.
 func (s *SessionProviderViaPlugin) DeleteSession(w http.ResponseWriter, r *http.Request) error {
-	log.Println("delete session")
-	return nil
+	return errors.New("SessionProviderViaPlugin.DeleteSession unimplemented")
 
 }
 
@@ -122,7 +121,6 @@ func (s *SessionProviderViaPlugin) DeleteSession(w http.ResponseWriter, r *http.
 // ErrNoSession if there is no valid session.
 
 func (s SessionProviderViaPlugin) GetSession(r *http.Request) (samlsp.Session, error) {
-	log.Println("get session")
 	return nil, samlsp.ErrNoSession
 
 }
