@@ -156,6 +156,14 @@ create view group_membership as (
 );
 
 
+create view anonymous_group_membership as ( 
+    select distinct ags.anonymous_id as agroup_id , gm.user_id as user_id
+    from anonymous_group_subgroups ags 
+    left join group_membership gm 
+    on gm.group_id  = ags.group_id 
+);
+
+
 
 CREATE TABLE anonymous_groups(
     id SERIAL PRIMARY KEY
@@ -180,8 +188,8 @@ CREATE TABLE makerspaces (
     timezone TEXT NOT NULL DEFAULT 'America/New_York',
     -- agroup of users who can manage this space
     management_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE,
-    -- agroup of users who can site-set equipment state
-    can_change_equipment_state_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE 
+    -- agroup of users who can site-set equipment state and other such actions
+    staff_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE 
 );
 
 CREATE TABLE restrictions (
@@ -225,17 +233,6 @@ CREATE TABLE announcements (
     makerspace_id INT REFERENCES makerspaces(id) ON DELETE CASCADE
 );
 
-CREATE TABLE managers (
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, makerspace_id)
-);
-
-CREATE TABLE staff (
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, makerspace_id)
-);
 
 CREATE TABLE equipment (
     id SERIAL PRIMARY KEY,

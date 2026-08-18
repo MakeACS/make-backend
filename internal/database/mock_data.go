@@ -55,6 +55,8 @@ func makeTestMakerspace(ctx context.Context, l *slog.Logger, store *Store) bool 
 		return false
 	}
 	localContext.Parlophone = *m
+
+	localContext.Parlophone.Description
 	return true
 }
 func fillTestUsers(ctx context.Context, l *slog.Logger, store *Store) bool {

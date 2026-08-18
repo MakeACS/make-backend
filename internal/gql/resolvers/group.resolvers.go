@@ -13,8 +13,6 @@ import (
 	"make-backend/internal/gql"
 )
 
-var ErrNoGroupOrWrongPermissions = fmt.Errorf("group does not exist or user has invalid permissions to query it")
-
 // DirectMembers is the resolver for the directMembers field.
 func (r *groupResolver) DirectMembers(ctx context.Context, obj *models.Group) ([]*models.MembershipToGroup, error) {
 	panic(fmt.Errorf("not implemented: DirectMembers - directMembers"))
@@ -128,7 +126,7 @@ func (r *queryResolver) IsUserInGroup(ctx context.Context, userID int, groupID i
 		return false, err
 	}
 	if !visibleToAsker {
-		return false, ErrNoGroupOrWrongPermissions
+		return false, models.ErrNoGroupOrWrongPermissions
 	}
 
 	in, _, err := r.Store.Groups.IsUserInGroup(ctx, userID, groupID)
@@ -147,7 +145,7 @@ func (r *queryResolver) IsUserInGroupDirectly(ctx context.Context, userID int, g
 		return false, err
 	}
 	if !visibleToAsker {
-		return false, ErrNoGroupOrWrongPermissions
+		return false, models.ErrNoGroupOrWrongPermissions
 	}
 
 	in, _, err := r.Store.Groups.IsUserInGroupDirectly(ctx, userID, groupID)
@@ -199,7 +197,7 @@ func (r *queryResolver) CanUserManageGroup(ctx context.Context, managerID int, g
 		return false, err
 	}
 	if !visibleToAsker {
-		return false, ErrNoGroupOrWrongPermissions
+		return false, models.ErrNoGroupOrWrongPermissions
 	}
 	return r.Store.Groups.CanUserManageGroup(ctx, managerID, groupID)
 }

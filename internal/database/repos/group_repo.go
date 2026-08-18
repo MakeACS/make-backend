@@ -48,6 +48,10 @@ type GroupRepository interface {
 	AllGroupsUserCanManage(ctx context.Context, userId int) ([]int, error)
 	AllGroupsUserVisibleToUser(ctx context.Context, userId int) ([]int, error)
 	IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, error)
+
+	IsUserInAnonymousGroup(ctx context.Context, anonymousGroupId int, groupId int)
+	AddGroupToAnonymousGroup(ctx context.Context, anonymousGroupId int, groupId int) (bool, error)
+	GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]int, error)
 }
 
 type GroupRepo struct {
@@ -390,7 +394,7 @@ func (g *GroupRepo) IsUserInGroup(ctx context.Context, userId int, groupId int) 
 func (g *GroupRepo) IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error) {
 	var perms models.GroupViewPermission
 
-	query := "SELECT view_permission FROM group_membership WHERE user_id = $1 and group_id = $2"
+	query := "SELECT view_permission FROM group_direct_membership WHERE user_id = $1 and group_id = $2"
 
 	err := g.DB.QueryRow(query, userId, groupId).Scan(&perms)
 	if errors.Is(err, sql.ErrNoRows) {
