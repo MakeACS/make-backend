@@ -15,8 +15,8 @@ directive @isStaffOrSelf on FIELD_DEFINITION # REQUIRES a target_id parameter
 type User {
     id: ID!
     email: String!
-    firstname: String!
-    lastname: String!
+    full_name: String!
+    preferred_name: String!
     pronouns: String!
     join_date: Time!
     setup_complete: Boolean!

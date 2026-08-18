@@ -12,8 +12,8 @@ CREATE TABLE audit_logs (
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    first_name TEXT NOT NULL DEFAULT '',
-    last_name TEXT NOT NULL DEFAULT '',
+    full_name TEXT NOT NULL DEFAULT '',
+    preferred_name TEXT NOT NULL DEFAULT '',
     email TEXT NOT NULL UNIQUE,
     pronouns TEXT NOT NULL DEFAULT '',
     join_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
