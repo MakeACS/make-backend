@@ -126,20 +126,21 @@ func addUsersToTestGroups(ctx context.Context, t *slog.Logger, store *Store) boo
 	for _, member := range []struct {
 		email   string
 		groupId int
+		perm    models.GroupViewPermission
 	}{
-		{"brian@beatles.com", localContext.BeatlesManagers.Id},
-		{"john@beatles.com", localContext.BeatlesMusicians.Id},
-		{"paul@beatles.com", localContext.BeatlesMusicians.Id},
-		{"george@beatles.com", localContext.BeatlesMusicians.Id},
-		{"ringo@beatles.com", localContext.BeatlesMusicians.Id},
-		{"pete@beatles.com", localContext.ExMusicians.Id},
+		{"brian@beatles.com", localContext.BeatlesManagers.Id, models.GroupViewPermission_SeeSelf},
+		{"john@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},
+		{"paul@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},
+		{"george@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},
+		{"ringo@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},
+		{"pete@beatles.com", localContext.ExMusicians.Id, models.GroupViewPermission_SeeNone},
 	} {
 		user, err := store.Users.GetUserByEmail(ctx, member.email)
 		if err != nil {
 			t.Error("couldn't find user", "email", member.email, "err", err)
 			return false
 		}
-		err = store.Groups.AddUserToGroup(ctx, user.Id, member.groupId, models.GroupViewPermission_SeeAll)
+		err = store.Groups.AddUserToGroup(ctx, user.Id, member.groupId, member.perm)
 		if err != nil {
 			t.Error("Failed to add ", "user", user, "group", member.groupId)
 			return false

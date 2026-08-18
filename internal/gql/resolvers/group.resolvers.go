@@ -8,6 +8,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"log"
 	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
@@ -25,13 +26,33 @@ func (r *groupResolver) Members(ctx context.Context, obj *models.Group) ([]*mode
 		return nil, auth.ErrNotAuthenticated
 	}
 
-	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *userId, obj.Id)
+	visible, how, err := r.Store.Groups.IsUserInGroup(ctx, *userId, obj.Id)
+	if err != nil {
+
+		return nil, err
+	}
+	visibleByManager, err := r.Store.Groups.CanUserManageGroup(ctx, *userId, obj.Id)
 	if err != nil {
 		return nil, err
 	}
+
+	visible = visible || visibleByManager
 	if !visible {
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
 	}
+	log.Println("how", how, "vbm", visibleByManager)
+	if how == models.GroupViewPermission_SeeSelf && !visibleByManager {
+		m := models.MembershipToGroup{
+			UserId:         *userId,
+			ViewPermission: models.GroupViewPermission_SeeSelf,
+		}
+		ms := []*models.MembershipToGroup{
+			&m,
+		}
+		return ms, nil
+	}
+
+	// Permission SeeAll or manager level
 
 	members, err := r.Store.Groups.GetGroupMembers(ctx, obj.Id)
 	if err != nil {

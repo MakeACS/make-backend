@@ -238,12 +238,9 @@ func TestFindingGroupsById(t *testing.T) {
 }
 
 func areGroupsEqual(wantedIds, gotIds []int) bool {
-	for _, m := range wantedIds {
-		if !slices.Contains(gotIds, m) {
-			return false
-		}
-	}
-	return true
+	slices.Sort(wantedIds)
+	slices.Sort(gotIds)
+	return slices.Equal(wantedIds, gotIds)
 }
 
 func TestMembersOfGroupAsManager(t *testing.T) {
@@ -274,8 +271,8 @@ func TestMembersOfGroupAsManager(t *testing.T) {
 
 func TestMembersOfGroupAsSeeSelf(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
-	group := data.BeatlesMusicians
-	askerId := data.Users[1].Id
+	group := data.BeatlesManagers
+	askerId := data.Users[0].Id
 
 	ctx := ContextWithUser(t.Context(), askerId)
 	members, err := resolver.Group().Members(ctx, &group)
@@ -325,6 +322,6 @@ func TestMembersOfGroupAsSeeNone(t *testing.T) {
 	ctx := ContextWithUser(t.Context(), askerId)
 	members, err := resolver.Group().Members(ctx, &group)
 	if err == nil {
-		t.Fatalf("see none member should not be able to see themselves: saw %v", members)
+		t.Fatalf("see none member should not be able to see group at all: saw %v", members)
 	}
 }
