@@ -152,7 +152,7 @@ func TestGroupMembership(t *testing.T) {
 			if inGroup != tC.shouldBeMember {
 				t.Fatalf("user %v should have membership:%v to group %v but was %v", tC.user, tC.shouldBeMember, tC.group, inGroup)
 			}
-			if inGroup != tC.shouldBeMember {
+			if inGroupDirectly != tC.shouldBeDirect {
 				t.Fatalf("user %v should have direct membership:%v to group %v but was %v", tC.user, tC.shouldBeDirect, tC.group, inGroupDirectly)
 			}
 		})
@@ -332,5 +332,94 @@ func TestMembersOfGroupAsNotSignedIn(t *testing.T) {
 	members, err := resolver.Group().Members(t.Context(), &group)
 	if err == nil {
 		t.Fatalf("non signed in user should not be able to see group at all: saw %v", members)
+	}
+}
+
+func TestDirectManagedGroups(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+
+	// Brian (Users[0]) is the asker, who belongs to BeatlesManagers.
+	// BeatlesManagers (which is managed by admin/root group) directly manages:
+	// - BeatlesMusicians
+	// - OtherMusicians
+	// - ExMusicians
+	ctx := ContextWithUser(t.Context(), data.Users[0].Id)
+
+	managedGroups, err := resolver.Group().DirectManagedGroups(ctx, &data.BeatlesManagers)
+	if err != nil {
+		t.Fatalf("failed to get direct managed groups: %v", err)
+	}
+
+	expectedIds := []int{
+		data.BeatlesMusicians.Id,
+		data.OtherMusicians.Id,
+		data.ExMusicians.Id,
+	}
+
+	gotIds := []int{}
+	for _, g := range managedGroups {
+		gotIds = append(gotIds, g.Id)
+	}
+
+	if !areGroupsEqual(expectedIds, gotIds) {
+		t.Fatalf("direct managed groups were not equal. Expected %v, got %v", expectedIds, gotIds)
+	}
+}
+
+func TestAuthenticationRequired(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+	ctx := t.Context() // context with no user
+
+	tests := []struct {
+		name string
+		run  func() error
+	}{
+		{
+			"Group.Members", func() error {
+				_, err := resolver.Group().Members(ctx, &data.BeatlesMusicians)
+				return err
+			},
+		},
+		{
+			"Query.Group", func() error {
+				_, err := resolver.Query().Group(ctx, data.BeatlesMusicians.Id)
+				return err
+			},
+		},
+		{
+			name: "Query.IsUserInGroup", run: func() error {
+				_, err := resolver.Query().IsUserInGroup(ctx, data.Users[0].Id, data.BeatlesMusicians.Id)
+				return err
+			},
+		},
+		{
+			"Query.IsUserInGroupDirectly", func() error {
+				_, err := resolver.Query().IsUserInGroupDirectly(ctx, data.Users[0].Id, data.BeatlesMusicians.Id)
+				return err
+			},
+		},
+		{
+			"Query.CanGroupManageGroup", func() error {
+				_, err := resolver.Query().CanGroupManageGroup(ctx, data.BeatlesManagers.Id, data.BeatlesMusicians.Id)
+				return err
+			},
+		},
+		{
+			"Query.CanUserManageGroup", func() error {
+				_, err := resolver.Query().CanUserManageGroup(ctx, data.Users[0].Id, data.BeatlesMusicians.Id)
+				return err
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.run()
+			if err == nil {
+				t.Error("expected error for unauthenticated user, but got nil")
+			} else if err != auth.ErrNotAuthenticated {
+				t.Errorf("expected non authenticated error %v, but got %v", auth.ErrNotAuthenticated, err)
+			}
+		})
 	}
 }

@@ -135,9 +135,18 @@ func (g *GroupRepo) IsGroupSubgroup(ctx context.Context, subgroup int, supergrou
 }
 
 func (g *GroupRepo) AddSubgroupToGroup(ctx context.Context, subgroupID, supergroupID int, permissions models.GroupViewPermission) error {
+	// if new supergroup is subgroup of new subgroup, would make a loop
+	wouldCreateCycle, _, err := g.IsGroupSubgroup(ctx, supergroupID, subgroupID)
+	if err != nil {
+		return fmt.Errorf("failed to check subgroup for cycle prevention")
+	}
+	if wouldCreateCycle {
+		return errors.New("not adding subgroup to group as it would cause a cycle")
+	}
+
 	query := `INSERT INTO group_direct_subgroups (group_id, subgroup_id, view_permission) VALUES ($1, $2, $3)`
 
-	_, err := g.DB.ExecContext(ctx, query, supergroupID, subgroupID, permissions)
+	_, err = g.DB.ExecContext(ctx, query, supergroupID, subgroupID, permissions)
 	if err != nil {
 		return fmt.Errorf("failed to add user to group: %w", err)
 	}

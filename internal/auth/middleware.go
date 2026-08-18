@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/alexedwards/scs/v2"
@@ -16,7 +15,6 @@ var ErrNotAuthenticated error = errors.New("not authenticated")
 func UserIDFromContext(ctx context.Context) *int {
 	userVal := ctx.Value(UserContextKey{})
 	if userVal == nil {
-		slog.Error("UserIDFromContext called with no userID in context. Caused by mismatch between route protection middleware and what resolvers actually do")
 		return nil
 	}
 	userID := userVal.(int)

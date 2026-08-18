@@ -44,7 +44,7 @@ CREATE TABLE images (
 
 CREATE TABLE groups (
     id SERIAL PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
     manager_id INT REFERENCES groups(id),
     description TEXT NOT NULL DEFAULT '',
     UNIQUE (name, manager_id)
@@ -62,8 +62,8 @@ CREATE TABLE group_direct_membership(
 );
 
 CREATE TABLE group_direct_subgroups (
-    group_id INT REFERENCES groups(id),
-    subgroup_id INT REFERENCES groups(id),
+    group_id INT REFERENCES groups(id) ON DELETE CASCADE,
+    subgroup_id INT REFERENCES groups(id) ON DELETE CASCADE,
     view_permission INT NOT NULL DEFAULT 0 CHECK (view_permission in (0, 1, 2)),
     PRIMARY KEY (group_id, subgroup_id)
 );
@@ -143,13 +143,16 @@ create view group_management as (
 );
 
 create view group_membership as ( 
-	select group_id, user_id, gdm.view_permission  from group_direct_membership gdm 
-	union
-	select distinct gs.supergroup_id, gdm.user_id, gs.view_permission  
-	from group_subgroups gs 
-	left join group_direct_membership gdm 
-	on gdm.group_id  = gs.subgroup_id 
-	where user_id is not null
+    select group_id, user_id, MAX(view_permission) as view_permission from (
+    	select group_id, user_id, gdm.view_permission as view_permission  from group_direct_membership gdm 
+    	union
+    	select distinct gs.supergroup_id, gdm.user_id, gs.view_permission  
+    	from group_subgroups gs 
+    	left join group_direct_membership gdm 
+    	on gdm.group_id  = gs.subgroup_id 
+    	where user_id is not null
+    ) as subquery
+    group by group_id, user_id
 );
 
 

@@ -8,11 +8,12 @@ package resolvers
 import (
 	"context"
 	"fmt"
-	"log"
 	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
 )
+
+var ErrNoGroupOrWrongPermissions = fmt.Errorf("group does not exist or user has invalid permissions to query it")
 
 // DirectMembers is the resolver for the directMembers field.
 func (r *groupResolver) DirectMembers(ctx context.Context, obj *models.Group) ([]*models.MembershipToGroup, error) {
@@ -40,7 +41,6 @@ func (r *groupResolver) Members(ctx context.Context, obj *models.Group) ([]*mode
 	if !visible {
 		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
 	}
-	log.Println("how", how, "vbm", visibleByManager)
 	if how == models.GroupViewPermission_SeeSelf && !visibleByManager {
 		m := models.MembershipToGroup{
 			UserId:         *userId,
@@ -128,7 +128,7 @@ func (r *queryResolver) IsUserInGroup(ctx context.Context, userID int, groupID i
 		return false, err
 	}
 	if !visibleToAsker {
-		return false, fmt.Errorf("group does not exist or user has invalid permissions to query it")
+		return false, ErrNoGroupOrWrongPermissions
 	}
 
 	in, _, err := r.Store.Groups.IsUserInGroup(ctx, userID, groupID)
@@ -147,7 +147,7 @@ func (r *queryResolver) IsUserInGroupDirectly(ctx context.Context, userID int, g
 		return false, err
 	}
 	if !visibleToAsker {
-		return false, fmt.Errorf("group does not exist or user has invalid permissions to query it")
+		return false, ErrNoGroupOrWrongPermissions
 	}
 
 	in, _, err := r.Store.Groups.IsUserInGroupDirectly(ctx, userID, groupID)
@@ -199,7 +199,7 @@ func (r *queryResolver) CanUserManageGroup(ctx context.Context, managerID int, g
 		return false, err
 	}
 	if !visibleToAsker {
-		return false, fmt.Errorf("group does not exist or user has invalid permissions to query it")
+		return false, ErrNoGroupOrWrongPermissions
 	}
 	return r.Store.Groups.CanUserManageGroup(ctx, managerID, groupID)
 }
