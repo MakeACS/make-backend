@@ -40,6 +40,131 @@ CREATE TABLE images (
     identifier TEXT NOT NULL UNIQUE
 );
 
+
+
+CREATE TABLE groups (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    manager_id INT REFERENCES groups(id),
+    description TEXT NOT NULL DEFAULT '',
+    UNIQUE (name, manager_id)
+);
+INSERT INTO groups (name, description) 
+VALUES ('admin', 'The root of all groups');
+
+
+
+CREATE TABLE group_direct_membership(
+    group_id INT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    view_permission INT NOT NULL DEFAULT 0 CHECK (view_permission in (0, 1, 2)),
+    PRIMARY KEY (group_id, user_id)
+);
+
+CREATE TABLE group_direct_subgroups (
+    group_id INT REFERENCES groups(id),
+    subgroup_id INT REFERENCES groups(id),
+    view_permission INT NOT NULL DEFAULT 0 CHECK (view_permission in (0, 1, 2)),
+    PRIMARY KEY (group_id, subgroup_id)
+);
+
+
+-- table of
+-- manager_id, managed_id, depth
+-- admin, staff_management, 1
+-- admin, student_groups, 1
+-- student_groups, club1, 1
+-- admin, club1, 2
+
+-- does not take into account subgroups
+-- if 
+--   A super:subgroups B 
+--   A manages C
+--   C manages D
+-- this view only shows A manages C, C manages D, A manages C
+-- the group_management view includes B manages C, B manages D
+
+create view group_noncombination_management as ( 
+	WITH RECURSIVE managees AS (
+		-- Anchor: get all groups and their managers
+	    SELECT g.manager_id as manager_group_id, g.id as group_id, 1 AS depth 
+	    FROM "groups" g
+	    UNION ALL
+	    -- Recursive: Joins my id and existing managers to find existing groups connection up the tree
+	    SELECT g2.manager_id as manager_group_id, m.group_id as group_id, m.depth + 1
+	    FROM groups g2
+	    JOIN managees m ON g2.id = m.manager_group_id
+	    where g2.id <> g2.manager_id and depth < 1000
+	)
+	SELECT manager_group_id, group_id, min(depth) as depth FROM managees group by (manager_group_id, group_id) 
+);
+
+create view group_subgroups as (
+WITH RECURSIVE subgroups AS (
+		-- Anchor: get all subgroups groups and their direct supergroups
+	    SELECT g.group_id as supergroup_id, g.subgroup_id as subgroup_id, view_permission, 1 AS depth 
+	    FROM "group_direct_subgroups" g
+	    UNION ALL
+	    -- Recursive: Joins to find existing groups connection up the tree
+	    -- geometrically working up the tree
+	    SELECT g2.group_id as supergroup_id, s.subgroup_id as subgroup_id, g2.view_permission, s.depth + 1
+	    FROM "group_direct_subgroups" g2
+	    JOIN subgroups s ON g2.subgroup_id  = s.supergroup_id 
+	    where g2.group_id <> g2.subgroup_id and depth < 1000
+	)
+SELECT distinct supergroup_id, subgroup_id, view_permission, depth as depth 
+FROM subgroups 
+);
+
+-- takes into account subgroups
+-- if 
+--   A super:subgroups B 
+--   A manages C
+--   C manages D
+-- this view only shows A manages C, C manages D, A manages C, B manages C, B manages D
+-- the group_noncombination_management view only shows A:C, C:D, A:C as it is unaware of subgroups
+
+create view group_management as ( 
+	with all_manage_links as (
+		select gnm.manager_group_id as manager_group_id, gnm.group_id,0 as subgroup_depth, gnm.depth as manage_depth from group_noncombination_management gnm 
+	union
+		select 
+			gs.subgroup_id as manager_group_id, 
+			gnm.group_id as group_id, 
+			gs.depth as subgroup_depth, 
+			gnm.depth as manage_depth
+		from group_subgroups gs 
+		left join group_noncombination_management gnm 
+		on gs.supergroup_id  = gnm.manager_group_id
+		where gnm.group_id is not null
+	)
+	select manager_group_id , group_id, min(subgroup_depth) as subgroup_depth, min(manage_depth) as manage_depth  from all_manage_links
+	group by manager_group_id , group_id 
+);
+
+create view group_membership as ( 
+	select group_id, user_id, gdm.view_permission  from group_direct_membership gdm 
+	union
+	select distinct gs.supergroup_id, gdm.user_id, gs.view_permission  
+	from group_subgroups gs 
+	left join group_direct_membership gdm 
+	on gdm.group_id  = gs.subgroup_id 
+	where user_id is not null
+);
+
+
+
+CREATE TABLE anonymous_groups(
+    id SERIAL PRIMARY KEY
+);
+CREATE TABLE anonymous_group_subgroups(
+    anonymous_id INT REFERENCES anonymous_groups(id) ON DELETE CASCADE,
+    group_id INT REFERENCES groups(id) ON DELETE CASCADE, 
+    PRIMARY KEY (anonymous_id, group_id)
+);
+
+
+
 CREATE TABLE makerspaces (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -49,7 +174,11 @@ CREATE TABLE makerspaces (
     docs_url TEXT NOT NULL DEFAULT '',
     image_id INT REFERENCES images(id) ON DELETE SET NULL,
     hidden BOOLEAN NOT NULL,
-    timezone TEXT NOT NULL DEFAULT 'America/New_York'
+    timezone TEXT NOT NULL DEFAULT 'America/New_York',
+    -- agroup of users who can manage this space
+    management_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE,
+    -- agroup of users who can site-set equipment state
+    can_change_equipment_state_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE 
 );
 
 CREATE TABLE restrictions (
@@ -259,15 +388,17 @@ CREATE TABLE custom_links (
     long_url TEXT NOT NULL
 );
 
-CREATE TABLE temp_cards (
-    id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    card_tag TEXT NOT NULL,
-    issued TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
+
 
 -- +goose Down
-DROP TABLE IF EXISTS temp_cards;
+DROP TABLE IF EXISTS groups;
+DROP TABLE IF EXISTS group_direct_membership;
+DROP TABLE IF EXISTS group_direct_subgroups;
+
+
+DROP TABLE IF EXISTS anonymous_groups;
+DROP TABLE IF EXISTS anonymous_group_subgroups;
+
 DROP TABLE IF EXISTS custom_links;
 DROP TABLE IF EXISTS reservations;
 DROP TABLE IF EXISTS equipment_instances;

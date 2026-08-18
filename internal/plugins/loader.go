@@ -37,7 +37,7 @@ func (t *TestAuthCBProvider) UserLoggedIn(data *auth.UserLoginCallback) (*auth.R
 		var id int
 		id, err = t.store.Users.CreateUser(context.TODO(), data.Email)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create new user on login {should make new user}", "err", err)
+			return nil, fmt.Errorf("failed to create new user on login {should make new user}: %w", err)
 		} else {
 			slog.Info("new user joined", "email", data.Email)
 			newAccount = true
@@ -45,18 +45,13 @@ func (t *TestAuthCBProvider) UserLoggedIn(data *auth.UserLoginCallback) (*auth.R
 		u, err = t.store.Users.GetUserById(context.TODO(), id)
 	}
 	if err != nil || u == nil {
-		return nil, fmt.Errorf("failed to find user on login {should make new user}", "err", err)
+		return nil, fmt.Errorf("failed to find user on login {should make new user}: %w", err)
 	}
 
 	ctx1 := context.Background()
 	ctx2, err := t.sessionManager.Load(ctx1, "")
 
 	t.sessionManager.Put(ctx2, "user_id", u.Id)
-	// sd := sessionData{
-	// deadline: time.Now().Add(lifetime).UTC(),
-	// status:   Unmodified,
-	// values:   make(map[string]interface{}),
-	// }
 
 	if err != nil {
 		slog.Warn("failed to load token", "err", err)

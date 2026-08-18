@@ -129,16 +129,16 @@ func (r *UserRepo) IsManager(ctx context.Context, id int) (bool, error) {
 }
 
 func (r *UserRepo) IsStaff(ctx context.Context, id int) (bool, error) {
-	var isStaaff bool
+	var isStaff bool
 
 	query := `SELECT EXISTS(SELECT 1 FROM staff WHERE user_id = $1)`
 
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&isStaaff)
+	err := r.DB.QueryRowContext(ctx, query, id).Scan(&isStaff)
 	if err != nil {
 		return false, err
 	}
 
-	return isStaaff, nil
+	return isStaff, nil
 }
 
 func (r *UserRepo) IsTrainer(ctx context.Context, id int) (bool, error) {

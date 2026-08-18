@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+// User refers to a single person from the backends point of view
+// It intentionally does not refer to the sign in method (SSO, OAUTH, etc) as a User is independent of the sign in method
 type User struct {
 	Id            int
 	Email         string
