@@ -68,6 +68,19 @@ func TestMakerspaceManagerSubgroups(t *testing.T) {
 	}
 }
 
+func TestAddToStaffAgroupWithoutAuth(t *testing.T) {
+	_, data, resolver := helpersForResolverTest(t)
+	groupAlreadyThere := data.BeatlesMusicians.Id
+	groupToAdd := data.ExMusicians.Id
+	wantedSG := []int{groupAlreadyThere, groupToAdd}
+
+	good, err := resolver.Mutation().SetAnonymousGroupSubgroups(t.Context(), data.Parlophone.StaffAgroupId, wantedSG)
+	if good || err == nil {
+		t.Fatalf("succeeded in adding subgroups to anonymous group when unauthenticated")
+	}
+
+}
+
 func TestAddAndRemoveFromStaffAgroup(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
 	groupAlreadyThere := data.BeatlesMusicians.Id
@@ -75,13 +88,15 @@ func TestAddAndRemoveFromStaffAgroup(t *testing.T) {
 	midWantedSG := []int{groupAlreadyThere, groupToAdd}
 	endWantedSG := []int{groupAlreadyThere}
 
-	good, err := resolver.Mutation().SetAnonymousGroupSubgroups(t.Context(), data.Parlophone.StaffAgroupId, midWantedSG)
+	ctx := ContextWithUser(t.Context(), data.Users[0].Id)
+
+	good, err := resolver.Mutation().SetAnonymousGroupSubgroups(ctx, data.Parlophone.StaffAgroupId, midWantedSG)
 	if !good || err != nil {
 		t.Fatalf("failed to set agroup subgroups to %v: good: %v, err: %v", midWantedSG, good, err)
 	}
 
 	// add new group
-	gotSGsMid, err := resolver.Makerspace().StaffSubgroups(t.Context(), &data.Parlophone)
+	gotSGsMid, err := resolver.Makerspace().StaffSubgroups(ctx, &data.Parlophone)
 	if err != nil {
 		t.Fatalf("failed to get manager subgroups of makerspace after addition %v", err)
 	}
@@ -94,12 +109,12 @@ func TestAddAndRemoveFromStaffAgroup(t *testing.T) {
 	}
 
 	// remove new group
-	good, err = resolver.Mutation().SetAnonymousGroupSubgroups(t.Context(), data.Parlophone.StaffAgroupId, endWantedSG)
+	good, err = resolver.Mutation().SetAnonymousGroupSubgroups(ctx, data.Parlophone.StaffAgroupId, endWantedSG)
 	if !good || err != nil {
 		t.Fatalf("failed to set agroup subgroups to %v: good: %v, err: %v", endWantedSG, good, err)
 	}
 
-	gotSGsEnd, err := resolver.Makerspace().StaffSubgroups(t.Context(), &data.Parlophone)
+	gotSGsEnd, err := resolver.Makerspace().StaffSubgroups(ctx, &data.Parlophone)
 	if err != nil {
 		t.Fatalf("failed to get manager subgroups of makerspace after removal %v", err)
 	}

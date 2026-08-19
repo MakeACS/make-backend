@@ -176,8 +176,6 @@ create view anonymous_group_membership as (
 );
 
 
-
-
 CREATE TABLE makerspaces (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -193,6 +191,32 @@ CREATE TABLE makerspaces (
     -- agroup of users who can site-set equipment state and other such actions
     staff_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE 
 );
+
+create view anonymous_group_management_by_group as (
+    (
+        -- groups in management agroup can manage staff agroup for makerspace
+        select ags.group_id as manager_group_id, m.staff_agroup_id as managed_agroup_id
+        from  makerspaces m
+        left join anonymous_group_subgroups ags on m.management_agroup_id = ags.anonymous_id
+    ) union (
+        -- root group can manage any agroup id
+        select g.id as manager_group_id, ag.id as managed_agroup_id
+        from anonymous_groups ag
+        left join groups g on TRUE
+        -- only group with no manager is root group
+        where g.manager_id is null
+    )
+    -- NOTE: add other rules about which groups can manage agroups here and union them in
+);
+
+
+create view anonymous_group_management_by_user as (
+    select gm.user_id as manager_user_id, agm.managed_agroup_id as managed_agroup_id
+    from anonymous_group_management_by_group agm
+    left join group_membership gm on gm.group_id = agm.manager_group_id
+
+);
+
 
 CREATE TABLE restrictions (
     id SERIAL PRIMARY KEY,
@@ -397,11 +421,12 @@ DROP TABLE IF EXISTS groups;
 DROP TABLE IF EXISTS group_direct_membership;
 DROP TABLE IF EXISTS group_direct_subgroups;
 
-DROP VIEW IF EXISTS group_noncombination_management
-DROP VIEW IF EXISTS group_subgroups
-DROP VIEW IF EXISTS group_management
-DROP VIEW IF EXISTS group_membership
-DROP VIEW IF EXISTS anonymous_group_membership
+DROP VIEW IF EXISTS group_noncombination_management;
+DROP VIEW IF EXISTS group_subgroups;
+DROP VIEW IF EXISTS group_management;
+DROP VIEW IF EXISTS group_membership;
+DROP VIEW IF EXISTS anonymous_group_membership;
+DROP VIEW IF EXISTS anonymous_group_management_by_group;
 
 
 DROP TABLE IF EXISTS anonymous_groups;

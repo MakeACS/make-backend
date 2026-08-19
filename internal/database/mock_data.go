@@ -62,7 +62,7 @@ func makeTestMakerspace(ctx context.Context, l *slog.Logger, store *Store) bool 
 	}
 	err = store.Groups.SetGroupsForAnonymousGroup(ctx, localContext.Parlophone.ManagementAgroupId, []int{localContext.BeatlesManagers.Id})
 	if err != nil {
-		l.Error("Failed to add beatles as staff of parlophone", "err", err)
+		l.Error("Failed to add beatles managers as staff of parlophone", "err", err)
 		return false
 	}
 

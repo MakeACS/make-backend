@@ -7,6 +7,7 @@ package resolvers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
@@ -55,7 +56,7 @@ func (r *groupResolver) Members(ctx context.Context, obj *models.Group) ([]*mode
 
 	visible = visible || visibleByManager
 	if !visible {
-		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
+		return nil, models.ErrNoGroupOrWrongPermissions
 	}
 	if how == models.GroupViewPermission_SeeSelf && !visibleByManager {
 		m := models.MembershipToGroup{
@@ -103,12 +104,26 @@ func (r *groupResolver) DirectSubGroups(ctx context.Context, obj *models.Group) 
 
 // User is the resolver for the User field.
 func (r *membershipToGroupResolver) User(ctx context.Context, obj *models.MembershipToGroup) (*models.User, error) {
+	// TODO figure out what permissions for this are and check them
 	return r.Store.Users.GetUserById(ctx, obj.UserId)
 }
 
 // SetAnonymousGroupSubgroups is the resolver for the SetAnonymousGroupSubgroups field.
 func (r *mutationResolver) SetAnonymousGroupSubgroups(ctx context.Context, agroupID int, subgroups []int) (bool, error) {
-	err := r.Store.Groups.SetGroupsForAnonymousGroup(ctx, agroupID, subgroups)
+	userId := auth.UserIDFromContext(ctx)
+	if userId == nil {
+		return false, auth.ErrNotAuthenticated
+	}
+
+	canManage, err := r.Store.Groups.CanUserManageAnonymousGroup(ctx, *userId, agroupID)
+	if err != nil {
+		return false, err
+	}
+	if !canManage {
+		return false, errors.New("anonymous group does not exist or user does not have the permissions to edit it")
+	}
+
+	err = r.Store.Groups.SetGroupsForAnonymousGroup(ctx, agroupID, subgroups)
 	if err != nil {
 		return false, err
 	}
@@ -127,7 +142,7 @@ func (r *queryResolver) Group(ctx context.Context, id int) (*models.Group, error
 		return nil, err
 	}
 	if !visible {
-		return nil, fmt.Errorf("group does not exist or user does not have permission to see it")
+		return nil, models.ErrNoGroupOrWrongPermissions
 	}
 
 	group, err := r.Store.Groups.GetGroupById(ctx, id)
@@ -139,6 +154,18 @@ func (r *queryResolver) Group(ctx context.Context, id int) (*models.Group, error
 
 // AnonymousGroup is the resolver for the anonymousGroup field.
 func (r *queryResolver) AnonymousGroup(ctx context.Context, id int) (*models.AnonymousGroup, error) {
+	userId := auth.UserIDFromContext(ctx)
+	if userId == nil {
+		return nil, auth.ErrNotAuthenticated
+	}
+
+	canManage, err := r.Store.Groups.CanUserManageAnonymousGroup(ctx, *userId, id)
+	if err != nil {
+		return nil, err
+	}
+	if !canManage {
+		return nil, models.ErrNoGroupOrWrongPermissions
+	}
 	ag := models.AnonymousGroup{
 		Id: id,
 	}

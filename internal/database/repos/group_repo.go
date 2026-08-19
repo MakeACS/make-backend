@@ -55,10 +55,38 @@ type GroupRepository interface {
 
 	GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.Group, error)
 	SetGroupsForAnonymousGroup(ctx context.Context, anonymousGroupId int, groupIds []int) error
+	CanGroupManageAnonymousGroup(ctx context.Context, managerGroupId, anonymousGroupId int) (bool, error)
+	CanUserManageAnonymousGroup(ctx context.Context, managerUserId, anonymousGroupId int) (bool, error)
 }
 
 type GroupRepo struct {
 	DB *sql.DB
+}
+
+func (g *GroupRepo) CanGroupManageAnonymousGroup(ctx context.Context, managerGroupId, anonymousGroupId int) (bool, error) {
+	// NOTE don't edit this function to add other rules, instead add rules to the  anonymous_group_management_by_group view
+	var canManage bool
+	query := "SELECT EXISTS(SELECT 1 FROM anonymous_group_management_by_group WHERE manager_group_id = $1 and managed_agroup_id = $2)"
+	err := g.DB.QueryRow(query, managerGroupId, anonymousGroupId).Scan(&canManage)
+
+	if err != nil {
+		return false, err
+	}
+	return canManage, nil
+
+}
+
+func (g *GroupRepo) CanUserManageAnonymousGroup(ctx context.Context, managerUserId, anonymousGroupId int) (bool, error) {
+	// NOTE don't edit this function to add other rules, instead add rules to the  anonymous_group_management_by_group view
+	var canManage bool
+	query := "SELECT EXISTS(SELECT 1 FROM anonymous_group_management_by_user WHERE manager_user_id = $1 and managed_agroup_id = $2)"
+	err := g.DB.QueryRow(query, managerUserId, anonymousGroupId).Scan(&canManage)
+
+	if err != nil {
+		return false, err
+	}
+	return canManage, nil
+
 }
 
 func (g *GroupRepo) UsersInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.User, error) {
