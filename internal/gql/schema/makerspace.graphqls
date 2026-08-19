@@ -12,6 +12,12 @@ type Makerspace {
     timezone: String!
     zones: [Zone!]!
     hours: [MakerspaceHours!]!
+
+    managers: [User!]!
+    managerSubgroups: [Group!]!
+
+    staff: [User!]!
+    staffSubgroups: [Group!]!
 }
 
 type Query {

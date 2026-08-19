@@ -55,8 +55,17 @@ func makeTestMakerspace(ctx context.Context, l *slog.Logger, store *Store) bool 
 		return false
 	}
 	localContext.Parlophone = *m
+	err = store.Groups.AddGroupToAnonymousGroup(ctx, localContext.Parlophone.StaffAgroupId, localContext.BeatlesMusicians.Id)
+	if err != nil {
+		l.Error("Failed to add beatles as staff of parlophone", "err", err)
+		return false
+	}
+	err = store.Groups.AddGroupToAnonymousGroup(ctx, localContext.Parlophone.ManagementAgroupId, localContext.BeatlesManagers.Id)
+	if err != nil {
+		l.Error("Failed to add beatles as staff of parlophone", "err", err)
+		return false
+	}
 
-	localContext.Parlophone.Description
 	return true
 }
 func fillTestUsers(ctx context.Context, l *slog.Logger, store *Store) bool {

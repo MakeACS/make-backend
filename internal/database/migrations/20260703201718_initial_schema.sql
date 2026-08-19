@@ -142,6 +142,7 @@ create view group_management as (
 	group by manager_group_id , group_id 
 );
 
+
 create view group_membership as ( 
     select group_id, user_id, MAX(view_permission) as view_permission from (
     	select group_id, user_id, gdm.view_permission as view_permission  from group_direct_membership gdm 
@@ -156,14 +157,6 @@ create view group_membership as (
 );
 
 
-create view anonymous_group_membership as ( 
-    select distinct ags.anonymous_id as agroup_id , gm.user_id as user_id
-    from anonymous_group_subgroups ags 
-    left join group_membership gm 
-    on gm.group_id  = ags.group_id 
-);
-
-
 
 CREATE TABLE anonymous_groups(
     id SERIAL PRIMARY KEY
@@ -173,6 +166,15 @@ CREATE TABLE anonymous_group_subgroups(
     group_id INT REFERENCES groups(id) ON DELETE CASCADE, 
     PRIMARY KEY (anonymous_id, group_id)
 );
+
+
+create view anonymous_group_membership as ( 
+    select distinct ags.anonymous_id as agroup_id , gm.user_id as user_id
+    from anonymous_group_subgroups ags 
+    left join group_membership gm 
+    on gm.group_id  = ags.group_id 
+);
+
 
 
 
@@ -394,6 +396,12 @@ CREATE TABLE custom_links (
 DROP TABLE IF EXISTS groups;
 DROP TABLE IF EXISTS group_direct_membership;
 DROP TABLE IF EXISTS group_direct_subgroups;
+
+DROP VIEW IF EXISTS group_noncombination_management
+DROP VIEW IF EXISTS group_subgroups
+DROP VIEW IF EXISTS group_management
+DROP VIEW IF EXISTS group_membership
+DROP VIEW IF EXISTS anonymous_group_membership
 
 
 DROP TABLE IF EXISTS anonymous_groups;

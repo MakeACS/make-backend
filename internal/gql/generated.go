@@ -187,16 +187,20 @@ type ComplexityRoot struct {
 	}
 
 	Makerspace struct {
-		Description func(childComplexity int) int
-		DocsUrl     func(childComplexity int) int
-		Hidden      func(childComplexity int) int
-		Hours       func(childComplexity int) int
-		Id          func(childComplexity int) int
-		ImageId     func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Subtitle    func(childComplexity int) int
-		Timezone    func(childComplexity int) int
-		Zones       func(childComplexity int) int
+		Description      func(childComplexity int) int
+		DocsUrl          func(childComplexity int) int
+		Hidden           func(childComplexity int) int
+		Hours            func(childComplexity int) int
+		Id               func(childComplexity int) int
+		ImageId          func(childComplexity int) int
+		ManagerSubgroups func(childComplexity int) int
+		Managers         func(childComplexity int) int
+		Name             func(childComplexity int) int
+		Staff            func(childComplexity int) int
+		StaffSubgroups   func(childComplexity int) int
+		Subtitle         func(childComplexity int) int
+		Timezone         func(childComplexity int) int
+		Zones            func(childComplexity int) int
 	}
 
 	MembershipToGroup struct {
@@ -342,6 +346,10 @@ type GroupResolver interface {
 type MakerspaceResolver interface {
 	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
 	Hours(ctx context.Context, obj *models.Makerspace) ([]models.MakerspaceHours, error)
+	Managers(ctx context.Context, obj *models.Makerspace) ([]*models.User, error)
+	ManagerSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error)
+	Staff(ctx context.Context, obj *models.Makerspace) ([]*models.User, error)
+	StaffSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error)
 }
 type MembershipToGroupResolver interface {
 	User(ctx context.Context, obj *models.MembershipToGroup) (*models.User, error)
@@ -945,12 +953,36 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Makerspace.ImageId(childComplexity), true
+	case "Makerspace.managerSubgroups":
+		if e.ComplexityRoot.Makerspace.ManagerSubgroups == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Makerspace.ManagerSubgroups(childComplexity), true
+	case "Makerspace.managers":
+		if e.ComplexityRoot.Makerspace.Managers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Makerspace.Managers(childComplexity), true
 	case "Makerspace.name":
 		if e.ComplexityRoot.Makerspace.Name == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Makerspace.Name(childComplexity), true
+	case "Makerspace.staff":
+		if e.ComplexityRoot.Makerspace.Staff == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Makerspace.Staff(childComplexity), true
+	case "Makerspace.staffSubgroups":
+		if e.ComplexityRoot.Makerspace.StaffSubgroups == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Makerspace.StaffSubgroups(childComplexity), true
 	case "Makerspace.subtitle":
 		if e.ComplexityRoot.Makerspace.Subtitle == nil {
 			break
@@ -1780,6 +1812,14 @@ func (ec *executionContext) childFields_Makerspace(ctx context.Context, field gr
 		return ec.fieldContext_Makerspace_zones(ctx, field)
 	case "hours":
 		return ec.fieldContext_Makerspace_hours(ctx, field)
+	case "managers":
+		return ec.fieldContext_Makerspace_managers(ctx, field)
+	case "managerSubgroups":
+		return ec.fieldContext_Makerspace_managerSubgroups(ctx, field)
+	case "staff":
+		return ec.fieldContext_Makerspace_staff(ctx, field)
+	case "staffSubgroups":
+		return ec.fieldContext_Makerspace_staffSubgroups(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Makerspace", field.Name)
 }
@@ -4534,6 +4574,134 @@ func (ec *executionContext) _Makerspace_hours(ctx context.Context, field graphql
 }
 func (ec *executionContext) fieldContext_Makerspace_hours(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Makerspace", field, true, true, errors.New("field of type MakerspaceHours does not have child fields"))
+}
+
+func (ec *executionContext) _Makerspace_managers(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Makerspace_managers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Makerspace().Managers(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.User) graphql.Marshaler {
+			return ec.marshalNUser2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUserᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Makerspace_managers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Makerspace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Makerspace_managerSubgroups(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Makerspace_managerSubgroups(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Makerspace().ManagerSubgroups(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
+			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Makerspace_managerSubgroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Makerspace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Group(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Makerspace_staff(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Makerspace_staff(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Makerspace().Staff(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.User) graphql.Marshaler {
+			return ec.marshalNUser2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUserᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Makerspace_staff(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Makerspace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Makerspace_staffSubgroups(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Makerspace_staffSubgroups(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Makerspace().StaffSubgroups(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
+			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Makerspace_staffSubgroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Makerspace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Group(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _MembershipToGroup_UserId(ctx context.Context, field graphql.CollectedField, obj *models.MembershipToGroup) (ret graphql.Marshaler) {
@@ -9156,6 +9324,158 @@ func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSe
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "managers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Makerspace_managers(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "managerSubgroups":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Makerspace_managerSubgroups(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "staff":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Makerspace_staff(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "staffSubgroups":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Makerspace_staffSubgroups(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11070,6 +11390,22 @@ func (ec *executionContext) marshalNTrainingBlock2ᚕmakeᚑbackendᚋinternal�
 
 func (ec *executionContext) marshalNUser2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUser2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.User) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {

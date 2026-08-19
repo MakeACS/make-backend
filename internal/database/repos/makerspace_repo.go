@@ -56,24 +56,34 @@ func (r *MakerspaceRepo) GetMakerspaceById(ctx context.Context, id int) (*models
 }
 
 func (r *MakerspaceRepo) CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error) {
+	tx, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
 	var mid_result int
 	var manager_agroup_id_result, staff_agroup_id_result int
 
 	query1 := `INSERT INTO anonymous_groups DEFAULT VALUES RETURNING id`
-	err := r.DB.QueryRowContext(ctx, query1).Scan(&manager_agroup_id_result)
+	err = tx.QueryRowContext(ctx, query1).Scan(&manager_agroup_id_result)
 	if err != nil {
 		return 0, err
 	}
 
-	err = r.DB.QueryRowContext(ctx, query1).Scan(&staff_agroup_id_result)
+	err = tx.QueryRowContext(ctx, query1).Scan(&staff_agroup_id_result)
 	if err != nil {
 		return 0, err
 	}
 
 	query2 := `INSERT INTO makerspaces (name, hidden, management_agroup_id, staff_agroup_id) VALUES ($1, $2, $3, $4) RETURNING id`
 
-	err = r.DB.QueryRowContext(ctx, query2, name, hidden, manager_agroup_id_result, staff_agroup_id_result).Scan(&mid_result)
+	err = tx.QueryRowContext(ctx, query2, name, hidden, manager_agroup_id_result, staff_agroup_id_result).Scan(&mid_result)
 	if err != nil {
+		return 0, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
 
