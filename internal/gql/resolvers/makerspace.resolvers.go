@@ -7,6 +7,7 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
 )
@@ -38,6 +39,7 @@ func (r *makerspaceResolver) Hours(ctx context.Context, obj *models.Makerspace) 
 
 // Managers is the resolver for the managers field.
 func (r *makerspaceResolver) Managers(ctx context.Context, obj *models.Makerspace) ([]*models.User, error) {
+
 	us, err := r.Store.Groups.UsersInAnonymousGroup(ctx, obj.ManagementAgroupId)
 	if err != nil {
 		return nil, err
@@ -48,6 +50,10 @@ func (r *makerspaceResolver) Managers(ctx context.Context, obj *models.Makerspac
 
 // ManagerSubgroups is the resolver for the managerSubgroups field.
 func (r *makerspaceResolver) ManagerSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error) {
+	if err := CanUserFromContextManageAnonymousGroup(r.Store, ctx, obj.ManagementAgroupId); err != nil {
+		return nil, fmt.Errorf("cannot list manager subgroups: %w", err)
+	}
+
 	sgs, err := r.Store.Groups.GroupsInAnonymousGroup(ctx, obj.ManagementAgroupId)
 	if err != nil {
 		return nil, err

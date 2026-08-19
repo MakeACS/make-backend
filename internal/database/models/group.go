@@ -7,6 +7,7 @@ import (
 )
 
 var ErrNoGroupOrWrongPermissions = fmt.Errorf("group does not exist or user has invalid permissions to query it")
+var ErrNoAnonymousGroupOrWrongPermissions = fmt.Errorf("anonymous group does not exist or user has invalid permissions to query it")
 
 // Determines how users see the group theyre a part of
 type GroupViewPermission int

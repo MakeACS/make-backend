@@ -199,6 +199,11 @@ create view anonymous_group_management_by_group as (
         from  makerspaces m
         left join anonymous_group_subgroups ags on m.management_agroup_id = ags.anonymous_id
     ) union (
+        -- groups in management agroup can manage themselves
+        select ags.group_id as manager_group_id, m.management_agroup_id as managed_agroup_id
+        from  makerspaces m
+        left join anonymous_group_subgroups ags on m.management_agroup_id = ags.anonymous_id
+    ) union (
         -- root group can manage any agroup id
         select g.id as manager_group_id, ag.id as managed_agroup_id
         from anonymous_groups ag

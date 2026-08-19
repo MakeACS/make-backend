@@ -1,14 +1,14 @@
 package resolvers
 
 import (
-	"context"
 	"testing"
 )
 
-func TestMakerspaceStaff(t *testing.T) {
+func TestMakerspaceStaffAuthed(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
+	ctx := ContextWithUser(t.Context(), data.Users[0].Id)
 	wantedStaff := []int{data.Users[1].Id, data.Users[2].Id, data.Users[3].Id, data.Users[4].Id}
-	gotStaff, err := resolver.Makerspace().Staff(context.TODO(), &data.Parlophone)
+	gotStaff, err := resolver.Makerspace().Staff(ctx, &data.Parlophone)
 	if err != nil {
 		t.Fatalf("failed to get staff of makerspace %v", err)
 	}
@@ -20,12 +20,12 @@ func TestMakerspaceStaff(t *testing.T) {
 		t.Fatalf("staff group for makerspace not equal. Wanted %v but got %v", wantedStaff, sIds)
 	}
 }
-func TestMakerspaceManagers(t *testing.T) {
+func TestMakerspaceManagersAuthed(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
 	wantedManagers := []int{data.Users[0].Id}
-	gotManagers, err := resolver.Makerspace().Managers(context.TODO(), &data.Parlophone)
+	gotManagers, err := resolver.Makerspace().Managers(t.Context(), &data.Parlophone)
 	if err != nil {
-		t.Fatalf("failed to get staff of makerspace %v", err)
+		t.Fatalf("failed to get managers of makerspace %v", err)
 	}
 	mIds := []int{}
 	for _, user := range gotManagers {
@@ -38,8 +38,10 @@ func TestMakerspaceManagers(t *testing.T) {
 
 func TestMakerspaceStaffSubgroups(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
+	ctx := ContextWithUser(t.Context(), data.Users[0].Id)
+
 	wantedSG := []int{data.BeatlesMusicians.Id}
-	gotSGs, err := resolver.Makerspace().StaffSubgroups(context.TODO(), &data.Parlophone)
+	gotSGs, err := resolver.Makerspace().StaffSubgroups(ctx, &data.Parlophone)
 	if err != nil {
 		t.Fatalf("failed to get staff subgroups of makerspace %v", err)
 	}
@@ -52,12 +54,14 @@ func TestMakerspaceStaffSubgroups(t *testing.T) {
 	}
 }
 
-func TestMakerspaceManagerSubgroups(t *testing.T) {
+func TestMakerspaceManagerSubgroupsAuthed(t *testing.T) {
 	_, data, resolver := helpersForResolverTest(t)
+	ctx := ContextWithUser(t.Context(), data.Users[0].Id)
+
 	wantedSG := []int{data.BeatlesManagers.Id}
-	gotSGs, err := resolver.Makerspace().ManagerSubgroups(context.TODO(), &data.Parlophone)
+	gotSGs, err := resolver.Makerspace().ManagerSubgroups(ctx, &data.Parlophone)
 	if err != nil {
-		t.Fatalf("failed to get manager subgroups of makerspace %v", err)
+		t.Fatalf("failed to get manager subgroups of makerspace: %v", err)
 	}
 	SGIds := []int{}
 	for _, user := range gotSGs {
@@ -98,7 +102,7 @@ func TestAddAndRemoveFromStaffAgroup(t *testing.T) {
 	// add new group
 	gotSGsMid, err := resolver.Makerspace().StaffSubgroups(ctx, &data.Parlophone)
 	if err != nil {
-		t.Fatalf("failed to get manager subgroups of makerspace after addition %v", err)
+		t.Fatalf("failed to get staff subgroups of makerspace after addition: %v", err)
 	}
 	midSGIds := []int{}
 	for _, user := range gotSGsMid {
@@ -116,7 +120,7 @@ func TestAddAndRemoveFromStaffAgroup(t *testing.T) {
 
 	gotSGsEnd, err := resolver.Makerspace().StaffSubgroups(ctx, &data.Parlophone)
 	if err != nil {
-		t.Fatalf("failed to get manager subgroups of makerspace after removal %v", err)
+		t.Fatalf("failed to get staff subgroups of makerspace after removal: %v", err)
 	}
 	endSGIds := []int{}
 	for _, user := range gotSGsEnd {
