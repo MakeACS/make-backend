@@ -39,7 +39,6 @@ func (r *makerspaceResolver) Hours(ctx context.Context, obj *models.Makerspace) 
 
 // Managers is the resolver for the managers field.
 func (r *makerspaceResolver) Managers(ctx context.Context, obj *models.Makerspace) ([]*models.User, error) {
-
 	us, err := r.Store.Groups.UsersInAnonymousGroup(ctx, obj.ManagementAgroupId)
 	if err != nil {
 		return nil, err
