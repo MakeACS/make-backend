@@ -49,10 +49,12 @@ CREATE TABLE groups (
     description TEXT NOT NULL DEFAULT '',
     UNIQUE (name, manager_id)
 );
-INSERT INTO groups (name, description) 
-VALUES ('admin', 'The root of all groups');
+INSERT INTO groups (id, name, description) 
+VALUES (0, 'admin', 'The root of all groups');
 
-
+alter table groups
+  add constraint nonnull_manager_except_for_root
+  check (id = 0 or manager_id is not null);
 
 CREATE TABLE group_direct_membership(
     group_id INT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,

@@ -109,16 +109,11 @@ func (r *mutationResolver) SetAnonymousGroupSubgroups(ctx context.Context, agrou
 
 // Group is the resolver for the group field.
 func (r *queryResolver) Group(ctx context.Context, id int) (*models.Group, error) {
-	userId := auth.UserIDFromContext(ctx)
-	if userId == nil {
-		return nil, auth.ErrNotAuthenticated
-	}
-
-	visible, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *userId, id)
+	how, err := CanUserFromContextSeeGroup(r.Store, ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if !visible {
+	if how == models.GroupViewPermission_SeeNone {
 		return nil, models.ErrNoGroupOrWrongPermissions
 	}
 
@@ -139,17 +134,9 @@ func (r *queryResolver) AnonymousGroup(ctx context.Context, id int) (*models.Ano
 
 // IsUserInGroup is the resolver for the isUserInGroup field.
 func (r *queryResolver) IsUserInGroup(ctx context.Context, userID int, groupID int) (bool, error) {
-	askingUserID := auth.UserIDFromContext(ctx)
-	if askingUserID == nil {
-		return false, auth.ErrNotAuthenticated
-	}
-
-	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *askingUserID, groupID)
+	_, err := CanUserFromContextSeeGroup(r.Store, ctx, groupID)
 	if err != nil {
 		return false, err
-	}
-	if !visibleToAsker {
-		return false, models.ErrNoGroupOrWrongPermissions
 	}
 
 	in, _, err := r.Store.Groups.IsUserInGroup(ctx, userID, groupID)
@@ -209,19 +196,11 @@ func (r *queryResolver) CanGroupManageGroup(ctx context.Context, managerID int, 
 
 // CanUserManageGroup is the resolver for the canUserManageGroup field.
 func (r *queryResolver) CanUserManageGroup(ctx context.Context, managerID int, groupID int) (bool, error) {
-	askingUserID := auth.UserIDFromContext(ctx)
-
-	if askingUserID == nil {
-		return false, auth.ErrNotAuthenticated
-	}
-
-	visibleToAsker, err := r.Store.Groups.IsGroupVisibleToUser(ctx, *askingUserID, groupID)
+	_, err := CanUserFromContextSeeGroup(r.Store, ctx, groupID)
 	if err != nil {
 		return false, err
 	}
-	if !visibleToAsker {
-		return false, models.ErrNoGroupOrWrongPermissions
-	}
+
 	return r.Store.Groups.CanUserManageGroup(ctx, managerID, groupID)
 }
 

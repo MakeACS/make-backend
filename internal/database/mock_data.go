@@ -169,7 +169,7 @@ func addUsersToTestGroups(ctx context.Context, t *slog.Logger, store *Store) boo
 		}
 		err = store.Groups.AddUserToGroup(ctx, user.Id, member.groupId, member.perm)
 		if err != nil {
-			t.Error("Failed to add ", "user", user, "group", member.groupId)
+			t.Error("Failed to add ", "user", user, "group", member.groupId, "err", err)
 			return false
 		}
 	}

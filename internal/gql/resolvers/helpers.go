@@ -34,27 +34,41 @@ func CanUserFromContextManageAnonymousGroup(store *database.Store, ctx context.C
 	return nil
 }
 
+func CanUserFromContextManageGroup(store *database.Store, ctx context.Context, groupID int) (bool, error) {
+	userId := auth.UserIDFromContext(ctx)
+	if userId == nil {
+		return false, auth.ErrNotAuthenticated
+	}
+	return store.Groups.CanUserManageGroup(ctx, *userId, groupID)
+}
+
 func CanUserFromContextSeeGroup(store *database.Store, ctx context.Context, groupID int) (models.GroupViewPermission, error) {
 	userId := auth.UserIDFromContext(ctx)
 	if userId == nil {
 		return models.GroupViewPermission_SeeNone, auth.ErrNotAuthenticated
 	}
 
-	visible, how, err := store.Groups.IsUserInGroup(ctx, *userId, groupID)
-	if err != nil {
-		return models.GroupViewPermission_SeeNone, fmt.Errorf("error checking how user can view group: %w", err)
-	}
 	visibleByManager, err := store.Groups.CanUserManageGroup(ctx, *userId, groupID)
 	if err != nil {
 		return models.GroupViewPermission_SeeNone, fmt.Errorf("error checking how user can view group: %w", err)
 	}
-	visible = visible || visibleByManager
-	if !visible {
-		return models.GroupViewPermission_SeeNone, models.ErrNoGroupOrWrongPermissions
-	}
 	if visibleByManager {
 		return models.GroupViewPermission_SeeAll, nil
 	}
+
+	visibleByMember, how, err := store.Groups.IsUserInGroup(ctx, *userId, groupID)
+	if err != nil {
+		return models.GroupViewPermission_SeeNone, fmt.Errorf("error checking how user can view group: %w", err)
+	}
+
+	if !visibleByMember {
+		return models.GroupViewPermission_SeeNone, models.ErrNoGroupOrWrongPermissions
+	}
+
+	if how == models.GroupViewPermission_SeeNone {
+		return models.GroupViewPermission_SeeNone, models.ErrNoGroupOrWrongPermissions
+	}
+
 	return how, nil
 
 }

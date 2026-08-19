@@ -66,15 +66,15 @@ func TestUserManagingGroup(t *testing.T) {
 
 		can, err := resolver.Query().CanUserManageGroup(ctx, trial.user, trial.group)
 		if err != nil && !trial.shouldError {
-			t.Fatalf("got error when %v checks if %v can manage group %v: %v", trial.askerUser, trial.user, trial.group, err)
+			t.Fatalf("got error when user %v checks if user %v can manage group %v: %v", trial.askerUser, trial.user, trial.group, err)
 		} else if err == nil && trial.shouldError {
-			t.Fatalf("should get error when %v checks if %v can manage group %v we can't see", trial.askerUser, trial.user, trial.group)
+			t.Fatalf("should get error when user %v checks if user %v can manage group %v we can't see", trial.askerUser, trial.user, trial.group)
 			continue
 		}
 		if trial.shouldManage && can != trial.shouldManage {
-			t.Fatalf("%v should be able to manage %v but wasn't able to for some reason", trial.user, trial.group)
+			t.Fatalf("user %v should be able to manage %v but wasn't able to for some reason", trial.user, trial.group)
 		} else if !trial.shouldManage && can != trial.shouldManage {
-			t.Fatalf("%v should NOT be able to manage %v but wasn't able to for some reason", trial.user, trial.group)
+			t.Fatalf("user %v should NOT be able to manage %v but wasn't able to for some reason", trial.user, trial.group)
 		}
 	}
 }
