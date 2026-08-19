@@ -16,6 +16,18 @@ func SliceToPtrSlice[E any](s []E) []*E {
 	return pointers
 }
 
+func FullUserFromContext(store *database.Store, ctx context.Context) *models.User {
+	id := auth.UserIDFromContext(ctx)
+	if id == nil {
+		return nil
+	}
+	u, err := store.Users.GetUserById(ctx, *id)
+	if err != nil {
+		return nil
+	}
+	return u
+}
+
 // helper to check if the use stored in context can manage anonymous group
 // returns err if not, nil if can
 func CanUserFromContextManageAnonymousGroup(store *database.Store, ctx context.Context, agroupID int) error {

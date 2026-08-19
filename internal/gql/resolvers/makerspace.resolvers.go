@@ -8,6 +8,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
 )
@@ -80,10 +81,19 @@ func (r *makerspaceResolver) StaffSubgroups(ctx context.Context, obj *models.Mak
 
 // CreateMakerspace is the resolver for the createMakerspace field.
 func (r *mutationResolver) CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error) {
+	user := FullUserFromContext(r.Store, ctx)
+	if user != nil {
+		return 0, auth.ErrNotAuthenticated
+	}
 	id, err := r.Store.Makerspaces.CreateMakerspace(ctx, name, hidden)
 	if err != nil {
 		return 0, err
 	}
+	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, id)
+	if err != nil {
+		return id, fmt.Errorf("failed to retrieve new makerspace")
+	}
+	r.Logger.AuditLog.CreateUnassociated("builtin.makerspace.create", "{user} created {makerspace)", user.LogEntity(), makerspace.LogEntity())
 
 	return id, nil
 }
