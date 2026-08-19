@@ -29,15 +29,24 @@ type Group {
     directSubGroups: [Group!]!
 }
 
-
+type AnonymousGroup{
+    id: ID!
+    members: [User!]!
+    subgroups: [Group!]!
+}
 
 extend type Query {
     
     group(id: ID!): Group!
-    
+    anonymousGroup(id: ID!): AnonymousGroup!
+
     isUserInGroup(userID: ID!, groupID: ID!): Boolean!
 
     isUserInGroupDirectly(userID: ID!, groupID: ID!): Boolean!    
     canGroupManageGroup(managerID: ID!, groupID: ID!): Boolean!
     canUserManageGroup(managerID: ID!, groupID: ID!): Boolean!
+}
+
+extend type Mutation {
+    SetAnonymousGroupSubgroups(agroupID: ID!, subgroups: [Int!]!): Boolean!
 }

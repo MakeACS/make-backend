@@ -7,7 +7,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
 )
@@ -43,17 +42,17 @@ func (r *makerspaceResolver) Managers(ctx context.Context, obj *models.Makerspac
 	if err != nil {
 		return nil, err
 	}
-	users := []*models.User{}
-	for _, u := range us {
-		users = append(users, &u)
-	}
-	return users, nil
+
+	return SliceToPtrSlice(us), nil
 }
 
 // ManagerSubgroups is the resolver for the managerSubgroups field.
 func (r *makerspaceResolver) ManagerSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error) {
-	panic(fmt.Errorf("not implemented: ManagerSubgroups - managerSubgroups"))
-
+	sgs, err := r.Store.Groups.GroupsInAnonymousGroup(ctx, obj.ManagementAgroupId)
+	if err != nil {
+		return nil, err
+	}
+	return SliceToPtrSlice(sgs), nil
 }
 
 // Staff is the resolver for the staff field.
@@ -62,16 +61,16 @@ func (r *makerspaceResolver) Staff(ctx context.Context, obj *models.Makerspace) 
 	if err != nil {
 		return nil, err
 	}
-	users := []*models.User{}
-	for _, u := range us {
-		users = append(users, &u)
-	}
-	return users, nil
+	return SliceToPtrSlice(us), nil
 }
 
 // StaffSubgroups is the resolver for the staffSubgroups field.
 func (r *makerspaceResolver) StaffSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error) {
-	panic(fmt.Errorf("not implemented: StaffSubgroups - staffSubgroups"))
+	sgs, err := r.Store.Groups.GroupsInAnonymousGroup(ctx, obj.StaffAgroupId)
+	if err != nil {
+		return nil, err
+	}
+	return SliceToPtrSlice(sgs), nil
 }
 
 // CreateMakerspace is the resolver for the createMakerspace field.

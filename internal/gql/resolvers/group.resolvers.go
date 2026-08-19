@@ -13,6 +13,25 @@ import (
 	"make-backend/internal/gql"
 )
 
+// Members is the resolver for the members field.
+func (r *anonymousGroupResolver) Members(ctx context.Context, obj *models.AnonymousGroup) ([]*models.User, error) {
+	members, err := r.Store.Groups.UsersInAnonymousGroup(ctx, obj.Id)
+	if err != nil {
+
+		return nil, err
+	}
+	return SliceToPtrSlice(members), nil
+}
+
+// Subgroups is the resolver for the subgroups field.
+func (r *anonymousGroupResolver) Subgroups(ctx context.Context, obj *models.AnonymousGroup) ([]*models.Group, error) {
+	subgroups, err := r.Store.Groups.GroupsInAnonymousGroup(ctx, obj.Id)
+	if err != nil {
+		return nil, err
+	}
+	return SliceToPtrSlice(subgroups), nil
+}
+
 // DirectMembers is the resolver for the directMembers field.
 func (r *groupResolver) DirectMembers(ctx context.Context, obj *models.Group) ([]*models.MembershipToGroup, error) {
 	panic(fmt.Errorf("not implemented: DirectMembers - directMembers"))
@@ -27,7 +46,6 @@ func (r *groupResolver) Members(ctx context.Context, obj *models.Group) ([]*mode
 
 	visible, how, err := r.Store.Groups.IsUserInGroup(ctx, *userId, obj.Id)
 	if err != nil {
-
 		return nil, err
 	}
 	visibleByManager, err := r.Store.Groups.CanUserManageGroup(ctx, *userId, obj.Id)
@@ -56,11 +74,7 @@ func (r *groupResolver) Members(ctx context.Context, obj *models.Group) ([]*mode
 	if err != nil {
 		return nil, err
 	}
-	members2 := make([]*models.MembershipToGroup, 0, len(members))
-	for _, m := range members {
-		members2 = append(members2, &m)
-	}
-	return members2, nil
+	return SliceToPtrSlice(members), nil
 }
 
 // DirectManagedGroups is the resolver for the directManagedGroups field.
@@ -92,6 +106,15 @@ func (r *membershipToGroupResolver) User(ctx context.Context, obj *models.Member
 	return r.Store.Users.GetUserById(ctx, obj.UserId)
 }
 
+// SetAnonymousGroupSubgroups is the resolver for the SetAnonymousGroupSubgroups field.
+func (r *mutationResolver) SetAnonymousGroupSubgroups(ctx context.Context, agroupID int, subgroups []int) (bool, error) {
+	err := r.Store.Groups.SetGroupsForAnonymousGroup(ctx, agroupID, subgroups)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Group is the resolver for the group field.
 func (r *queryResolver) Group(ctx context.Context, id int) (*models.Group, error) {
 	userId := auth.UserIDFromContext(ctx)
@@ -112,6 +135,14 @@ func (r *queryResolver) Group(ctx context.Context, id int) (*models.Group, error
 		return nil, err
 	}
 	return group, nil
+}
+
+// AnonymousGroup is the resolver for the anonymousGroup field.
+func (r *queryResolver) AnonymousGroup(ctx context.Context, id int) (*models.AnonymousGroup, error) {
+	ag := models.AnonymousGroup{
+		Id: id,
+	}
+	return &ag, nil
 }
 
 // IsUserInGroup is the resolver for the isUserInGroup field.
@@ -202,6 +233,9 @@ func (r *queryResolver) CanUserManageGroup(ctx context.Context, managerID int, g
 	return r.Store.Groups.CanUserManageGroup(ctx, managerID, groupID)
 }
 
+// AnonymousGroup returns gql.AnonymousGroupResolver implementation.
+func (r *Resolver) AnonymousGroup() gql.AnonymousGroupResolver { return &anonymousGroupResolver{r} }
+
 // Group returns gql.GroupResolver implementation.
 func (r *Resolver) Group() gql.GroupResolver { return &groupResolver{r} }
 
@@ -211,6 +245,7 @@ func (r *Resolver) MembershipToGroup() gql.MembershipToGroupResolver {
 }
 
 type (
+	anonymousGroupResolver    struct{ *Resolver }
 	groupResolver             struct{ *Resolver }
 	membershipToGroupResolver struct{ *Resolver }
 )

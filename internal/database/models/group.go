@@ -32,6 +32,10 @@ type Group struct {
 	Description string
 }
 
+type AnonymousGroup struct {
+	Id int
+}
+
 // Stores a users membership in a group
 // membership is either direct: A user is manually added to a group with a certain view permission or
 // indirect: the user is a direct of a subgroup of the super group with view permissions defined at the subgroup relation

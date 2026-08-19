@@ -32,6 +32,7 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	AccessComponent() AccessComponentResolver
+	AnonymousGroup() AnonymousGroupResolver
 	Group() GroupResolver
 	Makerspace() MakerspaceResolver
 	MembershipToGroup() MembershipToGroupResolver
@@ -96,6 +97,12 @@ type ComplexityRoot struct {
 		Id           func(childComplexity int) int
 		MakerspaceId func(childComplexity int) int
 		Title        func(childComplexity int) int
+	}
+
+	AnonymousGroup struct {
+		Id        func(childComplexity int) int
+		Members   func(childComplexity int) int
+		Subgroups func(childComplexity int) int
 	}
 
 	CustomLink struct {
@@ -210,8 +217,9 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateMakerspace func(childComplexity int, name string, hidden bool) int
-		DeleteMakerspace func(childComplexity int, id int) int
+		CreateMakerspace           func(childComplexity int, name string, hidden bool) int
+		DeleteMakerspace           func(childComplexity int, id int) int
+		SetAnonymousGroupSubgroups func(childComplexity int, agroupID int, subgroups []int) int
 	}
 
 	OptionBlock struct {
@@ -237,6 +245,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AccessDevice          func(childComplexity int, id int) int
+		AnonymousGroup        func(childComplexity int, id int) int
 		CanGroupManageGroup   func(childComplexity int, managerID int, groupID int) int
 		CanUserManageGroup    func(childComplexity int, managerID int, groupID int) int
 		CurrentUser           func(childComplexity int) int
@@ -337,6 +346,10 @@ type ComplexityRoot struct {
 type AccessComponentResolver interface {
 	Type(ctx context.Context, obj *models.AccessComponent) (int, error)
 }
+type AnonymousGroupResolver interface {
+	Members(ctx context.Context, obj *models.AnonymousGroup) ([]*models.User, error)
+	Subgroups(ctx context.Context, obj *models.AnonymousGroup) ([]*models.Group, error)
+}
 type GroupResolver interface {
 	DirectMembers(ctx context.Context, obj *models.Group) ([]*models.MembershipToGroup, error)
 	Members(ctx context.Context, obj *models.Group) ([]*models.MembershipToGroup, error)
@@ -357,6 +370,7 @@ type MembershipToGroupResolver interface {
 type MutationResolver interface {
 	CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error)
 	DeleteMakerspace(ctx context.Context, id int) (bool, error)
+	SetAnonymousGroupSubgroups(ctx context.Context, agroupID int, subgroups []int) (bool, error)
 }
 type OptionBlockOptionResolver interface {
 	Correct(ctx context.Context, obj *models.OptionBlockOption) (*bool, error)
@@ -366,6 +380,7 @@ type QueryResolver interface {
 	Device(ctx context.Context, id int) (*models.Device, error)
 	AccessDevice(ctx context.Context, id int) (*models.AccessDevice, error)
 	Group(ctx context.Context, id int) (*models.Group, error)
+	AnonymousGroup(ctx context.Context, id int) (*models.AnonymousGroup, error)
 	IsUserInGroup(ctx context.Context, userID int, groupID int) (bool, error)
 	IsUserInGroupDirectly(ctx context.Context, userID int, groupID int) (bool, error)
 	CanGroupManageGroup(ctx context.Context, managerID int, groupID int) (bool, error)
@@ -558,6 +573,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Announcement.Title(childComplexity), true
+
+	case "AnonymousGroup.id":
+		if e.ComplexityRoot.AnonymousGroup.Id == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AnonymousGroup.Id(childComplexity), true
+	case "AnonymousGroup.members":
+		if e.ComplexityRoot.AnonymousGroup.Members == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AnonymousGroup.Members(childComplexity), true
+	case "AnonymousGroup.subgroups":
+		if e.ComplexityRoot.AnonymousGroup.Subgroups == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AnonymousGroup.Subgroups(childComplexity), true
 
 	case "CustomLink.long_url":
 		if e.ComplexityRoot.CustomLink.LongUrl == nil {
@@ -1043,6 +1077,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteMakerspace(childComplexity, args["id"].(int)), true
+	case "Mutation.SetAnonymousGroupSubgroups":
+		if e.ComplexityRoot.Mutation.SetAnonymousGroupSubgroups == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_SetAnonymousGroupSubgroups_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetAnonymousGroupSubgroups(childComplexity, args["agroupID"].(int), args["subgroups"].([]int)), true
 
 	case "OptionBlock.affirmation":
 		if e.ComplexityRoot.OptionBlock.Affirmation == nil {
@@ -1130,6 +1175,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccessDevice(childComplexity, args["id"].(int)), true
+	case "Query.anonymousGroup":
+		if e.ComplexityRoot.Query.AnonymousGroup == nil {
+			break
+		}
+
+		args, err := ec.field_Query_anonymousGroup_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AnonymousGroup(childComplexity, args["id"].(int)), true
 	case "Query.canGroupManageGroup":
 		if e.ComplexityRoot.Query.CanGroupManageGroup == nil {
 			break
@@ -1744,6 +1800,18 @@ func (ec *executionContext) childFields_AccessDeviceFlags(ctx context.Context, f
 	return nil, fmt.Errorf("no field named %q was found under type AccessDeviceFlags", field.Name)
 }
 
+func (ec *executionContext) childFields_AnonymousGroup(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AnonymousGroup_id(ctx, field)
+	case "members":
+		return ec.fieldContext_AnonymousGroup_members(ctx, field)
+	case "subgroups":
+		return ec.fieldContext_AnonymousGroup_subgroups(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AnonymousGroup", field.Name)
+}
+
 func (ec *executionContext) childFields_Device(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -2006,6 +2074,28 @@ func (ec *executionContext) childFields___Type(ctx context.Context, field graphq
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_SetAnonymousGroupSubgroups_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agroupID",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["agroupID"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "subgroups",
+		func(ctx context.Context, v any) ([]int, error) {
+			return ec.unmarshalNInt2ᚕintᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["subgroups"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createMakerspace_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2057,6 +2147,20 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 }
 
 func (ec *executionContext) field_Query_accessDevice_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_anonymousGroup_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
@@ -2952,6 +3056,93 @@ func (ec *executionContext) _Announcement_makerspace_id(ctx context.Context, fie
 }
 func (ec *executionContext) fieldContext_Announcement_makerspace_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Announcement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AnonymousGroup_id(ctx context.Context, field graphql.CollectedField, obj *models.AnonymousGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AnonymousGroup_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Id, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNID2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AnonymousGroup_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AnonymousGroup", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AnonymousGroup_members(ctx context.Context, field graphql.CollectedField, obj *models.AnonymousGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AnonymousGroup_members(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AnonymousGroup().Members(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.User) graphql.Marshaler {
+			return ec.marshalNUser2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUserᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AnonymousGroup_members(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AnonymousGroup",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AnonymousGroup_subgroups(ctx context.Context, field graphql.CollectedField, obj *models.AnonymousGroup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AnonymousGroup_subgroups(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AnonymousGroup().Subgroups(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
+			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AnonymousGroup_subgroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AnonymousGroup",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Group(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _CustomLink_short_url(ctx context.Context, field graphql.CollectedField, obj *models.CustomLink) (ret graphql.Marshaler) {
@@ -4870,6 +5061,50 @@ func (ec *executionContext) fieldContext_Mutation_deleteMakerspace(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_SetAnonymousGroupSubgroups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_SetAnonymousGroupSubgroups(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetAnonymousGroupSubgroups(ctx, fc.Args["agroupID"].(int), fc.Args["subgroups"].([]int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_SetAnonymousGroupSubgroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_SetAnonymousGroupSubgroups_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OptionBlock_block_id(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlock) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5325,6 +5560,50 @@ func (ec *executionContext) fieldContext_Query_group(ctx context.Context, field 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_group_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_anonymousGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_anonymousGroup(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().AnonymousGroup(ctx, fc.Args["id"].(int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *models.AnonymousGroup) graphql.Marshaler {
+			return ec.marshalNAnonymousGroup2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_anonymousGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AnonymousGroup(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_anonymousGroup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -8444,6 +8723,120 @@ func (ec *executionContext) _Announcement(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var anonymousGroupImplementors = []string{"AnonymousGroup"}
+
+func (ec *executionContext) _AnonymousGroup(ctx context.Context, sel ast.SelectionSet, obj *models.AnonymousGroup) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, anonymousGroupImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AnonymousGroup")
+		case "id":
+			out.Values[i] = ec._AnonymousGroup_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "members":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AnonymousGroup_members(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "subgroups":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AnonymousGroup_subgroups(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var customLinkImplementors = []string{"CustomLink"}
 
 func (ec *executionContext) _CustomLink(ctx context.Context, sel ast.SelectionSet, obj *models.CustomLink) graphql.Marshaler {
@@ -9612,6 +10005,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "SetAnonymousGroupSubgroups":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_SetAnonymousGroupSubgroups(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9921,6 +10321,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_group(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "anonymousGroup":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_anonymousGroup(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11150,6 +11572,20 @@ func (ec *executionContext) marshalNAccessDeviceFlags2makeᚑbackendᚋinternal�
 	return ec._AccessDeviceFlags(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNAnonymousGroup2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx context.Context, sel ast.SelectionSet, v models.AnonymousGroup) graphql.Marshaler {
+	return ec._AnonymousGroup(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAnonymousGroup2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx context.Context, sel ast.SelectionSet, v *models.AnonymousGroup) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AnonymousGroup(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11256,6 +11692,36 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNInt2ᚕintᚄ(ctx context.Context, v any) ([]int, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]int, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInt2int(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNInt2ᚕintᚄ(ctx context.Context, sel ast.SelectionSet, v []int) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNInt2int(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNMakerspaceHours2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐMakerspaceHours(ctx context.Context, sel ast.SelectionSet, v models.MakerspaceHours) graphql.Marshaler {

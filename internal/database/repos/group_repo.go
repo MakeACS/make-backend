@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"make-backend/internal/database/models"
+	"strings"
 )
 
 type GroupRepository interface {
@@ -51,9 +52,9 @@ type GroupRepository interface {
 
 	IsUserInAnonymousGroup(ctx context.Context, anonymousGroupId int, userId int) (bool, error)
 	UsersInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.User, error)
-	AddGroupToAnonymousGroup(ctx context.Context, anonymousGroupId int, groupId int) error
-	GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]int, error)
-	RemoveGroupFromAnonymousGroup(ctx context.Context, anonymousGroupId int, groupId int) error
+
+	GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.Group, error)
+	SetGroupsForAnonymousGroup(ctx context.Context, anonymousGroupId int, groupIds []int) error
 }
 
 type GroupRepo struct {
@@ -104,31 +105,49 @@ func (g *GroupRepo) UsersInAnonymousGroup(ctx context.Context, anonymousGroupId 
 
 }
 
-func (g *GroupRepo) AddGroupToAnonymousGroup(ctx context.Context, anonymousGroupId int, groupId int) error {
-	query := `INSERT INTO anonymous_group_subgroups (anonymous_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`
-	_, err := g.DB.ExecContext(ctx, query, anonymousGroupId, groupId)
+func (g *GroupRepo) SetGroupsForAnonymousGroup(ctx context.Context, anonymousGroupId int, groupIds []int) error {
+	tx, err := g.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	_, err = tx.ExecContext(ctx, "delete from anonymous_group_subgroups where anonymous_id = $1", anonymousGroupId)
+	if err != nil {
+		return fmt.Errorf("failed to delete old subgroups before adding new subgroups for set: %w", err)
+	}
+
+	counter := 1
+	valueSpots := []string{}
+	values := []any{}
+	for _, sg := range groupIds {
+		valueSpots = append(valueSpots, fmt.Sprintf("($%d, $%d)", counter, counter+1))
+		values = append(values, anonymousGroupId, sg)
+		counter += 2
+	}
+
+	query := `INSERT INTO anonymous_group_subgroups (anonymous_id, group_id) VALUES ` + strings.Join(valueSpots, ", ")
+	_, err = tx.ExecContext(ctx, query, values...)
 	if err != nil {
 		return fmt.Errorf("failed to add group to anonymous group: %w", err)
 	}
-	return nil
+	return tx.Commit()
 }
 
-// GroupsInAnonymousGroup implements [GroupRepository].
-func (g *GroupRepo) GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]int, error) {
-	query := `SELECT group_id FROM anonymous_group_subgroups WHERE anonymous_id = $1`
+func (g *GroupRepo) GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.Group, error) {
+	query := `SELECT group_id, g.name, g.description, g.manager_id FROM anonymous_group_subgroups left join groups g on g.id = group_id WHERE anonymous_id = $1`
 	rows, err := g.DB.QueryContext(ctx, query, anonymousGroupId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query groups in anonymous group: %w", err)
 	}
 	defer rows.Close()
 
-	var groupIds []int
+	var groupIds []models.Group
 	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("failed to scan group id in anonymous group: %w", err)
+		var g models.Group
+		if err := rows.Scan(&g.Id, &g.Name, &g.Description, &g.ManagerId); err != nil {
+			return nil, fmt.Errorf("failed to scan group in anonymous group: %w", err)
 		}
-		groupIds = append(groupIds, id)
+		groupIds = append(groupIds, g)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
