@@ -20,20 +20,6 @@ var wanted_plugins = []common.PluginDescription{
 		PluginType:  common.PluginType_Notification,
 		Options:     map[string]string{},
 	},
-	// {
-	// 	Name:       "notification.core.linux_email",
-	// 	Version:    1,
-	// 	MagicValue: "904d74d0-24e7-49b8-a4f6-0914aa4edde8",
-	// 	Url:        "",
-	// 	PluginType: PluginType_Notification,
-	// },
-	// {
-	// 	Name:       "auth.rit.shibboleth_sso",
-	// 	Version:    1,
-	// 	MagicValue: "904d74d0-24e7-49b8-a4f6-0914aa4edde8",
-	// 	Url:        "",
-	// 	PluginType: PluginType_Notification,
-	// },
 	{
 		Name:        "auth.core.saml",
 		Version:     1,

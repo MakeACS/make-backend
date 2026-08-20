@@ -48,19 +48,6 @@ func (r *makerspaceResolver) Managers(ctx context.Context, obj *models.Makerspac
 	return SliceToPtrSlice(us), nil
 }
 
-// ManagerSubgroups is the resolver for the managerSubgroups field.
-func (r *makerspaceResolver) ManagerSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error) {
-	if err := CanUserFromContextManageAnonymousGroup(r.Store, ctx, obj.ManagementAgroupId); err != nil {
-		return nil, fmt.Errorf("cannot list manager subgroups: %w", err)
-	}
-
-	sgs, err := r.Store.Groups.GroupsInAnonymousGroup(ctx, obj.ManagementAgroupId)
-	if err != nil {
-		return nil, err
-	}
-	return SliceToPtrSlice(sgs), nil
-}
-
 // Staff is the resolver for the staff field.
 func (r *makerspaceResolver) Staff(ctx context.Context, obj *models.Makerspace) ([]*models.User, error) {
 	us, err := r.Store.Groups.UsersInAnonymousGroup(ctx, obj.StaffAgroupId)
@@ -70,13 +57,14 @@ func (r *makerspaceResolver) Staff(ctx context.Context, obj *models.Makerspace) 
 	return SliceToPtrSlice(us), nil
 }
 
-// StaffSubgroups is the resolver for the staffSubgroups field.
-func (r *makerspaceResolver) StaffSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error) {
-	sgs, err := r.Store.Groups.GroupsInAnonymousGroup(ctx, obj.StaffAgroupId)
-	if err != nil {
-		return nil, err
-	}
-	return SliceToPtrSlice(sgs), nil
+// ManagerAnonymousGroup is the resolver for the managerAnonymousGroup field.
+func (r *makerspaceResolver) ManagerAnonymousGroup(ctx context.Context, obj *models.Makerspace) (*models.AnonymousGroup, error) {
+	panic(fmt.Errorf("not implemented: ManagerAnonymousGroup - managerAnonymousGroup"))
+}
+
+// StaffAnonymousGroup is the resolver for the staffAnonymousGroup field.
+func (r *makerspaceResolver) StaffAnonymousGroup(ctx context.Context, obj *models.Makerspace) (*models.AnonymousGroup, error) {
+	panic(fmt.Errorf("not implemented: StaffAnonymousGroup - staffAnonymousGroup"))
 }
 
 // CreateMakerspace is the resolver for the createMakerspace field.
@@ -106,6 +94,34 @@ func (r *mutationResolver) DeleteMakerspace(ctx context.Context, id int) (bool, 
 	}
 
 	return success, err
+}
+
+// SetManagerSubgroups is the resolver for the setManagerSubgroups field.
+func (r *mutationResolver) SetManagerSubgroups(ctx context.Context, makerspaceID int, subgroups []int) (bool, error) {
+	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, makerspaceID)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.Store.Groups.SetGroupsForAnonymousGroup(ctx, makerspace.ManagementAgroupId, subgroups)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// SetStaffSubgroups is the resolver for the setStaffSubgroups field.
+func (r *mutationResolver) SetStaffSubgroups(ctx context.Context, makerspaceID int, subgroups []int) (bool, error) {
+	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, makerspaceID)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.Store.Groups.SetGroupsForAnonymousGroup(ctx, makerspace.StaffAgroupId, subgroups)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Makerspace is the resolver for the makerspace field.

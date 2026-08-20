@@ -88,7 +88,7 @@ func TestSubgroupMembership(t *testing.T) {
 		"paul@beatles.com",
 		"george@beatles.com",
 		"ringo@beatles.com",
-		"brian@beatles.com",
+		"brian@example.com",
 	} {
 		user, err := store.Users.GetUserByEmail(t.Context(), email)
 		if err != nil {

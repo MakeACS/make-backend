@@ -34,7 +34,7 @@ var localContext TestMockData = TestMockData{
 		Id    int
 		Email string
 	}{
-		{Email: "brian@beatles.com"},
+		{Email: "brian@example.com"},
 		{Email: "john@beatles.com"},
 		{Email: "paul@beatles.com"},
 		{Email: "george@beatles.com"},
@@ -155,7 +155,7 @@ func addUsersToTestGroups(ctx context.Context, t *slog.Logger, store *Store) boo
 		groupId int
 		perm    models.GroupViewPermission
 	}{
-		{"brian@beatles.com", localContext.BeatlesManagers.Id, models.GroupViewPermission_SeeSelf},
+		{"brian@example.com", localContext.BeatlesManagers.Id, models.GroupViewPermission_SeeSelf},
 		{"john@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},
 		{"paul@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},
 		{"george@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},

@@ -47,6 +47,3 @@ extend type Query {
     canUserManageGroup(managerID: ID!, groupID: ID!): Boolean!
 }
 
-extend type Mutation {
-    SetAnonymousGroupSubgroups(agroupID: ID!, subgroups: [Int!]!): Boolean!
-}

@@ -95,18 +95,6 @@ func (r *membershipToGroupResolver) User(ctx context.Context, obj *models.Member
 	return r.Store.Users.GetUserById(ctx, obj.UserId)
 }
 
-// SetAnonymousGroupSubgroups is the resolver for the SetAnonymousGroupSubgroups field.
-func (r *mutationResolver) SetAnonymousGroupSubgroups(ctx context.Context, agroupID int, subgroups []int) (bool, error) {
-	if err := CanUserFromContextManageAnonymousGroup(r.Store, ctx, agroupID); err != nil {
-		return false, err
-	}
-	err := r.Store.Groups.SetGroupsForAnonymousGroup(ctx, agroupID, subgroups)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 // Group is the resolver for the group field.
 func (r *queryResolver) Group(ctx context.Context, id int) (*models.Group, error) {
 	how, err := CanUserFromContextSeeGroup(r.Store, ctx, id)

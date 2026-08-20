@@ -1,8 +1,10 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"embed"
+	"log/slog"
 	"make-backend/internal/database/repos"
 )
 
@@ -20,7 +22,7 @@ type Store struct {
 }
 
 func NewStore(db *sql.DB) *Store {
-	return &Store{
+	s := &Store{
 		Users:       &repos.UserRepo{DB: db},
 		Groups:      &repos.GroupRepo{DB: db},
 		Makerspaces: &repos.MakerspaceRepo{DB: db},
@@ -29,4 +31,6 @@ func NewStore(db *sql.DB) *Store {
 		Devices:     &repos.DeviceRepo{DB: db},
 		AuditLogs:   &repos.AuditLogRepo{DB: db},
 	}
+	fillTestData(context.Background(), slog.Default(), s)
+	return s
 }

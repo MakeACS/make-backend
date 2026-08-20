@@ -186,7 +186,7 @@ func (g *GroupRepo) GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId
 func (g *GroupRepo) IsUserInAnonymousGroup(ctx context.Context, anonymousGroupId int, userId int) (bool, error) {
 	var inGroup bool
 
-	query := "SELECT EXISTS(SELECT 1 FROM group_management WHERE group_id = $1 and user_id = $2)"
+	query := "SELECT EXISTS(SELECT 1 FROM anonymous_group_membership WHERE agroup_id = $1 and user_id = $2)"
 	err := g.DB.QueryRow(query, anonymousGroupId, userId).Scan(&inGroup)
 
 	if err != nil {

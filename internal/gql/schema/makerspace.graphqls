@@ -1,3 +1,5 @@
+directive @isManagerFor(makerspaceIdField: String, makerspaceIdArg: String) on FIELD_DEFINITION
+directive @isStaffFor(makerspaceIdField: String, makerspaceIdArg: String) on FIELD_DEFINITION
 
 union MakerspaceHours = DefaultHours | SpecialHours
 
@@ -13,11 +15,11 @@ type Makerspace {
     zones: [Zone!]!
     hours: [MakerspaceHours!]!
 
-    managers: [User!]!
-    managerSubgroups: [Group!]!
+    managers: [User!]! @isManagerFor(makerspaceIdField: "id")
+    staff: [User!]! @isStaffFor(makerspaceIdField: "id")
 
-    staff: [User!]!
-    staffSubgroups: [Group!]!
+    managerAnonymousGroup: AnonymousGroup @isManagerFor(makerspaceIdField: "id")
+    staffAnonymousGroup: AnonymousGroup @isManagerFor(makerspaceIdField: "id")
 }
 
 type Query {
@@ -25,6 +27,9 @@ type Query {
 }
 
 type Mutation {
-    createMakerspace(name: String!, hidden: Boolean!): ID!
-    deleteMakerspace(id: ID!): Boolean!
+    createMakerspace(name: String!, hidden: Boolean!): ID! @isAdmin
+    deleteMakerspace(id: ID!): Boolean! @isAdmin
+
+    setManagerSubgroups(makerspaceId: ID!, subgroups: [Int!]!): Boolean! @isManagerFor(makerspaceIdArg: "makerspaceId")
+    setStaffSubgroups(makerspaceId: ID!, subgroups: [Int!]!): Boolean! @isManagerFor(makerspaceIdArg: "makerspaceId")
 }

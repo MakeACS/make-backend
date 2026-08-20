@@ -43,15 +43,10 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	IsAdmin       func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsManager     func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsManagerFor  func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsSelf        func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsStaff       func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsStaffFor    func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsStaffOrSelf func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsTrainer     func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsTrainerFor  func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	IsAdmin      func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	IsManagerFor func(ctx context.Context, obj any, next graphql.Resolver, makerspaceIDField *string, makerspaceIDArg *string) (res any, err error)
+	IsSelf       func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	IsStaffFor   func(ctx context.Context, obj any, next graphql.Resolver, makerspaceIDField *string, makerspaceIDArg *string) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -194,20 +189,20 @@ type ComplexityRoot struct {
 	}
 
 	Makerspace struct {
-		Description      func(childComplexity int) int
-		DocsUrl          func(childComplexity int) int
-		Hidden           func(childComplexity int) int
-		Hours            func(childComplexity int) int
-		Id               func(childComplexity int) int
-		ImageId          func(childComplexity int) int
-		ManagerSubgroups func(childComplexity int) int
-		Managers         func(childComplexity int) int
-		Name             func(childComplexity int) int
-		Staff            func(childComplexity int) int
-		StaffSubgroups   func(childComplexity int) int
-		Subtitle         func(childComplexity int) int
-		Timezone         func(childComplexity int) int
-		Zones            func(childComplexity int) int
+		Description           func(childComplexity int) int
+		DocsUrl               func(childComplexity int) int
+		Hidden                func(childComplexity int) int
+		Hours                 func(childComplexity int) int
+		Id                    func(childComplexity int) int
+		ImageId               func(childComplexity int) int
+		ManagerAnonymousGroup func(childComplexity int) int
+		Managers              func(childComplexity int) int
+		Name                  func(childComplexity int) int
+		Staff                 func(childComplexity int) int
+		StaffAnonymousGroup   func(childComplexity int) int
+		Subtitle              func(childComplexity int) int
+		Timezone              func(childComplexity int) int
+		Zones                 func(childComplexity int) int
 	}
 
 	MembershipToGroup struct {
@@ -217,9 +212,10 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateMakerspace           func(childComplexity int, name string, hidden bool) int
-		DeleteMakerspace           func(childComplexity int, id int) int
-		SetAnonymousGroupSubgroups func(childComplexity int, agroupID int, subgroups []int) int
+		CreateMakerspace    func(childComplexity int, name string, hidden bool) int
+		DeleteMakerspace    func(childComplexity int, id int) int
+		SetManagerSubgroups func(childComplexity int, makerspaceID int, subgroups []int) int
+		SetStaffSubgroups   func(childComplexity int, makerspaceID int, subgroups []int) int
 	}
 
 	OptionBlock struct {
@@ -319,7 +315,6 @@ type ComplexityRoot struct {
 	User struct {
 		Admin         func(childComplexity int) int
 		Archived      func(childComplexity int) int
-		CardTag       func(childComplexity int) int
 		Email         func(childComplexity int) int
 		ForceArchive  func(childComplexity int) int
 		FullName      func(childComplexity int) int
@@ -360,9 +355,9 @@ type MakerspaceResolver interface {
 	Zones(ctx context.Context, obj *models.Makerspace) ([]*models.Zone, error)
 	Hours(ctx context.Context, obj *models.Makerspace) ([]models.MakerspaceHours, error)
 	Managers(ctx context.Context, obj *models.Makerspace) ([]*models.User, error)
-	ManagerSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error)
 	Staff(ctx context.Context, obj *models.Makerspace) ([]*models.User, error)
-	StaffSubgroups(ctx context.Context, obj *models.Makerspace) ([]*models.Group, error)
+	ManagerAnonymousGroup(ctx context.Context, obj *models.Makerspace) (*models.AnonymousGroup, error)
+	StaffAnonymousGroup(ctx context.Context, obj *models.Makerspace) (*models.AnonymousGroup, error)
 }
 type MembershipToGroupResolver interface {
 	User(ctx context.Context, obj *models.MembershipToGroup) (*models.User, error)
@@ -370,7 +365,8 @@ type MembershipToGroupResolver interface {
 type MutationResolver interface {
 	CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error)
 	DeleteMakerspace(ctx context.Context, id int) (bool, error)
-	SetAnonymousGroupSubgroups(ctx context.Context, agroupID int, subgroups []int) (bool, error)
+	SetManagerSubgroups(ctx context.Context, makerspaceID int, subgroups []int) (bool, error)
+	SetStaffSubgroups(ctx context.Context, makerspaceID int, subgroups []int) (bool, error)
 }
 type OptionBlockOptionResolver interface {
 	Correct(ctx context.Context, obj *models.OptionBlockOption) (*bool, error)
@@ -987,12 +983,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Makerspace.ImageId(childComplexity), true
-	case "Makerspace.managerSubgroups":
-		if e.ComplexityRoot.Makerspace.ManagerSubgroups == nil {
+	case "Makerspace.managerAnonymousGroup":
+		if e.ComplexityRoot.Makerspace.ManagerAnonymousGroup == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Makerspace.ManagerSubgroups(childComplexity), true
+		return e.ComplexityRoot.Makerspace.ManagerAnonymousGroup(childComplexity), true
 	case "Makerspace.managers":
 		if e.ComplexityRoot.Makerspace.Managers == nil {
 			break
@@ -1011,12 +1007,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Makerspace.Staff(childComplexity), true
-	case "Makerspace.staffSubgroups":
-		if e.ComplexityRoot.Makerspace.StaffSubgroups == nil {
+	case "Makerspace.staffAnonymousGroup":
+		if e.ComplexityRoot.Makerspace.StaffAnonymousGroup == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Makerspace.StaffSubgroups(childComplexity), true
+		return e.ComplexityRoot.Makerspace.StaffAnonymousGroup(childComplexity), true
 	case "Makerspace.subtitle":
 		if e.ComplexityRoot.Makerspace.Subtitle == nil {
 			break
@@ -1077,17 +1073,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteMakerspace(childComplexity, args["id"].(int)), true
-	case "Mutation.SetAnonymousGroupSubgroups":
-		if e.ComplexityRoot.Mutation.SetAnonymousGroupSubgroups == nil {
+	case "Mutation.setManagerSubgroups":
+		if e.ComplexityRoot.Mutation.SetManagerSubgroups == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_SetAnonymousGroupSubgroups_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_setManagerSubgroups_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.SetAnonymousGroupSubgroups(childComplexity, args["agroupID"].(int), args["subgroups"].([]int)), true
+		return e.ComplexityRoot.Mutation.SetManagerSubgroups(childComplexity, args["makerspaceId"].(int), args["subgroups"].([]int)), true
+	case "Mutation.setStaffSubgroups":
+		if e.ComplexityRoot.Mutation.SetStaffSubgroups == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setStaffSubgroups_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetStaffSubgroups(childComplexity, args["makerspaceId"].(int), args["subgroups"].([]int)), true
 
 	case "OptionBlock.affirmation":
 		if e.ComplexityRoot.OptionBlock.Affirmation == nil {
@@ -1539,12 +1546,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.Archived(childComplexity), true
-	case "User.card_tag":
-		if e.ComplexityRoot.User.CardTag == nil {
-			break
-		}
-
-		return e.ComplexityRoot.User.CardTag(childComplexity), true
 	case "User.email":
 		if e.ComplexityRoot.User.Email == nil {
 			break
@@ -1882,12 +1883,12 @@ func (ec *executionContext) childFields_Makerspace(ctx context.Context, field gr
 		return ec.fieldContext_Makerspace_hours(ctx, field)
 	case "managers":
 		return ec.fieldContext_Makerspace_managers(ctx, field)
-	case "managerSubgroups":
-		return ec.fieldContext_Makerspace_managerSubgroups(ctx, field)
 	case "staff":
 		return ec.fieldContext_Makerspace_staff(ctx, field)
-	case "staffSubgroups":
-		return ec.fieldContext_Makerspace_staffSubgroups(ctx, field)
+	case "managerAnonymousGroup":
+		return ec.fieldContext_Makerspace_managerAnonymousGroup(ctx, field)
+	case "staffAnonymousGroup":
+		return ec.fieldContext_Makerspace_staffAnonymousGroup(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Makerspace", field.Name)
 }
@@ -1938,8 +1939,6 @@ func (ec *executionContext) childFields_User(ctx context.Context, field graphql.
 		return ec.fieldContext_User_admin(ctx, field)
 	case "force_archive":
 		return ec.fieldContext_User_force_archive(ctx, field)
-	case "card_tag":
-		return ec.fieldContext_User_card_tag(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 }
@@ -2074,25 +2073,47 @@ func (ec *executionContext) childFields___Type(ctx context.Context, field graphq
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_SetAnonymousGroupSubgroups_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) dir_isManagerFor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agroupID",
-		func(ctx context.Context, v any) (int, error) {
-			return ec.unmarshalNID2int(ctx, v)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "makerspaceIdField",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["agroupID"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "subgroups",
-		func(ctx context.Context, v any) ([]int, error) {
-			return ec.unmarshalNInt2ᚕintᚄ(ctx, v)
+	args["makerspaceIdField"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "makerspaceIdArg",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["subgroups"] = arg1
+	args["makerspaceIdArg"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) dir_isStaffFor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "makerspaceIdField",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["makerspaceIdField"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "makerspaceIdArg",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["makerspaceIdArg"] = arg1
 	return args, nil
 }
 
@@ -2129,6 +2150,50 @@ func (ec *executionContext) field_Mutation_deleteMakerspace_args(ctx context.Con
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setManagerSubgroups_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "makerspaceId",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["makerspaceId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "subgroups",
+		func(ctx context.Context, v any) ([]int, error) {
+			return ec.unmarshalNInt2ᚕintᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["subgroups"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setStaffSubgroups_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "makerspaceId",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["makerspaceId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "subgroups",
+		func(ctx context.Context, v any) ([]int, error) {
+			return ec.unmarshalNInt2ᚕintᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["subgroups"] = arg1
 	return args, nil
 }
 
@@ -4778,7 +4843,25 @@ func (ec *executionContext) _Makerspace_managers(ctx context.Context, field grap
 		func(ctx context.Context) (any, error) {
 			return ec.Resolvers.Makerspace().Managers(ctx, obj)
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				makerspaceIDField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal []*models.User
+					return zeroVal, err
+				}
+				if ec.Directives.IsManagerFor == nil {
+					var zeroVal []*models.User
+					return zeroVal, errors.New("directive isManagerFor is not implemented")
+				}
+				return ec.Directives.IsManagerFor(ctx, obj, directive0, makerspaceIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v []*models.User) graphql.Marshaler {
 			return ec.marshalNUser2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUserᚄ(ctx, selections, v)
 		},
@@ -4799,38 +4882,6 @@ func (ec *executionContext) fieldContext_Makerspace_managers(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Makerspace_managerSubgroups(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Makerspace_managerSubgroups(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.Makerspace().ManagerSubgroups(ctx, obj)
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
-			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_Makerspace_managerSubgroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Makerspace",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_Group(ctx, field)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Makerspace_staff(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4842,7 +4893,25 @@ func (ec *executionContext) _Makerspace_staff(ctx context.Context, field graphql
 		func(ctx context.Context) (any, error) {
 			return ec.Resolvers.Makerspace().Staff(ctx, obj)
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				makerspaceIDField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal []*models.User
+					return zeroVal, err
+				}
+				if ec.Directives.IsStaffFor == nil {
+					var zeroVal []*models.User
+					return zeroVal, errors.New("directive isStaffFor is not implemented")
+				}
+				return ec.Directives.IsStaffFor(ctx, obj, directive0, makerspaceIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v []*models.User) graphql.Marshaler {
 			return ec.marshalNUser2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUserᚄ(ctx, selections, v)
 		},
@@ -4863,33 +4932,101 @@ func (ec *executionContext) fieldContext_Makerspace_staff(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Makerspace_staffSubgroups(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+func (ec *executionContext) _Makerspace_managerAnonymousGroup(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Makerspace_staffSubgroups(ctx, field)
+			return ec.fieldContext_Makerspace_managerAnonymousGroup(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.Makerspace().StaffSubgroups(ctx, obj)
+			return ec.Resolvers.Makerspace().ManagerAnonymousGroup(ctx, obj)
 		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
-			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				makerspaceIDField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal *models.AnonymousGroup
+					return zeroVal, err
+				}
+				if ec.Directives.IsManagerFor == nil {
+					var zeroVal *models.AnonymousGroup
+					return zeroVal, errors.New("directive isManagerFor is not implemented")
+				}
+				return ec.Directives.IsManagerFor(ctx, obj, directive0, makerspaceIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
+		func(ctx context.Context, selections ast.SelectionSet, v *models.AnonymousGroup) graphql.Marshaler {
+			return ec.marshalOAnonymousGroup2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx, selections, v)
 		},
 		true,
-		true,
+		false,
 	)
 }
-func (ec *executionContext) fieldContext_Makerspace_staffSubgroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Makerspace_managerAnonymousGroup(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Makerspace",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_Group(ctx, field)
+			return ec.childFields_AnonymousGroup(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Makerspace_staffAnonymousGroup(ctx context.Context, field graphql.CollectedField, obj *models.Makerspace) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Makerspace_staffAnonymousGroup(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Makerspace().StaffAnonymousGroup(ctx, obj)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				makerspaceIDField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal *models.AnonymousGroup
+					return zeroVal, err
+				}
+				if ec.Directives.IsManagerFor == nil {
+					var zeroVal *models.AnonymousGroup
+					return zeroVal, errors.New("directive isManagerFor is not implemented")
+				}
+				return ec.Directives.IsManagerFor(ctx, obj, directive0, makerspaceIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
+		func(ctx context.Context, selections ast.SelectionSet, v *models.AnonymousGroup) graphql.Marshaler {
+			return ec.marshalOAnonymousGroup2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Makerspace_staffAnonymousGroup(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Makerspace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AnonymousGroup(ctx, field)
 		},
 	}
 	return fc, nil
@@ -4985,7 +5122,20 @@ func (ec *executionContext) _Mutation_createMakerspace(ctx context.Context, fiel
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.Mutation().CreateMakerspace(ctx, fc.Args["name"].(string), fc.Args["hidden"].(bool))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.IsAdmin == nil {
+					var zeroVal int
+					return zeroVal, errors.New("directive isAdmin is not implemented")
+				}
+				return ec.Directives.IsAdmin(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
 			return ec.marshalNID2int(ctx, selections, v)
 		},
@@ -5029,7 +5179,20 @@ func (ec *executionContext) _Mutation_deleteMakerspace(ctx context.Context, fiel
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.Mutation().DeleteMakerspace(ctx, fc.Args["id"].(int))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.IsAdmin == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive isAdmin is not implemented")
+				}
+				return ec.Directives.IsAdmin(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
 			return ec.marshalNBoolean2bool(ctx, selections, v)
 		},
@@ -5061,19 +5224,37 @@ func (ec *executionContext) fieldContext_Mutation_deleteMakerspace(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_SetAnonymousGroupSubgroups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_setManagerSubgroups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Mutation_SetAnonymousGroupSubgroups(ctx, field)
+			return ec.fieldContext_Mutation_setManagerSubgroups(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().SetAnonymousGroupSubgroups(ctx, fc.Args["agroupID"].(int), fc.Args["subgroups"].([]int))
+			return ec.Resolvers.Mutation().SetManagerSubgroups(ctx, fc.Args["makerspaceId"].(int), fc.Args["subgroups"].([]int))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				makerspaceIDArg, err := ec.unmarshalOString2ᚖstring(ctx, "makerspaceId")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.Directives.IsManagerFor == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive isManagerFor is not implemented")
+				}
+				return ec.Directives.IsManagerFor(ctx, nil, directive0, nil, makerspaceIDArg)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
 			return ec.marshalNBoolean2bool(ctx, selections, v)
 		},
@@ -5081,7 +5262,7 @@ func (ec *executionContext) _Mutation_SetAnonymousGroupSubgroups(ctx context.Con
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_Mutation_SetAnonymousGroupSubgroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_setManagerSubgroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -5098,7 +5279,69 @@ func (ec *executionContext) fieldContext_Mutation_SetAnonymousGroupSubgroups(ctx
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_SetAnonymousGroupSubgroups_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_setManagerSubgroups_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setStaffSubgroups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_setStaffSubgroups(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetStaffSubgroups(ctx, fc.Args["makerspaceId"].(int), fc.Args["subgroups"].([]int))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				makerspaceIDArg, err := ec.unmarshalOString2ᚖstring(ctx, "makerspaceId")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.Directives.IsManagerFor == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive isManagerFor is not implemented")
+				}
+				return ec.Directives.IsManagerFor(ctx, nil, directive0, nil, makerspaceIDArg)
+			}
+
+			next = directive1
+			return next
+		},
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_setStaffSubgroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setStaffSubgroups_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5798,7 +6041,20 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.Query().User(ctx, fc.Args["id"].(int))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.IsSelf == nil {
+					var zeroVal *models.User
+					return zeroVal, errors.New("directive isSelf is not implemented")
+				}
+				return ec.Directives.IsSelf(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v *models.User) graphql.Marshaler {
 			return ec.marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx, selections, v)
 		},
@@ -7105,42 +7361,6 @@ func (ec *executionContext) _User_force_archive(ctx context.Context, field graph
 }
 func (ec *executionContext) fieldContext_User_force_archive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
-}
-
-func (ec *executionContext) _User_card_tag(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_User_card_tag(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.CardTag, nil
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.Directives.IsStaff == nil {
-					var zeroVal string
-					return zeroVal, errors.New("directive isStaff is not implemented")
-				}
-				return ec.Directives.IsStaff(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
-		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
-			return ec.marshalNString2string(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_User_card_tag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Zone_id(ctx context.Context, field graphql.CollectedField, obj *models.Zone) (ret graphql.Marshaler) {
@@ -9755,44 +9975,6 @@ func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSe
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "managerSubgroups":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Makerspace_managerSubgroups(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "staff":
 			field := field
 
@@ -9831,7 +10013,7 @@ func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSe
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "staffSubgroups":
+		case "managerAnonymousGroup":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -9840,8 +10022,46 @@ func (ec *executionContext) _Makerspace(ctx context.Context, sel ast.SelectionSe
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Makerspace_staffSubgroups(ctx, field, obj)
-				if res == graphql.Null {
+				res = ec._Makerspace_managerAnonymousGroup(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "staffAnonymousGroup":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Makerspace_staffAnonymousGroup(ctx, field, obj)
+				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -10005,9 +10225,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "SetAnonymousGroupSubgroups":
+		case "setManagerSubgroups":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_SetAnonymousGroupSubgroups(ctx, field)
+				return ec._Mutation_setManagerSubgroups(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setStaffSubgroups":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setStaffSubgroups(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -11077,11 +11304,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
-		case "card_tag":
-			out.Values[i] = ec._User_card_tag(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12086,6 +12308,13 @@ func (ec *executionContext) marshalOAccessDevice2ᚖmakeᚑbackendᚋinternalᚋ
 		return graphql.Null
 	}
 	return ec._AccessDevice(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAnonymousGroup2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx context.Context, sel ast.SelectionSet, v *models.AnonymousGroup) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AnonymousGroup(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
