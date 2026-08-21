@@ -59,12 +59,12 @@ func (r *makerspaceResolver) Staff(ctx context.Context, obj *models.Makerspace) 
 
 // ManagerAnonymousGroup is the resolver for the managerAnonymousGroup field.
 func (r *makerspaceResolver) ManagerAnonymousGroup(ctx context.Context, obj *models.Makerspace) (*models.AnonymousGroup, error) {
-	panic(fmt.Errorf("not implemented: ManagerAnonymousGroup - managerAnonymousGroup"))
+	return &models.AnonymousGroup{Id: obj.ManagementAgroupId}, nil
 }
 
 // StaffAnonymousGroup is the resolver for the staffAnonymousGroup field.
 func (r *makerspaceResolver) StaffAnonymousGroup(ctx context.Context, obj *models.Makerspace) (*models.AnonymousGroup, error) {
-	panic(fmt.Errorf("not implemented: StaffAnonymousGroup - staffAnonymousGroup"))
+	return &models.AnonymousGroup{Id: obj.StaffAgroupId}, nil
 }
 
 // CreateMakerspace is the resolver for the createMakerspace field.

@@ -2,8 +2,8 @@ package directives
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"log/slog"
 	"make-backend/internal/auth"
 	"make-backend/internal/database"
 	"make-backend/internal/gql"
@@ -20,12 +20,13 @@ func isAdmin(store *database.Store, ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("Access denied")
 	}
 
-	user, err := store.Users.GetUserById(ctx, *user_id)
+	adminGroupId, err := store.Groups.GetAdminGroupId(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	return user.Admin, nil
+	isAdmin, _, err := store.Groups.IsUserInGroup(ctx, *user_id, adminGroupId)
+	return isAdmin, err
 }
 
 func isTrainer(store *database.Store, ctx context.Context) (bool, error) {
@@ -45,45 +46,46 @@ func isTrainer(store *database.Store, ctx context.Context) (bool, error) {
 func isSelf(ctx context.Context) (bool, error) {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
-		return false, fmt.Errorf("Failed to get field context")
+		return false, fmt.Errorf("failed to get field context")
 	}
 
-	target_id, ok := fc.Args["target_id"].(int)
+	user_id, ok := fc.Args["id"].(int)
 	if !ok {
-		return false, fmt.Errorf("Failed to get target_id from field context")
+		return false, fmt.Errorf("failed to get id from field context")
 	}
 
-	user_id, ok := ctx.Value("user_id").(int)
-	if !ok {
-		return false, fmt.Errorf("Failed to get user_id from session context")
+	asker_id := auth.UserIDFromContext(ctx)
+	if asker_id == nil {
+		return false, nil
 	}
+	slog.Info("isSelf check", "asker", *asker_id, "user", user_id)
 
-	return target_id == user_id, nil
+	return *asker_id == user_id, nil
 }
 
-func extractMakerspaceIdFromFieldNameInMakerspaceType(obj any, makerspaceIdField string) (int, error) {
-	// obj represents the parent Go struct (ie. Makerspace)
+func extractIdFromFieldNameInType(obj any, idFieldName string) (int, error) {
+	// obj represents the parent Go struct (ie. Makerspace, User)
 	val := reflect.ValueOf(obj)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 
 	// Extract sibling field via reflection or direct type assertion
-	fieldVal := val.FieldByName(cases.Title(language.AmericanEnglish).String((makerspaceIdField)))
+	fieldVal := val.FieldByName(cases.Title(language.AmericanEnglish).String((idFieldName)))
 	makerspaceId := 0
 	if fieldVal.IsValid() {
 		makerspaceId, _ = fieldVal.Interface().(int)
 	} else {
-		return 0, fmt.Errorf("invalid field to extract. name: %v", makerspaceIdField)
+		return 0, fmt.Errorf("invalid field to extract. name: %v", idFieldName)
 	}
 	return makerspaceId, nil
 
 }
 
-func extractMakerspaceIdFromArgNameInMakerspaceType(ctx context.Context, makerspaceIdArg string) (int, error) {
+func extractIdFromArgName(ctx context.Context, idArg string) (int, error) {
 	fc := graphql.GetFieldContext(ctx)
 
-	if idVal, ok := fc.Args[makerspaceIdArg]; ok {
+	if idVal, ok := fc.Args[idArg]; ok {
 		id := idVal.(int)
 		return id, nil
 	}
@@ -92,17 +94,28 @@ func extractMakerspaceIdFromArgNameInMakerspaceType(ctx context.Context, makersp
 }
 
 func extractMakerspaceIdFromArgOrFieldName(ctx context.Context, obj any, makerspaceIdField *string, makerspaceIdArg *string) (int, error) {
-	if makerspaceIdArg == nil && makerspaceIdField == nil {
-		return 0, errors.New("specify one of makerspaceIdField makerspaceIdArg")
+	return extractIdFromArgOrFieldName("makerspace", ctx, obj, makerspaceIdField, makerspaceIdArg)
+}
+
+func extractUserIdFromArgOrFieldName(ctx context.Context, obj any, makerspaceIdField *string, makerspaceIdArg *string) (int, error) {
+	return extractIdFromArgOrFieldName("user", ctx, obj, makerspaceIdField, makerspaceIdArg)
+}
+func extractGroupIdFromArgOrFieldName(ctx context.Context, obj any, makerspaceIdField *string, makerspaceIdArg *string) (int, error) {
+	return extractIdFromArgOrFieldName("group", ctx, obj, makerspaceIdField, makerspaceIdArg)
+}
+
+func extractIdFromArgOrFieldName(prefix string, ctx context.Context, obj any, idField *string, idArg *string) (int, error) {
+	if idArg == nil && idField == nil {
+		return 0, fmt.Errorf("specify one of %sIdField or %sIdArg", prefix, prefix)
 	}
-	if makerspaceIdArg != nil && makerspaceIdField != nil {
-		return 0, errors.New("specify one of makerspaceIdField makerspaceIdArg not both")
+	if idArg != nil && idField != nil {
+		return 0, fmt.Errorf("specify one of %sIdField or %sIdArg not both", prefix, prefix)
 	}
 
-	if makerspaceIdArg != nil {
-		return extractMakerspaceIdFromArgNameInMakerspaceType(ctx, *makerspaceIdArg)
+	if idArg != nil {
+		return extractIdFromArgName(ctx, *idArg)
 	}
-	return extractMakerspaceIdFromFieldNameInMakerspaceType(obj, *makerspaceIdField)
+	return extractIdFromFieldNameInType(obj, *idField)
 
 }
 
@@ -144,13 +157,19 @@ func SetupDirectives(config *gql.Config, store *database.Store) {
 		}
 	}
 
-	config.Directives.IsSelf = func(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
-		self, err := isSelf(ctx)
-		if err != nil {
-			return nil, err
+	config.Directives.IsSelf = func(ctx context.Context, obj any, next graphql.Resolver, userIdField, userIdArg *string) (any, error) {
+		asker_id := auth.UserIDFromContext(ctx)
+		if asker_id == nil {
+			// if theres no person signed in, not an error just they cant be self
+			return false, nil
 		}
 
-		if self {
+		user_id, err := extractUserIdFromArgOrFieldName(ctx, obj, userIdField, userIdArg)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't find user id field/arg: %w", err)
+		}
+
+		if *asker_id == user_id {
 			return next(ctx)
 		} else {
 			return nil, fmt.Errorf("Unauthorized")
@@ -167,7 +186,7 @@ func SetupDirectives(config *gql.Config, store *database.Store) {
 			return nil, fmt.Errorf("couldn't find makerspace id field: %w", err)
 		}
 
-		// TODO add direct getter for in manager group
+		// TODO: add direct getter for in manager group
 		// Or not if permissions go fine grained
 		m, err := store.Makerspaces.GetMakerspaceById(ctx, makerspaceId)
 		if err != nil {
@@ -197,7 +216,7 @@ func SetupDirectives(config *gql.Config, store *database.Store) {
 			return nil, fmt.Errorf("couldn't find makerspace id field: %w", err)
 		}
 
-		// TODO add direct getter for in manager group
+		// TODO: add direct getter for in manager group
 		m, err := store.Makerspaces.GetMakerspaceById(ctx, makerspaceId)
 		if err != nil {
 			return nil, err
@@ -209,6 +228,89 @@ func SetupDirectives(config *gql.Config, store *database.Store) {
 		}
 
 		if isStaff {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+	}
+
+	config.Directives.IsStaffOrManagerFor = func(ctx context.Context, obj any, next graphql.Resolver, makerspaceIdField *string, makerspaceIdArg *string) (any, error) {
+		user_id := auth.UserIDFromContext(ctx)
+		if user_id == nil {
+			return false, fmt.Errorf("Access denied")
+		}
+
+		makerspaceId, err := extractMakerspaceIdFromArgOrFieldName(ctx, obj, makerspaceIdField, makerspaceIdArg)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't find makerspace id field: %w", err)
+		}
+
+		// TODO: add direct getter for in manager group
+		m, err := store.Makerspaces.GetMakerspaceById(ctx, makerspaceId)
+		if err != nil {
+			return nil, err
+		}
+		isStaff, err := store.Groups.IsUserInAnonymousGroup(ctx, m.StaffAgroupId, *user_id)
+		if err != nil {
+			return nil, err
+		}
+
+		if isStaff {
+			return next(ctx)
+		}
+
+		isManager, err := store.Groups.IsUserInAnonymousGroup(ctx, m.ManagementAgroupId, *user_id)
+		if err != nil {
+			return nil, err
+		}
+
+		if isManager {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+	}
+
+	config.Directives.CanAskerManageGroup = func(ctx context.Context, obj any, next graphql.Resolver, groupIdField *string, groupIdArg *string) (any, error) {
+		user_id := auth.UserIDFromContext(ctx)
+		if user_id == nil {
+			return false, fmt.Errorf("Access denied")
+		}
+
+		groupId, err := extractGroupIdFromArgOrFieldName(ctx, obj, groupIdField, groupIdArg)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't find group id field: %w", err)
+		}
+
+		canManage, err := store.Groups.CanUserManageGroup(ctx, *user_id, groupId)
+		if err != nil {
+			return nil, err
+		}
+
+		if canManage {
+			return next(ctx)
+		} else {
+			return nil, fmt.Errorf("Unauthorized")
+		}
+	}
+
+	config.Directives.CanAskerSeeGroup = func(ctx context.Context, obj any, next graphql.Resolver, groupIdField *string, groupIdArg *string) (any, error) {
+		user_id := auth.UserIDFromContext(ctx)
+		if user_id == nil {
+			return false, fmt.Errorf("Access denied")
+		}
+
+		groupId, err := extractGroupIdFromArgOrFieldName(ctx, obj, groupIdField, groupIdArg)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't find group id field: %w", err)
+		}
+
+		canManage, err := store.Groups.IsGroupVisibleToUser(ctx, *user_id, groupId)
+		if err != nil {
+			return nil, err
+		}
+
+		if canManage {
 			return next(ctx)
 		} else {
 			return nil, fmt.Errorf("Unauthorized")

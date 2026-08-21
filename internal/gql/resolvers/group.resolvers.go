@@ -91,8 +91,17 @@ func (r *groupResolver) DirectSubGroups(ctx context.Context, obj *models.Group) 
 
 // User is the resolver for the User field.
 func (r *membershipToGroupResolver) User(ctx context.Context, obj *models.MembershipToGroup) (*models.User, error) {
-	// TODO figure out what permissions for this are and check them
+	// TODO: figure out what permissions for this are and check them
 	return r.Store.Users.GetUserById(ctx, obj.UserId)
+}
+
+// AddUserToGroup is the resolver for the addUserToGroup field.
+func (r *mutationResolver) AddUserToGroup(ctx context.Context, userID int, groupID int, perms models.GroupViewPermission) (bool, error) {
+	err := r.Store.Groups.AddUserToGroup(ctx, userID, groupID, perms)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Group is the resolver for the group field.
@@ -110,14 +119,6 @@ func (r *queryResolver) Group(ctx context.Context, id int) (*models.Group, error
 		return nil, err
 	}
 	return group, nil
-}
-
-// AnonymousGroup is the resolver for the anonymousGroup field.
-func (r *queryResolver) AnonymousGroup(ctx context.Context, id int) (*models.AnonymousGroup, error) {
-	ag := models.AnonymousGroup{
-		Id: id,
-	}
-	return &ag, nil
 }
 
 // IsUserInGroup is the resolver for the isUserInGroup field.

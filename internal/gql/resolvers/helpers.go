@@ -28,24 +28,6 @@ func FullUserFromContext(store *database.Store, ctx context.Context) *models.Use
 	return u
 }
 
-// helper to check if the use stored in context can manage anonymous group
-// returns err if not, nil if can
-func CanUserFromContextManageAnonymousGroup(store *database.Store, ctx context.Context, agroupID int) error {
-	userId := auth.UserIDFromContext(ctx)
-	if userId == nil {
-		return auth.ErrNotAuthenticated
-	}
-
-	canManage, err := store.Groups.CanUserManageAnonymousGroup(ctx, *userId, agroupID)
-	if err != nil {
-		return err
-	}
-	if !canManage {
-		return models.ErrNoAnonymousGroupOrWrongPermissions
-	}
-	return nil
-}
-
 func CanUserFromContextManageGroup(store *database.Store, ctx context.Context, groupID int) (bool, error) {
 	userId := auth.UserIDFromContext(ctx)
 	if userId == nil {

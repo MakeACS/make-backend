@@ -112,9 +112,7 @@ func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]
 		users.setup_complete,
 		users.archived,
 		users.notes,
-		users.admin,
-		users.force_archive,
-		users.card_tag
+		users.force_archive
 		FROM users JOIN managers ON users.id = managers.user_id
 		WHERE managers.makerspace_id = $1
 	`
@@ -139,9 +137,7 @@ func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]
 			&user.SetupComplete,
 			&user.Archived,
 			&user.Notes,
-			&user.Admin,
 			&user.ForceArchive,
-			&user.CardTag,
 		)
 		if err != nil {
 			return nil, err

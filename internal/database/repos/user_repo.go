@@ -31,9 +31,7 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int) (*models.User, error
 		setup_complete,
 		archived,
 		notes,
-		admin,
-		force_archive,
-		card_tag
+		force_archive
 		FROM users WHERE users.id = $1`
 
 	err := r.DB.QueryRowContext(ctx, query, id).Scan(
@@ -46,9 +44,7 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int) (*models.User, error
 		&user_result.SetupComplete,
 		&user_result.Archived,
 		&user_result.Notes,
-		&user_result.Admin,
 		&user_result.ForceArchive,
-		&user_result.CardTag,
 	)
 
 	if err != nil {
@@ -71,9 +67,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 		setup_complete,
 		archived,
 		notes,
-		admin,
-		force_archive,
-		card_tag
+		force_archive
 		FROM users WHERE users.email = $1`
 
 	err := r.DB.QueryRowContext(ctx, query, email).Scan(
@@ -86,9 +80,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 		&user_result.SetupComplete,
 		&user_result.Archived,
 		&user_result.Notes,
-		&user_result.Admin,
 		&user_result.ForceArchive,
-		&user_result.CardTag,
 	)
 
 	if err != nil {

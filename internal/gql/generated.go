@@ -40,13 +40,17 @@ type ResolverRoot interface {
 	OptionBlockOption() OptionBlockOptionResolver
 	Query() QueryResolver
 	Training() TrainingResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
-	IsAdmin      func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsManagerFor func(ctx context.Context, obj any, next graphql.Resolver, makerspaceIDField *string, makerspaceIDArg *string) (res any, err error)
-	IsSelf       func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	IsStaffFor   func(ctx context.Context, obj any, next graphql.Resolver, makerspaceIDField *string, makerspaceIDArg *string) (res any, err error)
+	CanAskerManageGroup func(ctx context.Context, obj any, next graphql.Resolver, groupIDField *string, groupIDArg *string) (res any, err error)
+	CanAskerSeeGroup    func(ctx context.Context, obj any, next graphql.Resolver, groupIDField *string, groupIDArg *string) (res any, err error)
+	IsAdmin             func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	IsManagerFor        func(ctx context.Context, obj any, next graphql.Resolver, makerspaceIDField *string, makerspaceIDArg *string) (res any, err error)
+	IsSelf              func(ctx context.Context, obj any, next graphql.Resolver, userIDField *string, userIDArg *string) (res any, err error)
+	IsStaffFor          func(ctx context.Context, obj any, next graphql.Resolver, makerspaceIDField *string, makerspaceIDArg *string) (res any, err error)
+	IsStaffOrManagerFor func(ctx context.Context, obj any, next graphql.Resolver, makerspaceIDField *string, makerspaceIDArg *string) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -212,6 +216,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AddUserToGroup      func(childComplexity int, userID int, groupID int, perms models.GroupViewPermission) int
 		CreateMakerspace    func(childComplexity int, name string, hidden bool) int
 		DeleteMakerspace    func(childComplexity int, id int) int
 		SetManagerSubgroups func(childComplexity int, makerspaceID int, subgroups []int) int
@@ -241,7 +246,6 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AccessDevice          func(childComplexity int, id int) int
-		AnonymousGroup        func(childComplexity int, id int) int
 		CanGroupManageGroup   func(childComplexity int, managerID int, groupID int) int
 		CanUserManageGroup    func(childComplexity int, managerID int, groupID int) int
 		CurrentUser           func(childComplexity int) int
@@ -313,11 +317,12 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Admin         func(childComplexity int) int
+		AllGroups     func(childComplexity int) int
 		Archived      func(childComplexity int) int
 		Email         func(childComplexity int) int
 		ForceArchive  func(childComplexity int) int
 		FullName      func(childComplexity int) int
+		Groups        func(childComplexity int) int
 		Id            func(childComplexity int) int
 		JoinDate      func(childComplexity int) int
 		Notes         func(childComplexity int) int
@@ -367,6 +372,7 @@ type MutationResolver interface {
 	DeleteMakerspace(ctx context.Context, id int) (bool, error)
 	SetManagerSubgroups(ctx context.Context, makerspaceID int, subgroups []int) (bool, error)
 	SetStaffSubgroups(ctx context.Context, makerspaceID int, subgroups []int) (bool, error)
+	AddUserToGroup(ctx context.Context, userID int, groupID int, perms models.GroupViewPermission) (bool, error)
 }
 type OptionBlockOptionResolver interface {
 	Correct(ctx context.Context, obj *models.OptionBlockOption) (*bool, error)
@@ -376,7 +382,6 @@ type QueryResolver interface {
 	Device(ctx context.Context, id int) (*models.Device, error)
 	AccessDevice(ctx context.Context, id int) (*models.AccessDevice, error)
 	Group(ctx context.Context, id int) (*models.Group, error)
-	AnonymousGroup(ctx context.Context, id int) (*models.AnonymousGroup, error)
 	IsUserInGroup(ctx context.Context, userID int, groupID int) (bool, error)
 	IsUserInGroupDirectly(ctx context.Context, userID int, groupID int) (bool, error)
 	CanGroupManageGroup(ctx context.Context, managerID int, groupID int) (bool, error)
@@ -388,6 +393,10 @@ type QueryResolver interface {
 }
 type TrainingResolver interface {
 	Blocks(ctx context.Context, obj *models.Training) ([]models.TrainingBlock, error)
+}
+type UserResolver interface {
+	Groups(ctx context.Context, obj *models.User) ([]*models.Group, error)
+	AllGroups(ctx context.Context, obj *models.User) ([]*models.Group, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -1051,6 +1060,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.MembershipToGroup.ViewPermission(childComplexity), true
 
+	case "Mutation.addUserToGroup":
+		if e.ComplexityRoot.Mutation.AddUserToGroup == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addUserToGroup_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AddUserToGroup(childComplexity, args["userID"].(int), args["groupID"].(int), args["perms"].(models.GroupViewPermission)), true
 	case "Mutation.createMakerspace":
 		if e.ComplexityRoot.Mutation.CreateMakerspace == nil {
 			break
@@ -1182,17 +1202,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccessDevice(childComplexity, args["id"].(int)), true
-	case "Query.anonymousGroup":
-		if e.ComplexityRoot.Query.AnonymousGroup == nil {
-			break
-		}
-
-		args, err := ec.field_Query_anonymousGroup_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.ComplexityRoot.Query.AnonymousGroup(childComplexity, args["id"].(int)), true
 	case "Query.canGroupManageGroup":
 		if e.ComplexityRoot.Query.CanGroupManageGroup == nil {
 			break
@@ -1534,12 +1543,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Training.Name(childComplexity), true
 
-	case "User.admin":
-		if e.ComplexityRoot.User.Admin == nil {
+	case "User.allGroups":
+		if e.ComplexityRoot.User.AllGroups == nil {
 			break
 		}
 
-		return e.ComplexityRoot.User.Admin(childComplexity), true
+		return e.ComplexityRoot.User.AllGroups(childComplexity), true
 	case "User.archived":
 		if e.ComplexityRoot.User.Archived == nil {
 			break
@@ -1564,6 +1573,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.FullName(childComplexity), true
+	case "User.groups":
+		if e.ComplexityRoot.User.Groups == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.Groups(childComplexity), true
 	case "User.id":
 		if e.ComplexityRoot.User.Id == nil {
 			break
@@ -1935,10 +1950,12 @@ func (ec *executionContext) childFields_User(ctx context.Context, field graphql.
 		return ec.fieldContext_User_archived(ctx, field)
 	case "notes":
 		return ec.fieldContext_User_notes(ctx, field)
-	case "admin":
-		return ec.fieldContext_User_admin(ctx, field)
 	case "force_archive":
 		return ec.fieldContext_User_force_archive(ctx, field)
+	case "groups":
+		return ec.fieldContext_User_groups(ctx, field)
+	case "allGroups":
+		return ec.fieldContext_User_allGroups(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 }
@@ -2073,6 +2090,50 @@ func (ec *executionContext) childFields___Type(ctx context.Context, field graphq
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) dir_canAskerManageGroup_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "groupIdField",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["groupIdField"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "groupIdArg",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["groupIdArg"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) dir_canAskerSeeGroup_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "groupIdField",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["groupIdField"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "groupIdArg",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["groupIdArg"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) dir_isManagerFor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2095,6 +2156,28 @@ func (ec *executionContext) dir_isManagerFor_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
+func (ec *executionContext) dir_isSelf_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userIdField",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userIdField"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userIdArg",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userIdArg"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) dir_isStaffFor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2114,6 +2197,58 @@ func (ec *executionContext) dir_isStaffFor_args(ctx context.Context, rawArgs map
 		return nil, err
 	}
 	args["makerspaceIdArg"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) dir_isStaffOrManagerFor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "makerspaceIdField",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["makerspaceIdField"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "makerspaceIdArg",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["makerspaceIdArg"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_addUserToGroup_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userID",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userID"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "groupID",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNID2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["groupID"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "perms",
+		func(ctx context.Context, v any) (models.GroupViewPermission, error) {
+			return ec.unmarshalNGroupViewPermission2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupViewPermission(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["perms"] = arg2
 	return args, nil
 }
 
@@ -2212,20 +2347,6 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 }
 
 func (ec *executionContext) field_Query_accessDevice_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
-		func(ctx context.Context, v any) (int, error) {
-			return ec.unmarshalNID2int(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_anonymousGroup_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
@@ -4902,11 +5023,11 @@ func (ec *executionContext) _Makerspace_staff(ctx context.Context, field graphql
 					var zeroVal []*models.User
 					return zeroVal, err
 				}
-				if ec.Directives.IsStaffFor == nil {
+				if ec.Directives.IsStaffOrManagerFor == nil {
 					var zeroVal []*models.User
-					return zeroVal, errors.New("directive isStaffFor is not implemented")
+					return zeroVal, errors.New("directive isStaffOrManagerFor is not implemented")
 				}
-				return ec.Directives.IsStaffFor(ctx, obj, directive0, makerspaceIDField, nil)
+				return ec.Directives.IsStaffOrManagerFor(ctx, obj, directive0, makerspaceIDField, nil)
 			}
 
 			next = directive1
@@ -5348,6 +5469,68 @@ func (ec *executionContext) fieldContext_Mutation_setStaffSubgroups(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_addUserToGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_addUserToGroup(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().AddUserToGroup(ctx, fc.Args["userID"].(int), fc.Args["groupID"].(int), fc.Args["perms"].(models.GroupViewPermission))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				groupIDArg, err := ec.unmarshalOString2ᚖstring(ctx, "groupID")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.Directives.CanAskerManageGroup == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive canAskerManageGroup is not implemented")
+				}
+				return ec.Directives.CanAskerManageGroup(ctx, nil, directive0, nil, groupIDArg)
+			}
+
+			next = directive1
+			return next
+		},
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_addUserToGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addUserToGroup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OptionBlock_block_id(ctx context.Context, field graphql.CollectedField, obj *models.OptionBlock) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5777,7 +5960,25 @@ func (ec *executionContext) _Query_group(ctx context.Context, field graphql.Coll
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.Query().Group(ctx, fc.Args["id"].(int))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				groupIDField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal *models.Group
+					return zeroVal, err
+				}
+				if ec.Directives.CanAskerSeeGroup == nil {
+					var zeroVal *models.Group
+					return zeroVal, errors.New("directive canAskerSeeGroup is not implemented")
+				}
+				return ec.Directives.CanAskerSeeGroup(ctx, nil, directive0, groupIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v *models.Group) graphql.Marshaler {
 			return ec.marshalNGroup2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroup(ctx, selections, v)
 		},
@@ -5809,50 +6010,6 @@ func (ec *executionContext) fieldContext_Query_group(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_anonymousGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_Query_anonymousGroup(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().AnonymousGroup(ctx, fc.Args["id"].(int))
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *models.AnonymousGroup) graphql.Marshaler {
-			return ec.marshalNAnonymousGroup2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_Query_anonymousGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_AnonymousGroup(ctx, field)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_anonymousGroup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_isUserInGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5865,7 +6022,25 @@ func (ec *executionContext) _Query_isUserInGroup(ctx context.Context, field grap
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.Query().IsUserInGroup(ctx, fc.Args["userID"].(int), fc.Args["groupID"].(int))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				groupIDField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.Directives.CanAskerSeeGroup == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive canAskerSeeGroup is not implemented")
+				}
+				return ec.Directives.CanAskerSeeGroup(ctx, nil, directive0, groupIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
 			return ec.marshalNBoolean2bool(ctx, selections, v)
 		},
@@ -5909,7 +6084,25 @@ func (ec *executionContext) _Query_isUserInGroupDirectly(ctx context.Context, fi
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.Query().IsUserInGroupDirectly(ctx, fc.Args["userID"].(int), fc.Args["groupID"].(int))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				groupIDField, err := ec.unmarshalOString2ᚖstring(ctx, "groupId")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.Directives.CanAskerSeeGroup == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive canAskerSeeGroup is not implemented")
+				}
+				return ec.Directives.CanAskerSeeGroup(ctx, nil, directive0, groupIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
 			return ec.marshalNBoolean2bool(ctx, selections, v)
 		},
@@ -5953,7 +6146,25 @@ func (ec *executionContext) _Query_canGroupManageGroup(ctx context.Context, fiel
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.Query().CanGroupManageGroup(ctx, fc.Args["managerID"].(int), fc.Args["groupID"].(int))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				groupIDField, err := ec.unmarshalOString2ᚖstring(ctx, "groupId")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.Directives.CanAskerSeeGroup == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive canAskerSeeGroup is not implemented")
+				}
+				return ec.Directives.CanAskerSeeGroup(ctx, nil, directive0, groupIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
 			return ec.marshalNBoolean2bool(ctx, selections, v)
 		},
@@ -5997,7 +6208,25 @@ func (ec *executionContext) _Query_canUserManageGroup(ctx context.Context, field
 			fc := graphql.GetFieldContext(ctx)
 			return ec.Resolvers.Query().CanUserManageGroup(ctx, fc.Args["managerID"].(int), fc.Args["groupID"].(int))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				groupIDField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.Directives.CanAskerSeeGroup == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive canAskerSeeGroup is not implemented")
+				}
+				return ec.Directives.CanAskerSeeGroup(ctx, nil, directive0, groupIDField, nil)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
 			return ec.marshalNBoolean2bool(ctx, selections, v)
 		},
@@ -6045,11 +6274,16 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
+				userIDArg, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal *models.User
+					return zeroVal, err
+				}
 				if ec.Directives.IsSelf == nil {
 					var zeroVal *models.User
 					return zeroVal, errors.New("directive isSelf is not implemented")
 				}
-				return ec.Directives.IsSelf(ctx, nil, directive0)
+				return ec.Directives.IsSelf(ctx, nil, directive0, nil, userIDArg)
 			}
 
 			next = directive1
@@ -7317,29 +7551,6 @@ func (ec *executionContext) fieldContext_User_notes(_ context.Context, field gra
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _User_admin(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_User_admin(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Admin, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
-			return ec.marshalNBoolean2bool(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_User_admin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
-}
-
 func (ec *executionContext) _User_force_archive(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7361,6 +7572,70 @@ func (ec *executionContext) _User_force_archive(ctx context.Context, field graph
 }
 func (ec *executionContext) fieldContext_User_force_archive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _User_groups(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_User_groups(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.User().Groups(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
+			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_User_groups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Group(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_allGroups(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_User_allGroups(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.User().AllGroups(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
+			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_User_allGroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Group(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _Zone_id(ctx context.Context, field graphql.CollectedField, obj *models.Zone) (ret graphql.Marshaler) {
@@ -10239,6 +10514,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "addUserToGroup":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addUserToGroup(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10548,28 +10830,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_group(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "anonymousGroup":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_anonymousGroup(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11252,58 +11512,129 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._User_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "full_name":
 			out.Values[i] = ec._User_full_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "preferred_name":
 			out.Values[i] = ec._User_preferred_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "pronouns":
 			out.Values[i] = ec._User_pronouns(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "join_date":
 			out.Values[i] = ec._User_join_date(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "setup_complete":
 			out.Values[i] = ec._User_setup_complete(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "archived":
 			out.Values[i] = ec._User_archived(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "notes":
 			out.Values[i] = ec._User_notes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "admin":
-			out.Values[i] = ec._User_admin(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "force_archive":
 			out.Values[i] = ec._User_force_archive(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "groups":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_groups(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "allGroups":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_allGroups(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11792,20 +12123,6 @@ func (ec *executionContext) marshalNAccessComponent2ᚕmakeᚑbackendᚋinternal
 
 func (ec *executionContext) marshalNAccessDeviceFlags2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAccessDeviceFlags(ctx context.Context, sel ast.SelectionSet, v models.AccessDeviceFlags) graphql.Marshaler {
 	return ec._AccessDeviceFlags(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAnonymousGroup2makeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx context.Context, sel ast.SelectionSet, v models.AnonymousGroup) graphql.Marshaler {
-	return ec._AnonymousGroup(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAnonymousGroup2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐAnonymousGroup(ctx context.Context, sel ast.SelectionSet, v *models.AnonymousGroup) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AnonymousGroup(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {

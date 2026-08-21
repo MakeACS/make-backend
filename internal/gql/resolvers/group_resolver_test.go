@@ -98,7 +98,7 @@ func TestGroupManagingGroup(t *testing.T) {
 		{"sibling group managing each other", data.Users[0].Id, data.BeatlesMusicians.Id, data.OtherMusicians.Id, true, false},
 		{"manager group not visible to user", data.Users[1].Id, data.BeatlesManagers.Id, data.OtherMusicians.Id, true, false},
 		{"managed group not visible to user", data.Users[1].Id, data.BeatlesMusicians.Id, data.OtherMusicians.Id, true, false},
-		// TODO explicitly shared groups
+		// TODO: explicitly shared groups
 	}
 
 	for _, trial := range trials {

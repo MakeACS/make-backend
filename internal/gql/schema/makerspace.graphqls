@@ -1,5 +1,7 @@
 directive @isManagerFor(makerspaceIdField: String, makerspaceIdArg: String) on FIELD_DEFINITION
 directive @isStaffFor(makerspaceIdField: String, makerspaceIdArg: String) on FIELD_DEFINITION
+directive @isStaffOrManagerFor(makerspaceIdField: String, makerspaceIdArg: String) on FIELD_DEFINITION
+
 
 union MakerspaceHours = DefaultHours | SpecialHours
 
@@ -16,7 +18,7 @@ type Makerspace {
     hours: [MakerspaceHours!]!
 
     managers: [User!]! @isManagerFor(makerspaceIdField: "id")
-    staff: [User!]! @isStaffFor(makerspaceIdField: "id")
+    staff: [User!]! @isStaffOrManagerFor(makerspaceIdField: "id")
 
     managerAnonymousGroup: AnonymousGroup @isManagerFor(makerspaceIdField: "id")
     staffAnonymousGroup: AnonymousGroup @isManagerFor(makerspaceIdField: "id")

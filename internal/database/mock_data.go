@@ -34,7 +34,7 @@ var localContext TestMockData = TestMockData{
 		Id    int
 		Email string
 	}{
-		{Email: "brian@example.com"},
+		{Email: "brian@beatles.com"},
 		{Email: "john@beatles.com"},
 		{Email: "paul@beatles.com"},
 		{Email: "george@beatles.com"},
@@ -72,7 +72,8 @@ func fillTestUsers(ctx context.Context, l *slog.Logger, store *Store) bool {
 	for i, u := range localContext.Users {
 		id, err := store.Users.CreateUser(ctx, u.Email)
 		if err != nil {
-			l.Error("failed to add test user", "err", err)
+			l.Error("failed to add test user", "user", u, "err", err, "data", localContext)
+
 			return false
 		}
 		localContext.Users[i].Id = id
@@ -155,7 +156,7 @@ func addUsersToTestGroups(ctx context.Context, t *slog.Logger, store *Store) boo
 		groupId int
 		perm    models.GroupViewPermission
 	}{
-		{"brian@example.com", localContext.BeatlesManagers.Id, models.GroupViewPermission_SeeSelf},
+		{"brian@beatles.com", localContext.BeatlesManagers.Id, models.GroupViewPermission_SeeSelf},
 		{"john@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},
 		{"paul@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},
 		{"george@beatles.com", localContext.BeatlesMusicians.Id, models.GroupViewPermission_SeeAll},

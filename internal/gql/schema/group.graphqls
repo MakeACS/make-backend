@@ -1,4 +1,7 @@
+directive @canAskerManageGroup(groupIdField: String, groupIdArg: String) on FIELD_DEFINITION
 
+# SEE_SELF, SEE_ALL, or manages
+directive @canAskerSeeGroup(groupIdField: String, groupIdArg: String) on FIELD_DEFINITION
 
 
 
@@ -36,14 +39,15 @@ type AnonymousGroup{
 }
 
 extend type Query {
-    
-    group(id: ID!): Group!
-    anonymousGroup(id: ID!): AnonymousGroup!
+    group(id: ID!): Group! @canAskerSeeGroup(groupIdField: "id")
 
-    isUserInGroup(userID: ID!, groupID: ID!): Boolean!
+    isUserInGroup(userID: ID!, groupID: ID!): Boolean! @canAskerSeeGroup(groupIdField: "id")
 
-    isUserInGroupDirectly(userID: ID!, groupID: ID!): Boolean!    
-    canGroupManageGroup(managerID: ID!, groupID: ID!): Boolean!
-    canUserManageGroup(managerID: ID!, groupID: ID!): Boolean!
+    isUserInGroupDirectly(userID: ID!, groupID: ID!): Boolean! @canAskerSeeGroup(groupIdField: "groupId")
+    canGroupManageGroup(managerID: ID!, groupID: ID!): Boolean! @canAskerSeeGroup(groupIdField: "groupId")
+    canUserManageGroup(managerID: ID!, groupID: ID!): Boolean! @canAskerSeeGroup(groupIdField: "id")
 }
 
+extend type Mutation {
+    addUserToGroup(userID: ID!, groupID: ID!, perms: GroupViewPermission!): Boolean! @canAskerManageGroup(groupIdArg: "groupID")
+}

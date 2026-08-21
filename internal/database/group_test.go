@@ -88,7 +88,7 @@ func TestSubgroupMembership(t *testing.T) {
 		"paul@beatles.com",
 		"george@beatles.com",
 		"ringo@beatles.com",
-		"brian@example.com",
+		"brian@beatles.com",
 	} {
 		user, err := store.Users.GetUserByEmail(t.Context(), email)
 		if err != nil {
@@ -101,64 +101,5 @@ func TestSubgroupMembership(t *testing.T) {
 		if !inGroup {
 			t.Fatalf("user with email '%s' should be in group '%s' via subgroup but wasn't", email, localContext.BeatlesMusicians.Name)
 		}
-	}
-}
-
-func TestCanGroupManageAnonymousGroup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping db test in short mode.")
-	}
-	_, store, data := VerifyTestDb(slog.Default())
-	rootGroupId, err := store.Groups.GetAdminGroupId(t.Context())
-	if err != nil {
-		t.Fatalf("couldn't get root group ID to continue test")
-	}
-	tests := []struct {
-		testName string
-		// params
-		managerGroupId   int
-		anonymousGroupId int
-		want             bool
-		wantErr          bool
-	}{
-		{
-			"beatles managers manage parlophone so can manage staff of parlophone",
-			data.BeatlesManagers.Id,
-			data.Parlophone.StaffAgroupId,
-			true,
-			false,
-		},
-		{
-			"beatles musicians DONT manage parlophone so CANT manage staff of parlophone",
-			data.BeatlesMusicians.Id,
-			data.Parlophone.StaffAgroupId,
-			false,
-			false,
-		},
-		{
-			"root group can manage any agroup so can manage staff of parlophone",
-			rootGroupId,
-			data.Parlophone.StaffAgroupId,
-			true,
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			got, gotErr := store.Groups.CanGroupManageAnonymousGroup(t.Context(), tt.managerGroupId, tt.anonymousGroupId)
-			if gotErr != nil {
-				if !tt.wantErr {
-					t.Errorf("CanGroupManageAnonymousGroup() failed: %v", gotErr)
-				}
-				return
-			}
-			if tt.wantErr {
-				t.Fatal("CanGroupManageAnonymousGroup() succeeded unexpectedly")
-			}
-			// TODO: update the condition below to compare got with tt.want.
-			if got != tt.want {
-				t.Errorf("CanGroupManageAnonymousGroup() = %v, want %v", got, tt.want)
-			}
-		})
 	}
 }
