@@ -2,6 +2,12 @@
 
 package model
 
+type AuthProvider struct {
+	Name     string `json:"Name"`
+	ImageURL string `json:"ImageURL"`
+	PluginID string `json:"PluginId"`
+}
+
 type Mutation struct {
 }
 

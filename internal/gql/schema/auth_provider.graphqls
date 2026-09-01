@@ -1,0 +1,9 @@
+type AuthProvider {
+    Name: String!
+    ImageURL: String!
+    PluginId: String!
+}
+
+extend type Query {
+    authProviders: [AuthProvider!]!
+}

@@ -20,6 +20,7 @@ type AuthCallbackProvider interface {
 // What auth plugins expose/what the core can ask
 type AuthProvider interface {
 	common.BasePlugin
+	GetAuthDescription() (*AuthDescription, error)
 	// General status information about the plugin and if its still working
 	Heartbeat() (*common.HeartbeatInfo, error)
 	// Generate a URL/Body/headers for

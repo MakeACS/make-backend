@@ -607,6 +607,66 @@ func (x *PluginInitRequest) GetCallbackBrokerId() uint64 {
 	return 0
 }
 
+type AuthDescription struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	ImageUrl      string                 `protobuf:"bytes,3,opt,name=imageUrl,proto3" json:"imageUrl,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuthDescription) Reset() {
+	*x = AuthDescription{}
+	mi := &file_auth_interface_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuthDescription) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthDescription) ProtoMessage() {}
+
+func (x *AuthDescription) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_interface_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthDescription.ProtoReflect.Descriptor instead.
+func (*AuthDescription) Descriptor() ([]byte, []int) {
+	return file_auth_interface_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AuthDescription) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *AuthDescription) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *AuthDescription) GetImageUrl() string {
+	if x != nil {
+		return x.ImageUrl
+	}
+	return ""
+}
+
 var File_auth_interface_proto protoreflect.FileDescriptor
 
 const file_auth_interface_proto_rawDesc = "" +
@@ -647,17 +707,22 @@ const file_auth_interface_proto_rawDesc = "" +
 	"\tSubserver\x12\x12\n" +
 	"\x04port\x18\x01 \x01(\x05R\x04port\"A\n" +
 	"\x11PluginInitRequest\x12,\n" +
-	"\x12callback_broker_id\x18\x01 \x01(\x04R\x10callbackBrokerId*\x96\x01\n" +
+	"\x12callback_broker_id\x18\x01 \x01(\x04R\x10callbackBrokerId\"S\n" +
+	"\x0fAuthDescription\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1a\n" +
+	"\bimageUrl\x18\x03 \x01(\tR\bimageUrl*\x96\x01\n" +
 	"\x15UserLoginResponseType\x12(\n" +
 	"$USER_LOGIN_RESPONSE_TYPE_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fUSER_CREATED\x10\x01\x12\x0e\n" +
 	"\n" +
 	"USER_FOUND\x10\x02\x12&\n" +
 	"\"USER_ALREADY_EXISTS_OTHER_PROVIDER\x10\x03\x12\t\n" +
-	"\x05ERROR\x10\x042\xb6\x02\n" +
+	"\x05ERROR\x10\x042\xf2\x02\n" +
 	"\n" +
 	"AuthPlugin\x128\n" +
-	"\x04Info\x12\x1c.common.PluginInitialMessage\x1a\x12.common.PluginInfo\x121\n" +
+	"\x04Info\x12\x1c.common.PluginInitialMessage\x1a\x12.common.PluginInfo\x12:\n" +
+	"\x12GetAuthDescription\x12\r.common.Empty\x1a\x15.auth.AuthDescription\x121\n" +
 	"\tHeartbeat\x12\r.common.Empty\x1a\x15.common.HeartbeatInfo\x12B\n" +
 	"\x0fGetLoginRequest\x12\x1b.auth.UserLoginStartRequest\x1a\x12.auth.LoginRequest\x120\n" +
 	"\x06Logout\x12\x17.auth.UserLogOffRequest\x1a\r.common.Empty\x12E\n" +
@@ -679,7 +744,7 @@ func file_auth_interface_proto_rawDescGZIP() []byte {
 }
 
 var file_auth_interface_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_auth_interface_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_auth_interface_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_auth_interface_proto_goTypes = []any{
 	(UserLoginResponseType)(0),          // 0: auth.UserLoginResponseType
 	(*UserLoginCallback)(nil),           // 1: auth.UserLoginCallback
@@ -691,31 +756,34 @@ var file_auth_interface_proto_goTypes = []any{
 	(*RedirectURL)(nil),                 // 7: auth.RedirectURL
 	(*Subserver)(nil),                   // 8: auth.Subserver
 	(*PluginInitRequest)(nil),           // 9: auth.PluginInitRequest
-	(*common.PluginInitialMessage)(nil), // 10: common.PluginInitialMessage
-	(*common.Empty)(nil),                // 11: common.Empty
-	(*common.PluginInfo)(nil),           // 12: common.PluginInfo
-	(*common.HeartbeatInfo)(nil),        // 13: common.HeartbeatInfo
+	(*AuthDescription)(nil),             // 10: auth.AuthDescription
+	(*common.PluginInitialMessage)(nil), // 11: common.PluginInitialMessage
+	(*common.Empty)(nil),                // 12: common.Empty
+	(*common.PluginInfo)(nil),           // 13: common.PluginInfo
+	(*common.HeartbeatInfo)(nil),        // 14: common.HeartbeatInfo
 }
 var file_auth_interface_proto_depIdxs = []int32{
 	0,  // 0: auth.UserLoginResponse.response_type:type_name -> auth.UserLoginResponseType
 	5,  // 1: auth.LoginRequest.setHeaders:type_name -> auth.SetKV
 	5,  // 2: auth.RedirectURL.setHeaders:type_name -> auth.SetKV
-	10, // 3: auth.AuthPlugin.Info:input_type -> common.PluginInitialMessage
-	11, // 4: auth.AuthPlugin.Heartbeat:input_type -> common.Empty
-	2,  // 5: auth.AuthPlugin.GetLoginRequest:input_type -> auth.UserLoginStartRequest
-	4,  // 6: auth.AuthPlugin.Logout:input_type -> auth.UserLogOffRequest
-	9,  // 7: auth.AuthPlugin.internalInitializeCallbacks:input_type -> auth.PluginInitRequest
-	1,  // 8: auth.AuthCallbackService.UserLoggedIn:input_type -> auth.UserLoginCallback
-	4,  // 9: auth.AuthCallbackService.UserLoggedOut:input_type -> auth.UserLogOffRequest
-	12, // 10: auth.AuthPlugin.Info:output_type -> common.PluginInfo
-	13, // 11: auth.AuthPlugin.Heartbeat:output_type -> common.HeartbeatInfo
-	6,  // 12: auth.AuthPlugin.GetLoginRequest:output_type -> auth.LoginRequest
-	11, // 13: auth.AuthPlugin.Logout:output_type -> common.Empty
-	11, // 14: auth.AuthPlugin.internalInitializeCallbacks:output_type -> common.Empty
-	7,  // 15: auth.AuthCallbackService.UserLoggedIn:output_type -> auth.RedirectURL
-	11, // 16: auth.AuthCallbackService.UserLoggedOut:output_type -> common.Empty
-	10, // [10:17] is the sub-list for method output_type
-	3,  // [3:10] is the sub-list for method input_type
+	11, // 3: auth.AuthPlugin.Info:input_type -> common.PluginInitialMessage
+	12, // 4: auth.AuthPlugin.GetAuthDescription:input_type -> common.Empty
+	12, // 5: auth.AuthPlugin.Heartbeat:input_type -> common.Empty
+	2,  // 6: auth.AuthPlugin.GetLoginRequest:input_type -> auth.UserLoginStartRequest
+	4,  // 7: auth.AuthPlugin.Logout:input_type -> auth.UserLogOffRequest
+	9,  // 8: auth.AuthPlugin.internalInitializeCallbacks:input_type -> auth.PluginInitRequest
+	1,  // 9: auth.AuthCallbackService.UserLoggedIn:input_type -> auth.UserLoginCallback
+	4,  // 10: auth.AuthCallbackService.UserLoggedOut:input_type -> auth.UserLogOffRequest
+	13, // 11: auth.AuthPlugin.Info:output_type -> common.PluginInfo
+	10, // 12: auth.AuthPlugin.GetAuthDescription:output_type -> auth.AuthDescription
+	14, // 13: auth.AuthPlugin.Heartbeat:output_type -> common.HeartbeatInfo
+	6,  // 14: auth.AuthPlugin.GetLoginRequest:output_type -> auth.LoginRequest
+	12, // 15: auth.AuthPlugin.Logout:output_type -> common.Empty
+	12, // 16: auth.AuthPlugin.internalInitializeCallbacks:output_type -> common.Empty
+	7,  // 17: auth.AuthCallbackService.UserLoggedIn:output_type -> auth.RedirectURL
+	12, // 18: auth.AuthCallbackService.UserLoggedOut:output_type -> common.Empty
+	11, // [11:19] is the sub-list for method output_type
+	3,  // [3:11] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
@@ -736,7 +804,7 @@ func file_auth_interface_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_interface_proto_rawDesc), len(file_auth_interface_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

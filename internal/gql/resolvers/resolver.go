@@ -3,6 +3,7 @@ package resolvers
 import (
 	"make-backend/internal/database"
 	"make-backend/internal/logging"
+	"make-backend/internal/plugins"
 )
 
 // This file will not be regenerated automatically.
@@ -11,6 +12,7 @@ import (
 // here.
 
 type Resolver struct {
-	Store  *database.Store
-	Logger *logging.Logger
+	Store   *database.Store
+	Logger  *logging.Logger
+	Plugins *plugins.PluginStore
 }

@@ -43,6 +43,13 @@ func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
 
 var _ http.ResponseWriter = &common.WriteAdapter{}
 
+func (s *SAMLAuth) GetAuthDescription() (*auth.AuthDescription, error) {
+	return &auth.AuthDescription{
+		Name:     pluginName,
+		Url:      s.config.BaseURL + "/login",
+		ImageUrl: "https://www.shibboleth.net/wp-content/uploads/2020/10/shibboleth-icon-white-233x300.png",
+	}, nil
+}
 func (s *SAMLAuth) GenerateLoginRequest(start *auth.UserLoginStartRequest) (*auth.LoginRequest, error) {
 	if s.saml == nil {
 		return nil, errors.New("SAML provider degraded")

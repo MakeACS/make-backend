@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	AuthPlugin_Info_FullMethodName                        = "/auth.AuthPlugin/Info"
+	AuthPlugin_GetAuthDescription_FullMethodName          = "/auth.AuthPlugin/GetAuthDescription"
 	AuthPlugin_Heartbeat_FullMethodName                   = "/auth.AuthPlugin/Heartbeat"
 	AuthPlugin_GetLoginRequest_FullMethodName             = "/auth.AuthPlugin/GetLoginRequest"
 	AuthPlugin_Logout_FullMethodName                      = "/auth.AuthPlugin/Logout"
@@ -32,6 +33,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthPluginClient interface {
 	Info(ctx context.Context, in *common.PluginInitialMessage, opts ...grpc.CallOption) (*common.PluginInfo, error)
+	GetAuthDescription(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*AuthDescription, error)
 	Heartbeat(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*common.HeartbeatInfo, error)
 	GetLoginRequest(ctx context.Context, in *UserLoginStartRequest, opts ...grpc.CallOption) (*LoginRequest, error)
 	Logout(ctx context.Context, in *UserLogOffRequest, opts ...grpc.CallOption) (*common.Empty, error)
@@ -51,6 +53,16 @@ func (c *authPluginClient) Info(ctx context.Context, in *common.PluginInitialMes
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(common.PluginInfo)
 	err := c.cc.Invoke(ctx, AuthPlugin_Info_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authPluginClient) GetAuthDescription(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (*AuthDescription, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthDescription)
+	err := c.cc.Invoke(ctx, AuthPlugin_GetAuthDescription_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +114,7 @@ func (c *authPluginClient) InternalInitializeCallbacks(ctx context.Context, in *
 // for forward compatibility.
 type AuthPluginServer interface {
 	Info(context.Context, *common.PluginInitialMessage) (*common.PluginInfo, error)
+	GetAuthDescription(context.Context, *common.Empty) (*AuthDescription, error)
 	Heartbeat(context.Context, *common.Empty) (*common.HeartbeatInfo, error)
 	GetLoginRequest(context.Context, *UserLoginStartRequest) (*LoginRequest, error)
 	Logout(context.Context, *UserLogOffRequest) (*common.Empty, error)
@@ -119,6 +132,9 @@ type UnimplementedAuthPluginServer struct{}
 
 func (UnimplementedAuthPluginServer) Info(context.Context, *common.PluginInitialMessage) (*common.PluginInfo, error) {
 	return nil, status.Error(codes.Unimplemented, "method Info not implemented")
+}
+func (UnimplementedAuthPluginServer) GetAuthDescription(context.Context, *common.Empty) (*AuthDescription, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAuthDescription not implemented")
 }
 func (UnimplementedAuthPluginServer) Heartbeat(context.Context, *common.Empty) (*common.HeartbeatInfo, error) {
 	return nil, status.Error(codes.Unimplemented, "method Heartbeat not implemented")
@@ -167,6 +183,24 @@ func _AuthPlugin_Info_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthPluginServer).Info(ctx, req.(*common.PluginInitialMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthPlugin_GetAuthDescription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthPluginServer).GetAuthDescription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthPlugin_GetAuthDescription_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthPluginServer).GetAuthDescription(ctx, req.(*common.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -253,6 +287,10 @@ var AuthPlugin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Info",
 			Handler:    _AuthPlugin_Info_Handler,
+		},
+		{
+			MethodName: "GetAuthDescription",
+			Handler:    _AuthPlugin_GetAuthDescription_Handler,
 		},
 		{
 			MethodName: "Heartbeat",
