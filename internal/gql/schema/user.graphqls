@@ -17,7 +17,7 @@ type User {
     force_archive: Boolean
 
     # groups that the user is in and the asker can see. filters based on asker id
-    groups: [Group!]! @isSelf
+    groups: [Group!]! @isSelf(userIdField: "id")
 }
 
 extend type Query {

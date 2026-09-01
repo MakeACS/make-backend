@@ -7579,11 +7579,16 @@ func (ec *executionContext) _User_groups(ctx context.Context, field graphql.Coll
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
+				userIDField, err := ec.unmarshalOString2ᚖstring(ctx, "id")
+				if err != nil {
+					var zeroVal []*models.Group
+					return zeroVal, err
+				}
 				if ec.Directives.IsSelf == nil {
 					var zeroVal []*models.Group
 					return zeroVal, errors.New("directive isSelf is not implemented")
 				}
-				return ec.Directives.IsSelf(ctx, obj, directive0, nil, nil)
+				return ec.Directives.IsSelf(ctx, obj, directive0, userIDField, nil)
 			}
 
 			next = directive1
