@@ -27,9 +27,11 @@ var wanted_plugins = []common.PluginDescription{
 		DownloadUrl: "",
 		PluginType:  common.PluginType_Auth,
 		Options: map[string]string{
-			"SP_CERT":               os.Getenv("SAML_SP_CERT"),
-			"SP_KEY":                os.Getenv("SAML_SP_KEY"),
-			"IDP_METADATA_PROVIDER": os.Getenv("SAML_SP_METADATA_URL"),
+			"SP_CERT":                  os.Getenv("SAML_SP_CERT"),
+			"SP_KEY":                   os.Getenv("SAML_SP_KEY"),
+			"IDP_METADATA_PROVIDER":    os.Getenv("SAML_SP_METADATA_URL"),
+			"SAML_REPLACE_DOMAIN_FROM": os.Getenv("SAML_REPLACE_DOMAIN_FROM"),
+			"SAML_REPLACE_DOMAIN_TO":   os.Getenv("SAML_REPLACE_DOMAIN_TO"),
 		},
 	},
 }

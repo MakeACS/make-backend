@@ -317,7 +317,6 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AllGroups     func(childComplexity int) int
 		Archived      func(childComplexity int) int
 		Email         func(childComplexity int) int
 		ForceArchive  func(childComplexity int) int
@@ -396,7 +395,6 @@ type TrainingResolver interface {
 }
 type UserResolver interface {
 	Groups(ctx context.Context, obj *models.User) ([]*models.Group, error)
-	AllGroups(ctx context.Context, obj *models.User) ([]*models.Group, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -1543,12 +1541,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Training.Name(childComplexity), true
 
-	case "User.allGroups":
-		if e.ComplexityRoot.User.AllGroups == nil {
-			break
-		}
-
-		return e.ComplexityRoot.User.AllGroups(childComplexity), true
 	case "User.archived":
 		if e.ComplexityRoot.User.Archived == nil {
 			break
@@ -1954,8 +1946,6 @@ func (ec *executionContext) childFields_User(ctx context.Context, field graphql.
 		return ec.fieldContext_User_force_archive(ctx, field)
 	case "groups":
 		return ec.fieldContext_User_groups(ctx, field)
-	case "allGroups":
-		return ec.fieldContext_User_allGroups(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 }
@@ -6333,10 +6323,10 @@ func (ec *executionContext) _Query_currentUser(ctx context.Context, field graphq
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *models.User) graphql.Marshaler {
-			return ec.marshalNUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx, selections, v)
+			return ec.marshalOUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx, selections, v)
 		},
 		true,
-		true,
+		false,
 	)
 }
 func (ec *executionContext) fieldContext_Query_currentUser(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7585,7 +7575,20 @@ func (ec *executionContext) _User_groups(ctx context.Context, field graphql.Coll
 		func(ctx context.Context) (any, error) {
 			return ec.Resolvers.User().Groups(ctx, obj)
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.IsSelf == nil {
+					var zeroVal []*models.Group
+					return zeroVal, errors.New("directive isSelf is not implemented")
+				}
+				return ec.Directives.IsSelf(ctx, obj, directive0, nil, nil)
+			}
+
+			next = directive1
+			return next
+		},
 		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
 			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
 		},
@@ -7594,38 +7597,6 @@ func (ec *executionContext) _User_groups(ctx context.Context, field graphql.Coll
 	)
 }
 func (ec *executionContext) fieldContext_User_groups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_Group(ctx, field)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_allGroups(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_User_allGroups(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.User().AllGroups(ctx, obj)
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*models.Group) graphql.Marshaler {
-			return ec.marshalNGroup2ᚕᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐGroupᚄ(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_User_allGroups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -10962,7 +10933,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_currentUser(ctx, field)
-				if res == graphql.Null {
+				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -11569,44 +11540,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_groups(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "allGroups":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_allGroups(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -12785,6 +12718,13 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	_ = ctx
 	res := graphql.MarshalTime(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOUser2ᚖmakeᚑbackendᚋinternalᚋdatabaseᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

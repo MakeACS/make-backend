@@ -186,7 +186,7 @@ func startHttp(db *sql.DB, store *database.Store, logger *logging.Logger, port i
 
 	mux := http.NewServeMux()
 
-	protectedQueryHandler := sessionManager.LoadAndSave(auth.RequiredAuthMiddleware(srv, sessionManager))
+	protectedQueryHandler := sessionManager.LoadAndSave(auth.OptionalAuthMiddleware(srv, sessionManager))
 
 	mux.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	mux.Handle("/query", protectedQueryHandler)

@@ -22,5 +22,5 @@ type User {
 
 extend type Query {
     user(id: ID!): User! @isSelf(userIdArg: "id")  # isStaffOrSelf
-    currentUser: User!
+    currentUser: User
 }

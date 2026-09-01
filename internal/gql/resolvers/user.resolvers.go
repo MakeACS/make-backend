@@ -7,7 +7,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
@@ -22,6 +21,7 @@ func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) 
 func (r *queryResolver) CurrentUser(ctx context.Context) (*models.User, error) {
 	userId := auth.UserIDFromContext(ctx)
 	if userId == nil {
+		// not an error, theres just no user here
 		return nil, nil
 	}
 	user, err := r.Store.Users.GetUserById(ctx, *userId)
@@ -31,21 +31,15 @@ func (r *queryResolver) CurrentUser(ctx context.Context) (*models.User, error) {
 
 // Groups is the resolver for the groups field.
 func (r *userResolver) Groups(ctx context.Context, obj *models.User) ([]*models.Group, error) {
-	userId := auth.UserIDFromContext(ctx)
-	if userId == nil { // visitor in no groups
+	askingUserId := auth.UserIDFromContext(ctx)
+	if askingUserId == nil { // visitor in no groups
 		return []*models.Group{}, nil
 	}
-	gs, err := r.Store.Groups.AllGroupsUserIsInAndVisibleToAsker(ctx, *userId)
+	gs, err := r.Store.Groups.AllGroupsUserIsInAndVisibleToAsker(ctx, obj.Id, *askingUserId) // asker is the user themselves
 	if err != nil {
 		return nil, err
 	}
 	return SliceToPtrSlice(gs), nil
-}
-
-// AllGroups is the resolver for the allGroups field.
-func (r *userResolver) AllGroups(ctx context.Context, obj *models.User) ([]*models.Group, error) {
-	// get all groups visible to asker that the target user is in
-	panic(fmt.Errorf("not implemented: AllGroups - allGroups"))
 }
 
 // User returns gql.UserResolver implementation.
