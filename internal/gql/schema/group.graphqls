@@ -1,0 +1,53 @@
+directive @canAskerManageGroup(groupIdField: String, groupIdArg: String) on FIELD_DEFINITION
+
+# SEE_SELF, SEE_ALL, or manages
+directive @canAskerSeeGroup(groupIdField: String, groupIdArg: String) on FIELD_DEFINITION
+
+
+
+
+enum GroupViewPermission {
+  SEE_NONE
+  SEE_SELF
+  SEE_ALL
+}
+
+
+type MembershipToGroup {
+ 	UserId:         ID!
+	User: User!
+    ViewPermission: GroupViewPermission!   
+}
+
+type Group {
+    id: ID!
+    manager_id: ID!
+    name: String!
+    description: String!
+
+    directMembers: [MembershipToGroup!]!
+    members: [MembershipToGroup!]!
+
+    directManagedGroups: [Group!]!
+    directSubGroups: [Group!]!
+}
+
+type AnonymousGroup{
+    id: ID!
+    members: [User!]!
+    subgroups: [Group!]!
+}
+
+extend type Query {
+    group(id: ID!): Group! @canAskerSeeGroup(groupIdField: "id")
+
+    isUserInGroup(userID: ID!, groupID: ID!): Boolean! @canAskerSeeGroup(groupIdField: "id")
+
+    isUserInGroupDirectly(userID: ID!, groupID: ID!): Boolean! @canAskerSeeGroup(groupIdField: "groupId")
+    canGroupManageGroup(managerID: ID!, groupID: ID!): Boolean! @canAskerSeeGroup(groupIdField: "groupId")
+    canUserManageGroup(managerID: ID!, groupID: ID!): Boolean! @canAskerSeeGroup(groupIdField: "id")
+}
+
+extend type Mutation {
+    addUserToGroup(userID: ID!, groupID: ID!, perms: GroupViewPermission!): Boolean! @canAskerManageGroup(groupIdArg: "groupID")
+}

@@ -7,6 +7,8 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
+	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
 	"make-backend/internal/gql"
 )
@@ -36,12 +38,50 @@ func (r *makerspaceResolver) Hours(ctx context.Context, obj *models.Makerspace) 
 	return hours, nil
 }
 
+// Managers is the resolver for the managers field.
+func (r *makerspaceResolver) Managers(ctx context.Context, obj *models.Makerspace) ([]*models.User, error) {
+	us, err := r.Store.Groups.UsersInAnonymousGroup(ctx, obj.ManagementAgroupId)
+	if err != nil {
+		return nil, err
+	}
+
+	return SliceToPtrSlice(us), nil
+}
+
+// Staff is the resolver for the staff field.
+func (r *makerspaceResolver) Staff(ctx context.Context, obj *models.Makerspace) ([]*models.User, error) {
+	us, err := r.Store.Groups.UsersInAnonymousGroup(ctx, obj.StaffAgroupId)
+	if err != nil {
+		return nil, err
+	}
+	return SliceToPtrSlice(us), nil
+}
+
+// ManagerAnonymousGroup is the resolver for the managerAnonymousGroup field.
+func (r *makerspaceResolver) ManagerAnonymousGroup(ctx context.Context, obj *models.Makerspace) (*models.AnonymousGroup, error) {
+	return &models.AnonymousGroup{Id: obj.ManagementAgroupId}, nil
+}
+
+// StaffAnonymousGroup is the resolver for the staffAnonymousGroup field.
+func (r *makerspaceResolver) StaffAnonymousGroup(ctx context.Context, obj *models.Makerspace) (*models.AnonymousGroup, error) {
+	return &models.AnonymousGroup{Id: obj.StaffAgroupId}, nil
+}
+
 // CreateMakerspace is the resolver for the createMakerspace field.
 func (r *mutationResolver) CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error) {
+	user := FullUserFromContext(r.Store, ctx)
+	if user != nil {
+		return 0, auth.ErrNotAuthenticated
+	}
 	id, err := r.Store.Makerspaces.CreateMakerspace(ctx, name, hidden)
 	if err != nil {
 		return 0, err
 	}
+	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, id)
+	if err != nil {
+		return id, fmt.Errorf("failed to retrieve new makerspace")
+	}
+	r.Logger.AuditLog.CreateUnassociated("builtin.makerspace.create", "{user} created {makerspace)", user.LogEntity(), makerspace.LogEntity())
 
 	return id, nil
 }
@@ -54,6 +94,34 @@ func (r *mutationResolver) DeleteMakerspace(ctx context.Context, id int) (bool, 
 	}
 
 	return success, err
+}
+
+// SetManagerSubgroups is the resolver for the setManagerSubgroups field.
+func (r *mutationResolver) SetManagerSubgroups(ctx context.Context, makerspaceID int, subgroups []int) (bool, error) {
+	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, makerspaceID)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.Store.Groups.SetGroupsForAnonymousGroup(ctx, makerspace.ManagementAgroupId, subgroups)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// SetStaffSubgroups is the resolver for the setStaffSubgroups field.
+func (r *mutationResolver) SetStaffSubgroups(ctx context.Context, makerspaceID int, subgroups []int) (bool, error) {
+	makerspace, err := r.Store.Makerspaces.GetMakerspaceById(ctx, makerspaceID)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.Store.Groups.SetGroupsForAnonymousGroup(ctx, makerspace.StaffAgroupId, subgroups)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Makerspace is the resolver for the makerspace field.

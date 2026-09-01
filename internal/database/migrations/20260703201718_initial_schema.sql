@@ -20,9 +20,7 @@ CREATE TABLE users (
     setup_complete BOOLEAN NOT NULL DEFAULT FALSE,
     archived BOOLEAN NOT NULL DEFAULT FALSE,
     notes TEXT NOT NULL DEFAULT '',
-    admin BOOLEAN NOT NULL DEFAULT FALSE,
-    force_archive BOOLEAN,
-    card_tag TEXT NOT NULL DEFAULT ''
+    force_archive BOOLEAN
 );
 
 CREATE TABLE holds (
@@ -44,15 +42,17 @@ CREATE TABLE images (
 
 CREATE TABLE groups (
     id SERIAL PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
     manager_id INT REFERENCES groups(id),
     description TEXT NOT NULL DEFAULT '',
     UNIQUE (name, manager_id)
 );
-INSERT INTO groups (name, description) 
-VALUES ('admin', 'The root of all groups');
+INSERT INTO groups (id, name, description) 
+VALUES (0, 'admin', 'The root of all groups');
 
-
+alter table groups
+  add constraint nonnull_manager_except_for_root
+  check (id = 0 or manager_id is not null);
 
 CREATE TABLE group_direct_membership(
     group_id INT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -62,8 +62,8 @@ CREATE TABLE group_direct_membership(
 );
 
 CREATE TABLE group_direct_subgroups (
-    group_id INT REFERENCES groups(id),
-    subgroup_id INT REFERENCES groups(id),
+    group_id INT REFERENCES groups(id) ON DELETE CASCADE,
+    subgroup_id INT REFERENCES groups(id) ON DELETE CASCADE,
     view_permission INT NOT NULL DEFAULT 0 CHECK (view_permission in (0, 1, 2)),
     PRIMARY KEY (group_id, subgroup_id)
 );
@@ -142,14 +142,18 @@ create view group_management as (
 	group by manager_group_id , group_id 
 );
 
+
 create view group_membership as ( 
-	select group_id, user_id, gdm.view_permission  from group_direct_membership gdm 
-	union
-	select distinct gs.supergroup_id, gdm.user_id, gs.view_permission  
-	from group_subgroups gs 
-	left join group_direct_membership gdm 
-	on gdm.group_id  = gs.subgroup_id 
-	where user_id is not null
+    select group_id, user_id, MAX(view_permission) as view_permission from (
+    	select group_id, user_id, gdm.view_permission as view_permission  from group_direct_membership gdm 
+    	union
+    	select distinct gs.supergroup_id, gdm.user_id, gs.view_permission  
+    	from group_subgroups gs 
+    	left join group_direct_membership gdm 
+    	on gdm.group_id  = gs.subgroup_id 
+    	where user_id is not null
+    ) as subquery
+    group by group_id, user_id
 );
 
 
@@ -164,6 +168,13 @@ CREATE TABLE anonymous_group_subgroups(
 );
 
 
+create view anonymous_group_membership as ( 
+    select distinct ags.anonymous_id as agroup_id , gm.user_id as user_id
+    from anonymous_group_subgroups ags 
+    left join group_membership gm 
+    on gm.group_id  = ags.group_id 
+);
+
 
 CREATE TABLE makerspaces (
     id SERIAL PRIMARY KEY,
@@ -177,8 +188,8 @@ CREATE TABLE makerspaces (
     timezone TEXT NOT NULL DEFAULT 'America/New_York',
     -- agroup of users who can manage this space
     management_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE,
-    -- agroup of users who can site-set equipment state
-    can_change_equipment_state_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE 
+    -- agroup of users who can site-set equipment state and other such actions
+    staff_agroup_id INT NOT NULL REFERENCES anonymous_groups(id) ON DELETE CASCADE 
 );
 
 CREATE TABLE restrictions (
@@ -222,17 +233,6 @@ CREATE TABLE announcements (
     makerspace_id INT REFERENCES makerspaces(id) ON DELETE CASCADE
 );
 
-CREATE TABLE managers (
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, makerspace_id)
-);
-
-CREATE TABLE staff (
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    makerspace_id INT NOT NULL REFERENCES makerspaces(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, makerspace_id)
-);
 
 CREATE TABLE equipment (
     id SERIAL PRIMARY KEY,
@@ -394,6 +394,12 @@ CREATE TABLE custom_links (
 DROP TABLE IF EXISTS groups;
 DROP TABLE IF EXISTS group_direct_membership;
 DROP TABLE IF EXISTS group_direct_subgroups;
+
+DROP VIEW IF EXISTS group_noncombination_management;
+DROP VIEW IF EXISTS group_subgroups;
+DROP VIEW IF EXISTS group_management;
+DROP VIEW IF EXISTS group_membership;
+DROP VIEW IF EXISTS anonymous_group_membership;
 
 
 DROP TABLE IF EXISTS anonymous_groups;

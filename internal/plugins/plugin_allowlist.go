@@ -20,20 +20,6 @@ var wanted_plugins = []common.PluginDescription{
 		PluginType:  common.PluginType_Notification,
 		Options:     map[string]string{},
 	},
-	// {
-	// 	Name:       "notification.core.linux_email",
-	// 	Version:    1,
-	// 	MagicValue: "904d74d0-24e7-49b8-a4f6-0914aa4edde8",
-	// 	Url:        "",
-	// 	PluginType: PluginType_Notification,
-	// },
-	// {
-	// 	Name:       "auth.rit.shibboleth_sso",
-	// 	Version:    1,
-	// 	MagicValue: "904d74d0-24e7-49b8-a4f6-0914aa4edde8",
-	// 	Url:        "",
-	// 	PluginType: PluginType_Notification,
-	// },
 	{
 		Name:        "auth.core.saml",
 		Version:     1,
@@ -41,9 +27,11 @@ var wanted_plugins = []common.PluginDescription{
 		DownloadUrl: "",
 		PluginType:  common.PluginType_Auth,
 		Options: map[string]string{
-			"SP_CERT":               os.Getenv("SAML_SP_CERT"),
-			"SP_KEY":                os.Getenv("SAML_SP_KEY"),
-			"IDP_METADATA_PROVIDER": os.Getenv("SAML_SP_METADATA_URL"),
+			"SP_CERT":                  os.Getenv("SAML_SP_CERT"),
+			"SP_KEY":                   os.Getenv("SAML_SP_KEY"),
+			"IDP_METADATA_PROVIDER":    os.Getenv("SAML_SP_METADATA_URL"),
+			"SAML_REPLACE_DOMAIN_FROM": os.Getenv("SAML_REPLACE_DOMAIN_FROM"),
+			"SAML_REPLACE_DOMAIN_TO":   os.Getenv("SAML_REPLACE_DOMAIN_TO"),
 		},
 	},
 }

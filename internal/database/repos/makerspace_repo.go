@@ -3,7 +3,6 @@ package repos
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"make-backend/internal/database/models"
 )
 
@@ -11,8 +10,7 @@ type MakerspaceRepository interface {
 	GetMakerspaceById(ctx context.Context, id int) (*models.Makerspace, error)
 	CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error)
 	DeleteMakerspace(ctx context.Context, id int) (bool, error)
-	AddManager(ctx context.Context, makerspace_id int, user_id int) error
-	AddStaff(ctx context.Context, makerspace_id int, user_id int) error
+
 	GetDefaultHours(ctx context.Context, makerspace_id int) ([]*models.DefaultHours, error)
 }
 
@@ -31,7 +29,9 @@ func (r *MakerspaceRepo) GetMakerspaceById(ctx context.Context, id int) (*models
 		docs_url,
 		image_id,
 		hidden,
-		timezone
+		timezone,
+		management_agroup_id,
+		staff_agroup_id
 		FROM makerspaces where makerspaces.id = $1
 	`
 
@@ -44,6 +44,8 @@ func (r *MakerspaceRepo) GetMakerspaceById(ctx context.Context, id int) (*models
 		&makerspace_result.ImageId,
 		&makerspace_result.Hidden,
 		&makerspace_result.Timezone,
+		&makerspace_result.ManagementAgroupId,
+		&makerspace_result.StaffAgroupId,
 	)
 
 	if err != nil {
@@ -54,16 +56,38 @@ func (r *MakerspaceRepo) GetMakerspaceById(ctx context.Context, id int) (*models
 }
 
 func (r *MakerspaceRepo) CreateMakerspace(ctx context.Context, name string, hidden bool) (int, error) {
-	var id_result int
+	tx, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
 
-	query := `INSERT INTO makerspaces (name, hidden) VALUES ($1, $2) RETURNING id`
+	var mid_result int
+	var manager_agroup_id_result, staff_agroup_id_result int
 
-	err := r.DB.QueryRowContext(ctx, query, name, hidden).Scan(&id_result)
+	query1 := `INSERT INTO anonymous_groups DEFAULT VALUES RETURNING id`
+	err = tx.QueryRowContext(ctx, query1).Scan(&manager_agroup_id_result)
 	if err != nil {
 		return 0, err
 	}
 
-	return id_result, nil
+	err = tx.QueryRowContext(ctx, query1).Scan(&staff_agroup_id_result)
+	if err != nil {
+		return 0, err
+	}
+
+	query2 := `INSERT INTO makerspaces (name, hidden, management_agroup_id, staff_agroup_id) VALUES ($1, $2, $3, $4) RETURNING id`
+
+	err = tx.QueryRowContext(ctx, query2, name, hidden, manager_agroup_id_result, staff_agroup_id_result).Scan(&mid_result)
+	if err != nil {
+		return 0, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return mid_result, nil
 }
 
 func (r *MakerspaceRepo) DeleteMakerspace(ctx context.Context, id int) (bool, error) {
@@ -77,28 +101,6 @@ func (r *MakerspaceRepo) DeleteMakerspace(ctx context.Context, id int) (bool, er
 	return true, nil
 }
 
-func (r *MakerspaceRepo) AddManager(ctx context.Context, makerspace_id int, user_id int) error {
-	query := `INSERT INTO managers (makerspace_id, user_id) VALUES ($1, $2)`
-
-	_, err := r.DB.ExecContext(ctx, query, makerspace_id, user_id)
-	if err != nil {
-		return fmt.Errorf("failed to insert manager (makerspace: %d, user: %d): %w", makerspace_id, user_id, err)
-	}
-
-	return nil
-}
-
-func (r *MakerspaceRepo) AddStaff(ctx context.Context, makerspace_id int, user_id int) error {
-	query := `INSERT INTO staff (makerspace_id, user_id) VALUES ($1, $2)`
-
-	_, err := r.DB.ExecContext(ctx, query, makerspace_id, user_id)
-	if err != nil {
-		return fmt.Errorf("failed to insert staff (makerspace: %d, user: %d): %w", makerspace_id, user_id, err)
-	}
-
-	return nil
-}
-
 func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]*models.User, error) {
 	query := `SELECT
 		users.id,
@@ -110,9 +112,7 @@ func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]
 		users.setup_complete,
 		users.archived,
 		users.notes,
-		users.admin,
-		users.force_archive,
-		users.card_tag
+		users.force_archive
 		FROM users JOIN managers ON users.id = managers.user_id
 		WHERE managers.makerspace_id = $1
 	`
@@ -137,9 +137,7 @@ func (r *MakerspaceRepo) GetManagers(ctx context.Context, makerspace_id int) ([]
 			&user.SetupComplete,
 			&user.Archived,
 			&user.Notes,
-			&user.Admin,
 			&user.ForceArchive,
-			&user.CardTag,
 		)
 		if err != nil {
 			return nil, err

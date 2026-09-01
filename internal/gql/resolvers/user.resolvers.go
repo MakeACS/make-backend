@@ -7,20 +7,42 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"make-backend/internal/auth"
 	"make-backend/internal/database/models"
+	"make-backend/internal/gql"
 )
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	return r.Store.Users.GetUserById(ctx, id)
 }
 
 // CurrentUser is the resolver for the currentUser field.
 func (r *queryResolver) CurrentUser(ctx context.Context) (*models.User, error) {
-	userid := ctx.Value(auth.UserContextKey{}).(int)
-	user, err := r.Store.Users.GetUserById(ctx, userid)
+	userId := auth.UserIDFromContext(ctx)
+	if userId == nil {
+		// not an error, theres just no user here
+		return nil, nil
+	}
+	user, err := r.Store.Users.GetUserById(ctx, *userId)
 
 	return user, err
 }
+
+// Groups is the resolver for the groups field.
+func (r *userResolver) Groups(ctx context.Context, obj *models.User) ([]*models.Group, error) {
+	askingUserId := auth.UserIDFromContext(ctx)
+	if askingUserId == nil { // visitor in no groups
+		return []*models.Group{}, nil
+	}
+	gs, err := r.Store.Groups.AllGroupsUserIsInAndVisibleToAsker(ctx, obj.Id, *askingUserId) // asker is the user themselves
+	if err != nil {
+		return nil, err
+	}
+	return SliceToPtrSlice(gs), nil
+}
+
+// User returns gql.UserResolver implementation.
+func (r *Resolver) User() gql.UserResolver { return &userResolver{r} }
+
+type userResolver struct{ *Resolver }

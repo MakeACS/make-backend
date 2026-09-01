@@ -80,3 +80,26 @@ func TestJsonDataGenerationMultipleSame(t *testing.T) {
 	}
 
 }
+
+func TestMoreSpacesThanEntitiesFormat(t *testing.T) {
+	// should log a warning but still work and not crash
+	str := CreateFormatString("{user} elevated {user}", user1.LogEntity())
+	ref := "{user:0:John Doe} elevated {user:-1:unknown}"
+	if str != ref {
+		t.Errorf("reference and created string don't agree. Wanted `%s` got `%s`", str, ref)
+	}
+}
+
+func TestMoreSpacesThanEntitiesPlain(t *testing.T) {
+	// should log a warning but still work and not crash
+	str := CreatePlainString("{user} elevated {user}", user1.LogEntity())
+	ref := "John Doe elevated unknown"
+	if str != ref {
+		t.Errorf("reference and created string don't agree. Wanted `%s` got `%s`", str, ref)
+	}
+}
+
+func TestMoreSpacesThanEntitiesData(t *testing.T) {
+	// should log a warning but still work and not crash
+	_ = dataForEntities("{user} elevated {user}", []models.LogEntity{user1.LogEntity()})
+}

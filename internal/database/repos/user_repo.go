@@ -10,11 +10,7 @@ type UserRepository interface {
 	GetUserById(ctx context.Context, id int) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 	CreateUser(ctx context.Context, email string) (int, error)
-	IsManager(ctx context.Context, id int) (bool, error)
-	IsStaff(ctx context.Context, id int) (bool, error)
 	IsTrainer(ctx context.Context, id int) (bool, error)
-	IsManagerFor(ctx context.Context, user_id int, makerspace_id int) (bool, error)
-	IsStaffFor(ctx context.Context, user_id int, makerspace_id int) (bool, error)
 	IsTrainerFor(ctx context.Context, user_id int, equipment_id int) (bool, error)
 }
 
@@ -35,9 +31,7 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int) (*models.User, error
 		setup_complete,
 		archived,
 		notes,
-		admin,
-		force_archive,
-		card_tag
+		force_archive
 		FROM users WHERE users.id = $1`
 
 	err := r.DB.QueryRowContext(ctx, query, id).Scan(
@@ -50,9 +44,7 @@ func (r *UserRepo) GetUserById(ctx context.Context, id int) (*models.User, error
 		&user_result.SetupComplete,
 		&user_result.Archived,
 		&user_result.Notes,
-		&user_result.Admin,
 		&user_result.ForceArchive,
-		&user_result.CardTag,
 	)
 
 	if err != nil {
@@ -75,9 +67,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 		setup_complete,
 		archived,
 		notes,
-		admin,
-		force_archive,
-		card_tag
+		force_archive
 		FROM users WHERE users.email = $1`
 
 	err := r.DB.QueryRowContext(ctx, query, email).Scan(
@@ -90,9 +80,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 		&user_result.SetupComplete,
 		&user_result.Archived,
 		&user_result.Notes,
-		&user_result.Admin,
 		&user_result.ForceArchive,
-		&user_result.CardTag,
 	)
 
 	if err != nil {
@@ -115,32 +103,6 @@ func (r *UserRepo) CreateUser(ctx context.Context, email string) (int, error) {
 	return new_id, nil
 }
 
-func (r *UserRepo) IsManager(ctx context.Context, id int) (bool, error) {
-	var isManager bool
-
-	query := `SELECT EXISTS(SELECT 1 FROM managers WHERE user_id = $1)`
-
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&isManager)
-	if err != nil {
-		return false, err
-	}
-
-	return isManager, nil
-}
-
-func (r *UserRepo) IsStaff(ctx context.Context, id int) (bool, error) {
-	var isStaff bool
-
-	query := `SELECT EXISTS(SELECT 1 FROM staff WHERE user_id = $1)`
-
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&isStaff)
-	if err != nil {
-		return false, err
-	}
-
-	return isStaff, nil
-}
-
 func (r *UserRepo) IsTrainer(ctx context.Context, id int) (bool, error) {
 	var isTrainer bool
 
@@ -152,32 +114,6 @@ func (r *UserRepo) IsTrainer(ctx context.Context, id int) (bool, error) {
 	}
 
 	return isTrainer, nil
-}
-
-func (r *UserRepo) IsManagerFor(ctx context.Context, user_id int, makerspace_id int) (bool, error) {
-	var isManager bool
-
-	query := `SELECT EXISTS(SELECT 1 FROM managers WHERE user_id = $1 AND makerspace_id = $2)`
-
-	err := r.DB.QueryRowContext(ctx, query, user_id, makerspace_id).Scan(&isManager)
-	if err != nil {
-		return false, err
-	}
-
-	return isManager, nil
-}
-
-func (r *UserRepo) IsStaffFor(ctx context.Context, user_id int, makerspace_id int) (bool, error) {
-	var isStaff bool
-
-	query := `SELECT EXISTS(SELECT 1 FROM staff WHERE user_id = $1 AND makerspace_id = $2)`
-
-	err := r.DB.QueryRowContext(ctx, query, user_id, makerspace_id).Scan(&isStaff)
-	if err != nil {
-		return false, err
-	}
-
-	return isStaff, nil
 }
 
 func (r *UserRepo) IsTrainerFor(ctx context.Context, user_id int, equipment_id int) (bool, error) {

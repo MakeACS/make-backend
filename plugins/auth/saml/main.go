@@ -29,11 +29,13 @@ type SAMLAuth struct {
 	sp           SessionProviderViaPlugin
 	status       common.PluginStatus
 	statusString string
+	config       Config
 }
 
 func (s *SAMLAuth) RegisterCallbackProvider(cb auth.AuthCallbackProvider) {
 	s.sp = SessionProviderViaPlugin{
-		cb: cb,
+		cb:  cb,
+		cfg: &s.config,
 	}
 	s.callbacks = cb
 
@@ -95,6 +97,8 @@ var (
 	ConfigKeySpCert              = "SP_CERT"
 	ConfigKeySpKey               = "SP_KEY"
 	ConfigKeyIdpMetadataProvider = "IDP_METADATA_PROVIDER"
+	ConfigKeyReplaceDomainFrom   = "SAML_REPLACE_DOMAIN_FROM"
+	ConfigKeyReplaceDomainTo     = "SAML_REPLACE_DOMAIN_TO"
 )
 
 func SamlConfigFromPluginConfig(init *common.PluginInitialMessage) Config {
@@ -108,6 +112,10 @@ func SamlConfigFromPluginConfig(init *common.PluginInitialMessage) Config {
 			c.SPKey = pair.Value
 		case ConfigKeyIdpMetadataProvider:
 			c.SamlIDPMetadataProvider = pair.Value
+		case ConfigKeyReplaceDomainFrom:
+			c.OptionalReplaceDomainFrom = pair.Value
+		case ConfigKeyReplaceDomainTo:
+			c.OptionalReplaceDomainTo = pair.Value
 		}
 	}
 	return c

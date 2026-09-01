@@ -2,12 +2,25 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/alexedwards/scs/v2"
 )
 
 type UserContextKey struct{}
+
+var ErrNotAuthenticated error = errors.New("not authenticated")
+
+func UserIDFromContext(ctx context.Context) *int {
+	userVal := ctx.Value(UserContextKey{})
+	if userVal == nil {
+		return nil
+	}
+	userID := userVal.(int)
+	return &userID
+
+}
 
 func OptionalAuthMiddleware(next http.Handler, sessionManager *scs.SessionManager) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

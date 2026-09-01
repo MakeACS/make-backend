@@ -1,16 +1,8 @@
 scalar Time
 
 directive @isAdmin on FIELD_DEFINITION
-directive @isManager on FIELD_DEFINITION
-directive @isStaff on FIELD_DEFINITION
-directive @isTrainer on FIELD_DEFINITION
 
-# These directives REQUIRE the queries to have specific parameters in order to function properly
-directive @isManagerFor on FIELD_DEFINITION # REQUIRES a makerspace_id parameter
-directive @isStaffFor on FIELD_DEFINITION # REQUIRES a makerspace_id parameter
-directive @isTrainerFor on FIELD_DEFINITION # REQUIRES an equipment_id parameter
-directive @isSelf on FIELD_DEFINITION # REQUIRES a target_id parameter
-directive @isStaffOrSelf on FIELD_DEFINITION # REQUIRES a target_id parameter
+directive @isSelf(userIdField: String, userIdArg: String) on FIELD_DEFINITION 
 
 type User {
     id: ID!
@@ -22,12 +14,13 @@ type User {
     setup_complete: Boolean!
     archived: Boolean!
     notes: String!
-    admin: Boolean!
     force_archive: Boolean
-    card_tag: String! @isStaff
+
+    # groups that the user is in and the asker can see. filters based on asker id
+    groups: [Group!]! @isSelf(userIdField: "id")
 }
 
 extend type Query {
-    user(id: ID!): User!
-    currentUser: User!
+    user(id: ID!): User! @isSelf(userIdArg: "id")  # isStaffOrSelf
+    currentUser: User
 }

@@ -16,9 +16,7 @@ type User struct {
 	SetupComplete bool
 	Archived      bool
 	Notes         string
-	Admin         bool
 	ForceArchive  *bool
-	CardTag       string
 }
 
 func (u User) LogEntity() LogEntity {

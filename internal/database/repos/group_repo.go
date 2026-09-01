@@ -3,8 +3,10 @@ package repos
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"make-backend/internal/database/models"
+	"strings"
 )
 
 type GroupRepository interface {
@@ -21,36 +23,253 @@ type GroupRepository interface {
 	GetDirectSubgroups(ctx context.Context, groupId int) ([]models.SubgroupLink, error)
 
 	AddSubgroupToGroup(ctx context.Context, subgroup, supergroup int, permissions models.GroupViewPermission) error
+	IsGroupSubgroup(ctx context.Context, subgroup, supergroup int) (bool, models.GroupViewPermission, error)
 
 	GetGroupMembers(ctx context.Context, groupId int) ([]models.MembershipToGroup, error)
 	GetDirectGroupMembers(ctx context.Context, groupId int) ([]models.MembershipToGroup, error)
 
-	IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, error)
-	IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, error)
+	IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error)
+
+	AllGroupsUserIsMemberOf(ctx context.Context, userId int) ([]models.MembershipToUser, error)
+	IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error)
 	// add a user to a group
 	AddUserToGroup(ctx context.Context, userId int, groupId int, perms models.GroupViewPermission) error
 	// remove user from a group
 	// return true if removed, false if the user was not removed from that group
 	RemoveUserFromGroup(ctx context.Context, userId int, groupId int) (bool, error)
 
+	CanUserManageGroup(ctx context.Context, managerUser, managedGroup int) (bool, error)
 	CanGroupManageGroup(ctx context.Context, managerGroup, managedGroup int) (bool, error)
 
-	AllGroupsGroupCanManage(ctx context.Context, userId int) ([]int, error)
+	AllGroupsGroupCanManage(ctx context.Context, groupId int) ([]int, error)
+	AllGroupsGroupCanManageDirectly(ctx context.Context, groupId int) ([]int, error)
 	AllGroupsVisibleToGroup(ctx context.Context, groupId int) ([]int, error)
+	IsGroupVisibleToGroup(ctx context.Context, lookingGroupId int, groupId int) (bool, error)
 
-	AllGroupsUserIsMemberOf(ctx context.Context, userId int) ([]models.MembershipToUser, error)
 	AllGroupsUserCanManage(ctx context.Context, userId int) ([]int, error)
-	AllGroupsUserVisibleToUser(ctx context.Context, userId int) ([]int, error)
+	AllGroupsUserIsInAndVisibleToAsker(ctx context.Context, userId int, askerId int) ([]models.Group, error)
+	IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, error)
+
+	IsUserInAnonymousGroup(ctx context.Context, anonymousGroupId int, userId int) (bool, error)
+	UsersInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.User, error)
+
+	GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.Group, error)
+	SetGroupsForAnonymousGroup(ctx context.Context, anonymousGroupId int, groupIds []int) error
 }
 
 type GroupRepo struct {
 	DB *sql.DB
 }
 
+func (g *GroupRepo) UsersInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.User, error) {
+	query := `
+	select 
+		u.id, u.email, u.full_name, u.preferred_name, u.pronouns, u.join_date, u.setup_complete, u.archived, u.notes, u.force_archive 
+		from anonymous_group_membership 
+		left join users u on u.id = user_id
+		where agroup_id = $1`
+
+	rows, err := g.DB.QueryContext(ctx, query, anonymousGroupId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct QueryContext for GetGroupMembers: %w", err)
+	}
+
+	users := []models.User{}
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(
+			&user.Id,
+			&user.Email,
+			&user.FullName,
+			&user.PreferredName,
+			&user.Pronouns,
+			&user.JoinDate,
+			&user.SetupComplete,
+			&user.Archived,
+			&user.Notes,
+			&user.ForceArchive,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan for user in agroup: %w", err)
+		}
+		users = append(users, user)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to get group members: %w", err)
+	}
+
+	return users, nil
+
+}
+
+func (g *GroupRepo) SetGroupsForAnonymousGroup(ctx context.Context, anonymousGroupId int, groupIds []int) error {
+	tx, err := g.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	_, err = tx.ExecContext(ctx, "delete from anonymous_group_subgroups where anonymous_id = $1", anonymousGroupId)
+	if err != nil {
+		return fmt.Errorf("failed to delete old subgroups before adding new subgroups for set: %w", err)
+	}
+
+	counter := 1
+	valueSpots := []string{}
+	values := []any{}
+	for _, sg := range groupIds {
+		valueSpots = append(valueSpots, fmt.Sprintf("($%d, $%d)", counter, counter+1))
+		values = append(values, anonymousGroupId, sg)
+		counter += 2
+	}
+
+	query := `INSERT INTO anonymous_group_subgroups (anonymous_id, group_id) VALUES ` + strings.Join(valueSpots, ", ")
+	_, err = tx.ExecContext(ctx, query, values...)
+	if err != nil {
+		return fmt.Errorf("failed to add group to anonymous group: %w", err)
+	}
+	return tx.Commit()
+}
+
+func (g *GroupRepo) GroupsInAnonymousGroup(ctx context.Context, anonymousGroupId int) ([]models.Group, error) {
+	query := `SELECT group_id, g.name, g.description, g.manager_id FROM anonymous_group_subgroups left join groups g on g.id = group_id WHERE anonymous_id = $1`
+	rows, err := g.DB.QueryContext(ctx, query, anonymousGroupId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query groups in anonymous group: %w", err)
+	}
+	defer rows.Close()
+
+	var groupIds []models.Group
+	for rows.Next() {
+		var g models.Group
+		if err := rows.Scan(&g.Id, &g.Name, &g.Description, &g.ManagerId); err != nil {
+			return nil, fmt.Errorf("failed to scan group in anonymous group: %w", err)
+		}
+		groupIds = append(groupIds, g)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return groupIds, nil
+}
+
+func (g *GroupRepo) IsUserInAnonymousGroup(ctx context.Context, anonymousGroupId int, userId int) (bool, error) {
+	var inGroup bool
+
+	query := "SELECT EXISTS(SELECT 1 FROM anonymous_group_membership WHERE agroup_id = $1 and user_id = $2)"
+	err := g.DB.QueryRow(query, anonymousGroupId, userId).Scan(&inGroup)
+
+	if err != nil {
+		return false, err
+	}
+	return inGroup, nil
+
+}
+
+func (g *GroupRepo) RemoveGroupFromAnonymousGroup(ctx context.Context, anonymousGroupId int, groupId int) error {
+	query := `DELETE FROM anonymous_group_subgroups WHERE anonymous_id = $1 AND group_id = $2`
+	_, err := g.DB.ExecContext(ctx, query, anonymousGroupId, groupId)
+	if err != nil {
+		return fmt.Errorf("failed to remove group from anonymous group: %w", err)
+	}
+	return nil
+}
+
+var _ GroupRepository = &GroupRepo{}
+
+func (g *GroupRepo) IsGroupVisibleToUser(ctx context.Context, userId int, groupId int) (bool, error) {
+	// if can manage -> see all
+	canManage, err := g.CanUserManageGroup(ctx, userId, groupId)
+	if err != nil {
+		return false, fmt.Errorf("failed to check if group is visible to user check 1: %w", err)
+	}
+	if canManage {
+		return true, nil
+	}
+	// TODO: check if group is shared to group that user is in
+
+	isInGroup, how, err := g.IsUserInGroup(ctx, userId, groupId)
+	if err != nil {
+		return false, fmt.Errorf("failed to check if group is visible to user check 2: %w", err)
+	}
+
+	if isInGroup {
+		switch how {
+		case models.GroupViewPermission_SeeAll:
+			return true, nil
+		case models.GroupViewPermission_SeeNone:
+			return false, nil
+		case models.GroupViewPermission_SeeSelf:
+			return true, nil
+		default:
+			return false, fmt.Errorf("invalid view permission: %v", how)
+		}
+	}
+	return false, nil
+}
+func (g *GroupRepo) IsGroupVisibleToGroup(ctx context.Context, lookingGroupId int, groupId int) (bool, error) {
+	// if can manage -> see all
+	canManage, err := g.CanGroupManageGroup(ctx, lookingGroupId, groupId)
+	if err != nil {
+		return false, fmt.Errorf("failed to check if group is visible to group 1: %w", err)
+	}
+	if canManage {
+		return true, nil
+	}
+
+	isSubgroup, perms, err := g.IsGroupSubgroup(ctx, lookingGroupId, groupId)
+	if err != nil {
+		return false, fmt.Errorf("failed to check if group is visible to group 3: %w", err)
+	}
+	if isSubgroup {
+		switch perms {
+
+		case models.GroupViewPermission_SeeAll:
+			return true, nil
+		case models.GroupViewPermission_SeeNone:
+			return false, nil
+		case models.GroupViewPermission_SeeSelf:
+			return true, nil
+		default:
+			return false, fmt.Errorf("invalid view permission %v", perms)
+		}
+
+	}
+	return false, nil
+
+}
+
+func (g *GroupRepo) IsGroupSubgroup(ctx context.Context, subgroup int, supergroup int) (bool, models.GroupViewPermission, error) {
+	var perms models.GroupViewPermission
+	query := `select view_permission from group_subgroups where supergroup_id = $1 and subgroup_id = $2`
+
+	row := g.DB.QueryRowContext(ctx, query, supergroup, subgroup)
+
+	err := row.Scan(&perms)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, models.GroupViewPermission_SeeNone, nil
+	}
+
+	if err != nil {
+		return false, models.GroupViewPermission_SeeNone, err
+	}
+	return true, perms, nil
+
+}
+
 func (g *GroupRepo) AddSubgroupToGroup(ctx context.Context, subgroupID, supergroupID int, permissions models.GroupViewPermission) error {
+	// if new supergroup is subgroup of new subgroup, would make a loop
+	wouldCreateCycle, _, err := g.IsGroupSubgroup(ctx, supergroupID, subgroupID)
+	if err != nil {
+		return fmt.Errorf("failed to check subgroup for cycle prevention")
+	}
+	if wouldCreateCycle {
+		return errors.New("not adding subgroup to group as it would cause a cycle")
+	}
+
 	query := `INSERT INTO group_direct_subgroups (group_id, subgroup_id, view_permission) VALUES ($1, $2, $3)`
 
-	_, err := g.DB.ExecContext(ctx, query, supergroupID, subgroupID, permissions)
+	_, err = g.DB.ExecContext(ctx, query, supergroupID, subgroupID, permissions)
 	if err != nil {
 		return fmt.Errorf("failed to add user to group: %w", err)
 	}
@@ -88,7 +307,6 @@ func (g *GroupRepo) GetDirectSubgroups(ctx context.Context, groupId int) ([]mode
 
 }
 
-// GetSubgroups implements [GroupRepository].
 func (g *GroupRepo) GetSubgroups(ctx context.Context, groupId int) ([]models.SubgroupLink, error) {
 
 	query := `select subgroup_id, view_permission from group_subgroups where supergroup_id = $1`
@@ -120,9 +338,35 @@ func (g *GroupRepo) GetSubgroups(ctx context.Context, groupId int) ([]models.Sub
 
 }
 
-// AllGroupsGroupCanManage implements [GroupRepository].
 func (g *GroupRepo) AllGroupsGroupCanManage(ctx context.Context, managerId int) ([]int, error) {
 	query := `select group_id from group_management where manager_group_id = $1`
+
+	rows, err := g.DB.QueryContext(ctx, query, managerId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct QueryContext: %w", err)
+	}
+	defer rows.Close()
+
+	groups := []int{}
+	for rows.Next() {
+		var group int
+		err := rows.Scan(&group)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan for groups group can manage: %w", err)
+		}
+		groups = append(groups, group)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to get for groups group can manage: %w", err)
+	}
+	return groups, nil
+
+}
+
+// AllGroupsGroupCanManage implements [GroupRepository].
+func (g *GroupRepo) AllGroupsGroupCanManageDirectly(ctx context.Context, managerId int) ([]int, error) {
+	query := `select id from groups where manager_id = $1`
 
 	rows, err := g.DB.QueryContext(ctx, query, managerId)
 	if err != nil {
@@ -206,9 +450,29 @@ func (g *GroupRepo) AllGroupsUserIsMemberOf(ctx context.Context, userId int) ([]
 
 }
 
-// AllGroupsUserVisibleToUser implements [GroupRepository].
-func (g *GroupRepo) AllGroupsUserVisibleToUser(ctx context.Context, userId int) ([]int, error) {
-	panic("unimplemented")
+// AllGroupsUserIsInAndVisibleToAsker implements [GroupRepository].
+func (g *GroupRepo) AllGroupsUserIsInAndVisibleToAsker(ctx context.Context, userId int, askerId int) ([]models.Group, error) {
+	// TODO: query for groups userId is in that askerId can see
+	query := `SELECT g.id, g.name, g.description, g.manager_id FROM group_membership gm left join groups g on g.id = gm.group_id WHERE gm.user_id = $1 and view_permission > 0`
+	rows, err := g.DB.QueryContext(ctx, query, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query groups user is in and can see: %w", err)
+	}
+	defer rows.Close()
+
+	var groupIds []models.Group
+	for rows.Next() {
+		var g models.Group
+		if err := rows.Scan(&g.Id, &g.Name, &g.Description, &g.ManagerId); err != nil {
+			return nil, fmt.Errorf("failed to scan group in anonymous group: %w", err)
+		}
+		groupIds = append(groupIds, g)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return groupIds, nil
+
 }
 
 // AllGroupsVisibleToGroup implements [GroupRepository].
@@ -229,42 +493,59 @@ func (g *GroupRepo) CanGroupManageGroup(ctx context.Context, managerGroup int, m
 	return exists, nil
 }
 
-func (g *GroupRepo) IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, error) {
+func (g *GroupRepo) CanUserManageGroup(ctx context.Context, managerUser int, managedGroup int) (bool, error) {
 	var exists bool
 
-	query := "SELECT EXISTS(SELECT 1 FROM group_membership WHERE user_id = $1 and group_id = $2)"
+	query := `
+	SELECT EXISTS(SELECT 1 
+			from group_management gm 
+			left join group_membership m on m.group_id = gm.manager_group_id
+			where m.user_id = $1 and gm.group_id = $2)
+	`
+	err := g.DB.QueryRow(query, managerUser, managedGroup).Scan(&exists)
 
-	err := g.DB.QueryRow(query, userId, groupId).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
 	return exists, nil
 }
 
-func (g *GroupRepo) IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, error) {
-	var exists bool
+func (g *GroupRepo) IsUserInGroup(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error) {
+	var perms models.GroupViewPermission
 
-	query := "SELECT EXISTS(SELECT 1 FROM group_direct_membership WHERE user_id = $1 and group_id = $2)"
+	query := "SELECT view_permission FROM group_membership WHERE user_id = $1 and group_id = $2"
 
-	err := g.DB.QueryRow(query, userId, groupId).Scan(&exists)
-	if err != nil {
-		return false, err
+	row := g.DB.QueryRow(query, userId, groupId)
+
+	err := row.Scan(&perms)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, models.GroupViewPermission_SeeNone, nil
 	}
-	return exists, nil
+
+	if err != nil {
+		return false, models.GroupViewPermission_SeeNone, err
+	}
+	return true, perms, nil
+}
+
+func (g *GroupRepo) IsUserInGroupDirectly(ctx context.Context, userId int, groupId int) (bool, models.GroupViewPermission, error) {
+	var perms models.GroupViewPermission
+
+	query := "SELECT view_permission FROM group_direct_membership WHERE user_id = $1 and group_id = $2"
+
+	err := g.DB.QueryRow(query, userId, groupId).Scan(&perms)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, models.GroupViewPermission_SeeNone, nil
+	}
+	if err != nil {
+		return false, models.GroupViewPermission_SeeNone, err
+	}
+	return true, perms, nil
+
 }
 
 func (g *GroupRepo) GetAdminGroupId(ctx context.Context) (int, error) {
-	var id_result int
-
-	query := `select id from groups where manager_id is null`
-
-	err := g.DB.QueryRowContext(ctx, query).Scan(&id_result)
-
-	if err != nil {
-		return 0, fmt.Errorf("failed to get admin group: %w", err)
-	}
-
-	return id_result, nil
+	return 0, nil
 }
 
 func (g *GroupRepo) CreateGroup(ctx context.Context, group models.Group) (models.Group, error) {
@@ -301,7 +582,7 @@ func (g *GroupRepo) GetGroupById(ctx context.Context, id int) (*models.Group, er
 		id,
 		manager_id,
 		name,
-		description,
+		description
 		FROM groups WHERE id = $1`
 
 	err := g.DB.QueryRowContext(ctx, query, id).Scan(
@@ -326,7 +607,7 @@ func (g *GroupRepo) GetGroupById(ctx context.Context, id int) (*models.Group, er
 }
 
 func (g *GroupRepo) AddUserToGroup(ctx context.Context, userId int, groupId int, permissions models.GroupViewPermission) error {
-
+	// TODO: on conflict on group_id, user_id just update permission
 	query := `INSERT INTO group_direct_membership (group_id, user_id, view_permission) VALUES ($1, $2, $3)`
 
 	_, err := g.DB.ExecContext(ctx, query, groupId, userId, permissions)

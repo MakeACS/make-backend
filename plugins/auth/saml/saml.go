@@ -7,9 +7,11 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"log"
 	"make-backend/internal/plugins/auth"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -20,9 +22,13 @@ type Config struct {
 	SPCert                  string
 	SPKey                   string
 	SamlIDPMetadataProvider string
+
+	OptionalReplaceDomainFrom string
+	OptionalReplaceDomainTo   string
 }
 
 func (s *SAMLAuth) SetupSamlSP(c Config, sp *SessionProviderViaPlugin) (*samlsp.Middleware, error) {
+	s.config = c
 	keyPair, err := tls.X509KeyPair([]byte(c.SPCert), []byte(c.SPKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load SAML keypair: %w", err)
@@ -46,6 +52,18 @@ func (s *SAMLAuth) SetupSamlSP(c Config, sp *SessionProviderViaPlugin) (*samlsp.
 	rootUrl, err := url.Parse(c.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse root url: %s", err)
+	}
+
+	if c.OptionalReplaceDomainFrom != "" {
+		if c.OptionalReplaceDomainTo == "" {
+			return nil, fmt.Errorf("if SAML_REPLACE_DOMAIN_FROM is specified, SAML_REPLACE_DOMAIN_TO should be as well")
+		}
+	}
+	if c.OptionalReplaceDomainTo != "" {
+		if c.OptionalReplaceDomainFrom == "" {
+			return nil, fmt.Errorf("if SAML_REPLACE_DOMAIN_TO is specified, SAML_REPLACE_DOMAIN_FROM should be as well")
+		}
+		log.Printf("replacing domain '%s' to '%s'", c.OptionalReplaceDomainFrom, c.OptionalReplaceDomainTo)
 	}
 
 	samlSP, err := samlsp.New(samlsp.Options{
@@ -72,7 +90,8 @@ func (s *SAMLAuth) SetupSamlSP(c Config, sp *SessionProviderViaPlugin) (*samlsp.
 }
 
 type SessionProviderViaPlugin struct {
-	cb auth.AuthCallbackProvider
+	cb  auth.AuthCallbackProvider
+	cfg *Config
 }
 
 func extractStringFromAttributeValues(values []saml.AttributeValue) string {
@@ -82,13 +101,16 @@ func extractStringFromAttributeValues(values []saml.AttributeValue) string {
 	return ""
 }
 
-func mapAssertionToCallback(assertion *saml.Assertion, cb *auth.UserLoginCallback) {
+func mapAssertionToCallback(c *Config, assertion *saml.Assertion, cb *auth.UserLoginCallback) {
 	for _, stmt := range assertion.AttributeStatements {
 		for _, attr := range stmt.Attributes {
 			if attr.Name == "email" {
 				cb.Email = extractStringFromAttributeValues(attr.Values)
 			}
 		}
+	}
+	if c.OptionalReplaceDomainFrom != "" {
+		cb.Email = strings.ReplaceAll(cb.Email, c.OptionalReplaceDomainFrom, c.OptionalReplaceDomainTo)
 	}
 }
 
@@ -97,7 +119,7 @@ func mapAssertionToCallback(assertion *saml.Assertion, cb *auth.UserLoginCallbac
 // setting a cookie.
 func (s *SessionProviderViaPlugin) CreateSession(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion) error {
 	cb := auth.UserLoginCallback{}
-	mapAssertionToCallback(assertion, &cb)
+	mapAssertionToCallback(s.cfg, assertion, &cb)
 	resp, err := s.cb.UserLoggedIn(&cb)
 	if err != nil {
 		return err

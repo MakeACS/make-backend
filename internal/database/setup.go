@@ -19,6 +19,7 @@ func SetupDB() (*sql.DB, error) {
 	if err != nil {
 		return db, err
 	}
+
 	return db, nil
 }
 
