@@ -116,9 +116,14 @@ func initMessageForPlugin(host string, desc common.PluginDescription) *common.Pl
 	return &msg
 }
 
+type AuthProviderWithInfo struct {
+	Provider auth.AuthProvider
+	Name     string
+	ImageUrl string
+}
 type PluginStore struct {
 	Notification map[string]notify.NotificationProvider
-	Auth         map[string]auth.AuthProvider
+	Auth         map[string]AuthProviderWithInfo
 
 	HttpForwards []PluginHTTPForwarding
 }
@@ -133,7 +138,7 @@ func StartPlugins(host string, store *database.Store, sessionManager *scs.Sessio
 	forwards := []PluginHTTPForwarding{}
 	var plugins = PluginStore{
 		Notification: map[string]notify.NotificationProvider{},
-		Auth:         map[string]auth.AuthProvider{},
+		Auth:         map[string]AuthProviderWithInfo{},
 	}
 
 	var pluginMap = generatePluginMap(wanted_plugins)
@@ -193,7 +198,16 @@ func StartPlugins(host string, store *database.Store, sessionManager *scs.Sessio
 				slog.Warn("plugin lied about type", "wanted", plugin_desc.PluginType, "plugin", plugin_desc.Name)
 			}
 			authPlugin.RegisterCallbackProvider(&TestAuthCBProvider{sessionManager, store})
-			plugins.Auth[plugin_desc.Name] = authPlugin
+			desc, err := authPlugin.GetAuthDescription()
+			if err != nil {
+				slog.Warn("cant use auth plugin bc we could not get auth description", "plugin_id", plugin_desc.Name, "err", err)
+				continue
+			}
+			plugins.Auth[plugin_desc.Name] = AuthProviderWithInfo{
+				Provider: authPlugin,
+				Name:     desc.Name,
+				ImageUrl: desc.ImageUrl,
+			}
 
 		case common.PluginType_Notification:
 			notifyPlugin, ok := raw.(notify.NotificationProvider)

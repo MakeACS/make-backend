@@ -100,6 +100,13 @@ func (g *GRPCClient) GenerateLoginRequest(req *UserLoginStartRequest) (*LoginReq
 	return res, nil
 }
 
+// GetAuthDescription implements [AuthProvider].
+func (g *GRPCClient) GetAuthDescription() (*AuthDescription, error) {
+	e := common.Empty{}
+	return g.client.GetAuthDescription(context.Background(), &e)
+
+}
+
 func (g *GRPCClient) Heartbeat() (*common.HeartbeatInfo, error) {
 	e := common.Empty{}
 	return g.client.Heartbeat(context.Background(), &e)
@@ -124,6 +131,10 @@ func (g *GRPCServer) GetLoginRequest(ctx context.Context, req *UserLoginStartReq
 	}
 	return res, nil
 
+}
+
+func (g *GRPCServer) GetAuthDescription(context.Context, *common.Empty) (*AuthDescription, error) {
+	return g.Impl.GetAuthDescription()
 }
 
 // Heartbeat implements [AuthPluginServer].
